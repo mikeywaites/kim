@@ -1,4 +1,4 @@
 kim
 ===
 
-kim - A python library serliazation library 
+kim - A python serliazation library 
