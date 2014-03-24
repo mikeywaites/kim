@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from .exceptions import MappingError
+
 
 class Mapping(object):
     """:class:`kim.mapping.Mapping` is a factory for generating data
