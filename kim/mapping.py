@@ -5,10 +5,10 @@ from .exceptions import MappingError
 
 class Mapping(object):
     """:class:`kim.mapping.Mapping` is a factory for generating data
-    structures in kim.
+    structures in KIM.
 
-    Mappings consitst of a collection key value pairs
-    where a key dictates the desired ouput field name and the value is an
+    Mappings consitst of a collection of key value pairs
+    where the key dictates the desired ouput field name and the value is an
     object that defines the :class:`kim.fields.BaseField` interface.
 
     The default Mapping class in kim stores collections of mapped properties
