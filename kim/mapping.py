@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from collections import OrderedDict
 
 from .exceptions import MappingError

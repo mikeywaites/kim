@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 
 class KimGoneWrong(Exception):
@@ -5,4 +7,16 @@ class KimGoneWrong(Exception):
 
 
 class MappingError(KimGoneWrong):
+    pass
+
+
+class FieldError(KimGoneWrong):
+    pass
+
+
+class ValidatorTypeError(KimGoneWrong):
+    pass
+
+
+class ValidationError(KimGoneWrong):
     pass
