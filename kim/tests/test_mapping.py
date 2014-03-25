@@ -79,3 +79,14 @@ class MappingTest(unittest.TestCase):
 
         with self.assertRaises(MappingError):
             Mapping(only=['foo'], exclude=['foo', 'bar'])
+
+    def test_nested_mapping(self):
+
+        field_a = FieldInterface()
+        field_b = FieldInterface()
+
+        initial = {'field_a': field_a, 'field_b': field_b}
+        mapping_a = Mapping(**initial)
+
+        mapping_b = Mapping(**{'field_c': mapping_a})
+        print mapping_b.mapped()
