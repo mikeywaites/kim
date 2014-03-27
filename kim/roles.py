@@ -104,6 +104,19 @@ def create_mapping_from_role(role, mapping):
 
 
 def _create_role(name, fields, role_base=None, whitelist=True, **kwargs):
+    """Factory function for generating new Roles derived from an
+    optional custom role class
+
+    :param name: the name given to this role
+    :param fields: iterable of field names
+    :param role_base: specify a custom role type to create a role from
+    :param whitelist: specify the role type
+
+    .. seealso::
+        :class:`Role`
+
+    :returns: New :class:`Role` type
+    """
 
     BaseKlass = role_base or Role
     return BaseKlass(
@@ -120,9 +133,13 @@ def whitelist(name, fields, role_base=None, **kwargs):
 
     :param name: the name given to this role
     :param fields: iterable of field names
+    :param role_base: specify a custom role type to create a role from
 
     e.g::
         role=whitelist('user_public', ['name', 'email'])
+
+    .. seealso::
+        :func:`_create_role`
 
     :returns: New :class:`Role` type
     """
@@ -138,9 +155,13 @@ def blacklist(name, fields, role_base=None, **kwargs):
 
     :param name: the name given to this role
     :param fields: iterable of field names
+    :param role_base: specify a custom role type to create a role from
 
     e.g::
         role=blacklist('user_public', ['name', 'email'])
+
+    .. seealso::
+        :func:`_create_role`
 
     :returns: New :class:`Role` type
     """
