@@ -1,7 +1,6 @@
 #from .exceptions import MappingError
 
 from .types import TypeABC, String
-from .serializers import SerializerABC
 
 
 
@@ -23,6 +22,7 @@ class Nested(TypeABC):
 
     @mapping.setter
     def mapping(self, mapped):
+        from .serializers import SerializerABC
         if isinstance(mapped, Mapping):
             self._mapping = mapped
         elif isinstance(mapped, SerializerABC):

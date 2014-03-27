@@ -23,6 +23,13 @@ def with_metaclass(meta, *bases):
     return metaclass('temporary_class', None, {})
 
 
+
+class Field(object):
+    def __init__(self, field_type, **params):
+        self.field_type = field_type
+        self.params = params
+
+
 class SerializerMetaclass(type):
  def __new__(mcs, name, bases, attrs):
         # Adapted from Django forms - https://github.com/django/django/blob/master/django/forms/forms.py#L73
@@ -30,7 +37,7 @@ class SerializerMetaclass(type):
         # Collect fields from current class.
         current_fields = []
         for key, value in list(attrs.items()):
-            if isinstance(value, TypeABC):
+            if isinstance(value, Field):
                 current_fields.append((key, value))
                 attrs.pop(key)
 
@@ -59,10 +66,10 @@ class SerializerMetaclass(type):
 class BaseSerializer(object):
     def get_mapping(self):
         mapping = Mapping(self.__class__.__name__)
-        for name, field in self.declared_fields.items():
-            field.name = name
-            if not field.source:
-                field.source = name
+        for name, field_wrapper in self.declared_fields.items():
+            params = field_wrapper.params
+            params.setdefault('source', name)
+            field = field_wrapper.field_type(name=name, **params)
             mapping.add_field(field)
         return mapping
 
@@ -72,9 +79,8 @@ class SerializerABC(with_metaclass(SerializerMetaclass, BaseSerializer)):
 
 
 class JacksSerializer(SerializerABC):
-    bla = String()
-    lol = String(source='something')
+    bla = Field(String)
+    lol = Field(String, source='something')
 
 
 mapping = JacksSerializer().get_mapping()
-import ipdb; ipdb.set_trace()
