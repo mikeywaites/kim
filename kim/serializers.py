@@ -1,30 +1,22 @@
 from collections import OrderedDict
 from .mapping import Mapping
-from .types import String
-
-
-def with_metaclass(meta, *bases):
-    '''Defines a metaclass.
-
-    Creates a dummy class with a dummy metaclass. When subclassed, the dummy
-    metaclass is used, which has a constructor that instantiates a
-    new class from the original parent. This ensures that the dummy class and
-    dummy metaclass are not in the inheritance tree.
-
-    Credit to Armin Ronacher.
-    '''
-    class metaclass(meta):
-        __call__ = type.__call__
-        __init__ = type.__init__
-        def __new__(cls, name, this_bases, d):
-            if this_bases is None:
-                return type.__new__(cls, name, (), d)
-            return meta(name, bases, d)
-    return metaclass('temporary_class', None, {})
-
+from .util import with_metaclass
 
 
 class Field(object):
+    """Wrapper representing a :class:`kim.types.Type` in a
+    :class:`kim.serializers.Serializer`.
+
+    :param field_type: The `Type` class to use for this `Field` (note this should
+        be a class, not an instantiated object)
+    :param **params: Extra params to be passed to the `Type` constructor, eg.
+        `source`
+
+    .. seealso::
+
+    :class:`kim.serializers.Serializer`
+    """
+
     def __init__(self, field_type, **params):
         self.field_type = field_type
         self.params = params
@@ -32,7 +24,8 @@ class Field(object):
 
 class SerializerMetaclass(type):
  def __new__(mcs, name, bases, attrs):
-        # Adapted from Django forms - https://github.com/django/django/blob/master/django/forms/forms.py#L73
+        # Adapted from Django forms -
+        # https://github.com/django/django/blob/master/django/forms/forms.py#L73
 
         # Collect fields from current class.
         current_fields = []
@@ -65,6 +58,8 @@ class SerializerMetaclass(type):
 
 class BaseSerializer(object):
     def get_mapping(self):
+        """Return a :class:`kim.mapping.Mapping` built up from the
+        attributes on this Serializer."""
         mapping = Mapping(self.__class__.__name__)
         for name, field_wrapper in self.declared_fields.items():
             params = field_wrapper.params
@@ -74,13 +69,28 @@ class BaseSerializer(object):
         return mapping
 
 
-class SerializerABC(with_metaclass(SerializerMetaclass, BaseSerializer)):
-    pass
+class Serializer(with_metaclass(SerializerMetaclass, BaseSerializer)):
+    """:class:`kim.serializer.Serializer` is a declarative wrapper for
+    generating :class:`kim.mapping.Mapping`s. It also provides convinience
+    methods for marshalling data against it's mapping.
+
+    Whilst it is not nessasary to use a :class:`kim.serializer.Serializer` to
+    use Kim, it is recommended for most users as the default way to
+    interact with the low level :class:`kim.mapping.Mapping` API.
+
+    Serializers consist of attributes representing fields. These will become
+    keys in the resulting serialized data. If the Field does not list a source,
+    the source will default to the field name.
+
+    e.g.::
+        class MySerializer(Serializer):
+            name = Field(String)
+            age = Field(Interger, source='user_age')
 
 
-class JacksSerializer(SerializerABC):
-    bla = Field(String)
-    lol = Field(String, source='something')
+    .. seealso::
 
+        :class:`kim.serializers.Field`
 
-mapping = JacksSerializer().get_mapping()
+    """
+
