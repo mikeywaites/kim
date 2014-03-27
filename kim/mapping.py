@@ -84,3 +84,12 @@ class Mapping(MappingABC):
         :returns: None
         """
         self.fields.append(field)
+
+
+def marshal(mapping, data):
+    output = {}
+    for field in mapping.fields:
+        source_value = getattr(data, field.source)
+        processed_value = field.get_value(source_value)
+        output[field.name] = processed_value
+    return output
