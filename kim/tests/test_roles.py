@@ -79,3 +79,11 @@ class RoleTests(unittest.TestCase):
         self.assertEqual(role.name, 'name')
         self.assertEqual(role.field_names, ('name',))
         self.assertFalse(role.whitelist)
+
+    def test_create_role_with_custom_base(self):
+
+        class CustomRole(Role):
+            pass
+
+        role = whitelist('foo', ['bar'], role_base=CustomRole)
+        self.assertIsInstance(role, CustomRole)

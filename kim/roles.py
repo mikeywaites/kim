@@ -103,6 +103,17 @@ def create_mapping_from_role(role, mapping):
     )
 
 
+def _create_role(name, fields, role_base=None, whitelist=True, **kwargs):
+
+    BaseKlass = role_base or Role
+    return BaseKlass(
+        name,
+        whitelist=whitelist,
+        *fields,
+        **kwargs
+    )
+
+
 def whitelist(name, fields, role_base=None, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to True
@@ -115,14 +126,10 @@ def whitelist(name, fields, role_base=None, **kwargs):
 
     :returns: New :class:`Role` type
     """
-
-    BaseKlass = role_base or Role
-    return BaseKlass(
-        name,
-        whitelist=True,
-        *fields,
-        **kwargs
-    )
+    return _create_role(name, fields,
+                        role_base=role_base,
+                        whitelist=True,
+                        **kwargs)
 
 
 def blacklist(name, fields, role_base=None, **kwargs):
@@ -137,10 +144,7 @@ def blacklist(name, fields, role_base=None, **kwargs):
 
     :returns: New :class:`Role` type
     """
-    BaseKlass = role_base or Role
-    return BaseKlass(
-        name,
-        whitelist=False,
-        *fields,
-        **kwargs
-    )
+    return _create_role(name, fields,
+                        role_base=role_base,
+                        whitelist=False,
+                        **kwargs)
