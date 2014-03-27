@@ -94,4 +94,3 @@ class Serializer(with_metaclass(SerializerMetaclass, BaseSerializer)):
         :class:`kim.serializers.Field`
 
     """
-
