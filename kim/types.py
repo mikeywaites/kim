@@ -8,6 +8,9 @@ class TypeABC(object):
         self.name = name
         self.source = source or name
 
+    def get_value(self, source_value):
+        return source_value
+
 
 class String(TypeABC):
     pass
@@ -90,18 +93,22 @@ class Nested(TypeABC):
         """
 
         #TODO sort out the cicular imports
-        from .serializers import SerializerABC
+        from .serializers import Serializer
         from .mapping import MappingABC
         if isinstance(mapped, MappingABC):
             self._mapping = mapped
-        elif isinstance(mapped, SerializerABC):
+        elif isinstance(mapped, Serializer):
             self._mapping = mapped.__mapping__
         else:
             raise TypeError('Nested() must be called with a '
                             'mapping or a mapped serializer instance')
 
-    def get_fields(self):
+    def get_mapping(self):
         if self.role:
-            return self.role.get_mapping(self.mapping).fields
+            return self.role.get_mapping(self.mapping)
 
-        return self.mapping.fields
+        return self.mapping
+
+    def get_value(self, source_value):
+        from .mapping import marshal
+        return marshal(self.get_mapping(), source_value)
