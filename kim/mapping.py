@@ -1,19 +1,11 @@
 #from .exceptions import MappingError
 
-
-class FieldABC(object):
-
-    def __init__(self, name='', source=''):
-        self.name = name
-        self.source = source
+from .types import TypeABC, String
+from .serializers import SerializerABC
 
 
-class SerializerABC(object):
 
-    __mapping__ = None
-
-
-class Nested(FieldABC):
+class Nested(TypeABC):
 
     def __init__(self, name='', mapped=None,
                  nullable=True, role=None, *args, **kwargs):
@@ -44,14 +36,6 @@ class Nested(FieldABC):
             return self.role.get_mapping(self.mapping).fields
 
         return self.mapping.fields
-
-
-class String(FieldABC):
-    pass
-
-
-class Integer(FieldABC):
-    pass
 
 
 class RoleABC(object):
@@ -109,7 +93,7 @@ class Mapping(object):
 
     :param fields: contains the `collection` of Field types provided
 
-        Any field inherting from :class:`kim.fields.FieldABC` is considered
+        Any field inherting from :class:`kim.fields.TypeABC` is considered
         to be a valid field passed into a mapping.
 
     :param collection: Provided as a keyword arg to a `mapping` sets the data
@@ -117,7 +101,7 @@ class Mapping(object):
 
     .. seealso::
 
-        :class:`kim.fields.FieldABC`
+        :class:`kim.fields.TypeABC`
 
     """
 
@@ -148,7 +132,7 @@ class Mapping(object):
         """
 
         for item in items:
-            if isinstance(item, FieldABC):
+            if isinstance(item, TypeABC):
                 self.add_field(item)
 
     def add_field(self, field):
@@ -157,7 +141,7 @@ class Mapping(object):
         :param field: A field type
 
         .. seealso::
-            :class:`kim.fields.FieldABC`
+            :class:`kim.fields.TypeABC`
 
         :returns: None
         """
