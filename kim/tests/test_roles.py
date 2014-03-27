@@ -12,6 +12,10 @@ class MyCustomMapping(Mapping):
     pass
 
 
+class CustomRole(Role):
+    pass
+
+
 class RoleTests(unittest.TestCase):
 
     def test_role_requires_name(self):
@@ -81,9 +85,6 @@ class RoleTests(unittest.TestCase):
         self.assertFalse(role.whitelist)
 
     def test_create_role_with_custom_base(self):
-
-        class CustomRole(Role):
-            pass
 
         role = whitelist('foo', ['bar'], role_base=CustomRole)
         self.assertIsInstance(role, CustomRole)

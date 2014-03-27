@@ -3,90 +3,55 @@
 
 import unittest
 
-from kim.mapping import Mapping, MappingError
+from kim import types
+from kim.mapping import Mapping
 
 
-class FieldInterface(object):
-    #TODO replace this with a proper field class
+class NotAType(object):
 
-    pass
+    def __init__(self, *args, **kwargs):
+        pass
 
 
 class MappingTest(unittest.TestCase):
 
-    def test_add_initial_mapping(self):
+    def test_name_arg_required_for_mapping(self):
 
-        field_a = FieldInterface()
+        with self.assertRaises(TypeError):
+            Mapping()
 
-        initial = {'field_a': field_a}
-        mapping = Mapping(**initial)
+    def test_name_correctly_set_for_mapping(self):
 
-        exp = Mapping.collection()
-        exp['field_a'] = field_a
-        self.assertDictEqual(exp, mapping.mapped())
+        mapping = Mapping('users')
+        self.assertEqual(mapping.name, 'users')
 
-    def test_mapping_with_no_initial_mapping(self):
+    def test_setting_mapping_fields(self):
 
-        mapping = Mapping()
-        self.assertDictEqual(Mapping.collection(), mapping.mapped())
+        name = types.String('name')
+        not_a = NotAType('foo')
+        mapping = Mapping('users', name, not_a)
+        self.assertIn(name, mapping.fields)
+        self.assertNotIn(not_a, mapping.fields)
 
-    def test_add_property_to_mapping(self):
+    def test_set_custom_mapping_colleciton(self):
 
-        field_a = FieldInterface()
-        mapping = Mapping()
-        mapping.add('field_a', field_a)
+        mapping = Mapping('users', collection=set())
+        self.assertIsInstance(mapping.fields, set)
 
-        exp = Mapping.collection()
-        exp['field_a'] = field_a
+    def test_mapping_add_field(self):
 
-        self.assertDictEqual(exp, mapping.mapped())
+        mapping = Mapping('users')
+        name = types.String('name')
 
-    def test_add_property_overwrites_initial_property(self):
-        field_a = FieldInterface()
-        field_b = FieldInterface()
+        mapping.add_field(name)
+        self.assertIn(name, mapping.fields)
 
-        initial = {'field_a': field_a}
-        mapping = Mapping(**initial)
-        mapping.add('field_a', field_b)
+    def test_iterate_over_mapping(self):
 
-        exp = Mapping.collection()
-        exp['field_a'] = field_b
-        self.assertDictEqual(exp, mapping.mapped())
+        name = types.String('name')
+        email = types.String('email')
+        mapping = Mapping('users', name, email)
 
-    def test_field_ignored_when_only_is_provided(self):
-
-        field_a = FieldInterface()
-        field_b = FieldInterface()
-
-        initial = {'field_a': field_a}
-        mapping = Mapping(only=['field_b'], **initial)
-        mapping.add('field_b', field_b)
-        exp = Mapping.collection()
-        exp['field_b'] = field_b
-
-        self.assertNotIn('field_a', mapping.mapped())
-
-    def test_field_rejected_when_in_exclude(self):
-
-        field_a = FieldInterface()
-
-        initial = {'field_a': field_a}
-        mapping = Mapping(exclude=['field_a'], **initial)
-        exp = Mapping.collection()
-        self.assertDictEqual(exp, mapping.mapped())
-
-    def test_mapping_error_raised_when_duplicates_in_only_excluded(self):
-
-        with self.assertRaises(MappingError):
-            Mapping(only=['foo'], exclude=['foo', 'bar'])
-
-    def test_nested_mapping(self):
-
-        field_a = FieldInterface()
-        field_b = FieldInterface()
-
-        initial = {'field_a': field_a, 'field_b': field_b}
-        mapping_a = Mapping(**initial)
-
-        mapping_b = Mapping(**{'field_c': mapping_a})
-        print mapping_b.mapped()
+        fields = [field for field in mapping]
+        self.assertEqual(fields[0], name)
+        self.assertEqual(fields[1], email)
