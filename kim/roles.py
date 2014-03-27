@@ -32,8 +32,12 @@ class Role(RoleABC):
     or disabled for this role. (see :meth:`membership`)
     """
 
-    def __init__(self, name, *field_names, **kwargs):
-        super(Role, self).__init__(name, *field_names, **kwargs)
+    def __init__(self, *args, **kwargs):
+        try:
+            name, field_names = args[0], args[1:]
+        except IndexError:
+            raise TypeError('Role() requires at least one argument')
+
         self.name = name
         self.field_names = field_names
         self.whitelist = kwargs.pop('whitelist', True)
