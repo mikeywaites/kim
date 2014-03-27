@@ -56,6 +56,7 @@ class SerializerMetaclass(type):
 
         return new_class
 
+
 class BaseSerializer(object):
     def get_mapping(self):
         """Return a :class:`kim.mapping.Mapping` built up from the
