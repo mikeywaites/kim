@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-
 class TypeABC(object):
 
-    def __init__(self, name, source):
+    def __init__(self, name, source=None):
         self.name = name
-        self.source = source
+        self.source = source or name
 
 
 class String(TypeABC):
