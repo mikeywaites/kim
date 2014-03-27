@@ -95,6 +95,7 @@ class Nested(TypeABC):
         #TODO sort out the cicular imports
         from .serializers import Serializer
         from .mapping import MappingABC
+
         if isinstance(mapped, MappingABC):
             self._mapping = mapped
         elif isinstance(mapped, Serializer):
@@ -104,11 +105,29 @@ class Nested(TypeABC):
                             'mapping or a mapped serializer instance')
 
     def get_mapping(self):
+        """Return the mapping defined for this `Nested` type.
+
+        If a `role` has been passed to the `Nested` type the mapping
+        will be run through the role automatically
+
+        :returns: :class:`kim.mapping.MappingABC` type
+
+        .. seealso::
+            :class:`kim.roles.Role`
+        """
         if self.role:
             return self.role.get_mapping(self.mapping)
 
         return self.mapping
 
     def get_value(self, source_value):
+        """marshall the `mapping` for this nested type
+
+        :param source_value: data to marshall this `Nested` type to
+
+        :returns: marshalled mapping
+        """
+
+        #TODO sort out cicular dep's issue
         from .mapping import marshal
         return marshal(self.get_mapping(), source_value)
