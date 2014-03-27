@@ -1,75 +1,13 @@
 #from .exceptions import MappingError
 
-from .types import TypeABC, String
-from .serializers import SerializerABC
+from .types import TypeABC
 
 
-
-class Nested(TypeABC):
-
-    def __init__(self, name='', mapped=None,
-                 nullable=True, role=None, *args, **kwargs):
-
-        self._mapping = None
-        self.mapping = mapped
-        self.nullable = True
-        self.role = role
-
-        super(Nested, self).__init__(name, *args, **kwargs)
-
-    @property
-    def mapping(self):
-        return self._mapping
-
-    @mapping.setter
-    def mapping(self, mapped):
-        if isinstance(mapped, Mapping):
-            self._mapping = mapped
-        elif isinstance(mapped, SerializerABC):
-            self._mapping = mapped.__mapping__
-        else:
-            raise TypeError('Nested() must be called with a '
-                            'mapping or a mapped serializer instance')
-
-    def get_fields(self):
-        if self.role:
-            return self.role.get_mapping(self.mapping).fields
-
-        return self.mapping.fields
+class MappingABC(object):
+    pass
 
 
-class RoleABC(object):
-
-    def __init__(self, name, *field_names, **kwargs):
-        self.name = name
-        self.field_names = field_names
-
-
-class Role(RoleABC):
-
-    def __init__(self, name, *field_names, **kwargs):
-        super(Role, self).__init__(name, *field_names, **kwargs)
-        self.whitelist = kwargs.pop('whitelist', True)
-
-    def membership(self, field_name):
-        if self.whitelist:
-            return field_name in self.field_names
-        else:
-            return field_name not in self.field_names
-
-    def get_mapping(self, mapping):
-
-        fields = [field for field in mapping.fields
-                  if self.membership(field.name)]
-
-        MappingKlass = mapping.__class__
-        return MappingKlass(
-            mapping.name,
-            *fields
-        )
-
-
-class Mapping(object):
+class Mapping(MappingABC):
     """:class:`kim.mapping.Mapping` is a factory for generating data
     structures in KIM.
 
@@ -146,18 +84,3 @@ class Mapping(object):
         :returns: None
         """
         self.fields.append(field)
-
-
-if __name__=="__main__":
-    other_mapping = Mapping(
-        'food',
-        String('name'),
-        String('name_2'),
-    )
-    mapping = Mapping(
-        'users',
-        String('name'),
-        Nested('food', other_mapping, role=Role('test', 'name')),
-    )
-    mapping.fields[1].get_fields()
-    print 'foo'
