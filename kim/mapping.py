@@ -1,129 +1,126 @@
-from collections import OrderedDict
+#from .exceptions import MappingError
 
-from .exceptions import MappingError
+
+class FieldABC(object):
+
+    def __init__(self, name='', source=''):
+        self.name = name
+        self.source = source
+
+
+class String(FieldABC):
+    pass
+
+
+class Integer(FieldABC):
+    pass
+
+
+class RoleABC(object):
+
+    def __init__(self, name='', *fields):
+        self.name = name
+        self.fields = [].extend(fields)
+
+
+class Role(RoleABC):
+    pass
 
 
 class Mapping(object):
     """:class:`kim.mapping.Mapping` is a factory for generating data
     structures in KIM.
 
-    Mappings consitst of a collection of key value pairs
-    where the key dictates the desired ouput field name and the value is an
-    object that defines the :class:`kim.fields.BaseField` interface.
+    A mapping consists of a collection of kim `field` interfaces and
+    roles.
 
-    The default Mapping class in kim stores collections of mapped properties
-    as an OrderedDict, other than that a mapping is roughly equivalent to the
-    following
+    `Mappings` are created by passing `Fields` and `Roles`
+    to the contructor of :class:`kim.mapping.Mapping`
 
-    >>> mapping = {'field_a': my_field}
+     e.g.::
 
-    Creating mappings
-    -----------------
+        my_mapping = Mapping(
+            'my_mapping',
+             String('name'),
+             Integer('id'),
+             Role('overview', 'name', 'id')
+        )
 
-    :class:`kim.mapping.Mapping` may be instantiated in several ways.  You
-    may optinally proivide the constructor with **mappings which is a dict
-    of 'field_name': field key value pairs, where field implements the field
-    interface.
+    The first argument to the Mapping type is the name of this mapping,
+    the following arguments may be any mixture of `Field` and `Role`
+    types
 
-    >>> from kim.mapping import Mapping
-    >>> mapping = Mapping(**{'field_one': field})
+    :param name: The user defined name of this `mapping`
 
-    One an instance of :class:`kim.mapping.Mapping` has been created you can
-    also add fields using the :meth:`kim.mapping.Mapping.add` method.
+    :param fields: contains the `collection` of Field types provided
 
-    >>> from kim.mapping import Mapping
-    >>> mapping = Mapping(**{'field_one': field})
-    >>> mapping.add('field_two', other_field)
+        Any field inherting from :class:`kim.fields.FieldABC` is considered
+        to be a valid field passed into a mapping.
 
-    Getting the mapped properties from a mapping.
-    --------------------------------------------
+    :param collection: Provided as a keyword arg to a `mapping` sets the data
+                       structure used to store `fields` in. (default list)
 
-    Once a mapped data structure has been instantiated you may call the
-    :meth:`mapped` method to retrieve the mapped field_name/field key value
-    pairs
+    .. seealso::
 
-    >>> from kim.mapping import Mapping
-    >>> mapping = Mapping(**{'field_one': field})
-    >>> mapping.mapped()
-    >>> OrderedDict([('field_a', <field String>)])
-
-    Limiting the fields added to a mapping
-    --------------------------------------
-    When mappings are declared you may optionally limit the fields added
-    by using the `only` and `exclude` params passed the a mapping
-    instance.
-
-    >>> mapping = Mapping(only=['field_a'])
-    >>> mapping = Mapping(exclude=['field_b'])
-
-    Its prefered to only specify one of the parameters at a time.
-    The fields defined must be unqiue in each option or a
-    :class:`kim.exceptions.MappingError` exception will be raised.
+        :class:`kim.fields.FieldABC`
+        :class:`kim.roles.RoleABC`
 
     """
 
-    collection = OrderedDict
-
-    def __init__(self, only=None, exclude=None, **mappings):
+    def __init__(self, *args, **kwargs):
         """:class:`kim.mapping.Mapping` constructor.
 
-        :param mapping: field name and field key value pairs.
-        :param only: specify an iterable of field_names that may ONLY
-                     appear in the mapping.
-        :param exclude: specify an iterable of field_names that may MUST
-                        not appear in the mapping
-
-        :raises: :class:`kim.exceptions.MappingError`
         """
-        self.only = only or list()
-        self.only = set(self.only)
+        try:
+            mapping_name, args = args[0], args[1:]
+        except IndexError:
+            raise TypeError("Mapping() takes at least one argument")
 
-        self.exclude = exclude or list()
-        self.exclude = set(self.exclude)
+        self.name = mapping_name
+        self.fields = kwargs.get('collection', list())
+        self.roles = {}
 
-        if any(self.only & self.exclude):
-            raise MappingError('only and exclude mappings '
-                               'must not contain duplicate fields')
+        self._arg_loop(args)
 
-        self._mapping = self.collection()
-        for field_name, field in mappings.iteritems():
-            self.add(field_name, field)
+    def __iter__(self):
+        return iter(self.fields)
 
-    def mapped(self):
-        """Returns the dict like object containing all the
-        properties defined in this mapping.
+    def _arg_loop(self, items):
+        """Iterates over collection of constructor args and assigns
+        accordingly.
 
-        :rtype: `self.collection`
-        :returns: collection of mapped properties
-        """
-        return self._mapping
+        :param items: collection of Field and Role type args.
 
-    def _add_mapping(self, field_name, field):
-        """Stores a mapping by field_name: field in the mapping
-        collection class
-
-        :param field_name str: named of this mapped property
-        :param field: obj implementing the field interface
-
-        :raises: None
-        :returns: None
-
-        """
-        self._mapping[field_name] = field
-
-    def add(self, field_name, field):
-        """Add a new property to mapping ensuring field_name is
-        permitted inside of this mapping.
-
-        :param field_name str: named of this mapped property
-        :param field: obj implementing the field interface
-
-        :raises: None
         :returns: None
         """
 
-        if ((self.only and field_name not in self.only) or
-                (self.exclude and field_name in self.exclude)):
-            return
+        for item in items:
+            if isinstance(item, FieldABC):
+                self.add_field(item)
 
-        self._add_mapping(field_name, field)
+            if isinstance(item, RoleABC):
+                self.add_role(item)
+
+    def add_role(self, role):
+        """Adds a role to the roles dict keyed by `role.name`: `role`
+
+        :param role: a `Role` type
+
+        .. seealso::
+            :class:`kim.roles.RoleABC`
+
+        :returns: None
+        """
+        self.roles.update({role.name: role})
+
+    def add_field(self, field):
+        """Add a `field` type to the `fields` collection.
+
+        :param field: A field type
+
+        .. seealso::
+            :class:`kim.fields.FieldABC`
+
+        :returns: None
+        """
+        self.fields.append(field)
