@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from .serializers import SerializerABC
-from .mapping import MappingABC
 
 
 class TypeABC(object):
@@ -38,6 +36,8 @@ class Nested(TypeABC):
 
     @mapping.setter
     def mapping(self, mapped):
+        from .serializers import SerializerABC
+        from .mapping import MappingABC
         if isinstance(mapped, MappingABC):
             self._mapping = mapped
         elif isinstance(mapped, SerializerABC):

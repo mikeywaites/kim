@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from .mapping import Mapping
-from .types import TypeABC, String
+from .types import String
 
 
 def with_metaclass(meta, *bases):
