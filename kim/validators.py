@@ -83,6 +83,6 @@ def validator(base=None, *args, **kwargs):
         def wrapped_f(*args, **kwargs):
             validator = base or Validator()
             validator.validate = f
-            return validator.run(*args, **kwargs)
+            return validator
         return wrapped_f
     return wrap
