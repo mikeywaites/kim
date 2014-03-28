@@ -17,7 +17,7 @@ class Validator(object):
         method should return a bool indicating wether the validation was
         succesful or not.
 
-        :param field_type: :class:`kim.types.TypeABC` instance from a mapping
+        :param field_type: :class:`kim.types.BaseType` instance from a mapping
         :param value: the value being validated for this Type
 
         :raises: NotImplementedError
@@ -32,7 +32,7 @@ class Validator(object):
         user input.  Typically this method will not be overridden by
         concrete classes, instead see :meth:`validate`
 
-        :param field_type: :class:`kim.types.TypeABC` instance from a mapping
+        :param field_type: :class:`kim.types.BaseType` instance from a mapping
         :param value: the value being validated for this Type
 
         :raises: ValidationError
@@ -49,7 +49,7 @@ class Validator(object):
         """Return a humand readable error message for this validator
         when validation fails.
 
-        :param field_type: :class:`kim.types.TypeABC` instance from a mapping
+        :param field_type: :class:`kim.types.BaseType` instance from a mapping
         :param value: the value being validated for this Type
 
         :type: mixed

@@ -7,14 +7,14 @@ the `Roles` system with KIM.
 """
 
 
-class RoleABC(object):
+class BaseRole(object):
     """Role Abstract Base Class.  All `Role` types MUST inherit from this
     base class.
     """
     pass
 
 
-class Role(RoleABC):
+class Role(BaseRole):
     """:class:`kim.roles.Role` is a way to affect the `Types`
     used in a Mapping or Mapped Serializer.  They allow users
     to specify custom sets of field names that are permitted
@@ -69,9 +69,9 @@ class Role(RoleABC):
     def get_mapping(self, mapping):
         """Creates a new mapping based on this role.
 
-        :param mapping: a :class:`kim.mapping.MappingABC` mapping type.
+        :param mapping: a :class:`kim.mapping.BaseMapping` mapping type.
 
-        :rtype: :class:`kim.mapping.MappingABC`
+        :rtype: :class:`kim.mapping.BaseMapping`
         :returns: a new mapping from this role
 
         .. seealso::
@@ -85,10 +85,10 @@ def create_mapping_from_role(role, mapping):
     """utility method that creates a new mapping from `mapping`
     pulling in the allowed fields defined in `role.field_names`
 
-    :param role: :class:`RoleABC` type
-    :param mapping: :class:`kim.mapping.MappingABC` type
+    :param role: :class:`BaseRole` type
+    :param mapping: :class:`kim.mapping.BaseMapping` type
 
-    :rtype: :class:`kim.mapping.MappingABC`
+    :rtype: :class:`kim.mapping.BaseMapping`
     :returns: New mapping constructred from role.field_names
     """
     fields = [field for field in mapping.fields

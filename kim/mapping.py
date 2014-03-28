@@ -1,13 +1,13 @@
 #from .exceptions import MappingError
 
-from .types import TypeABC, MappedType
+from .types import BaseType, MappedType
 
 
-class MappingABC(object):
+class BaseMapping(object):
     pass
 
 
-class Mapping(MappingABC):
+class Mapping(BaseMapping):
     """:class:`kim.mapping.Mapping` is a factory for generating data
     structures in KIM.
 
@@ -31,7 +31,7 @@ class Mapping(MappingABC):
 
     :param fields: contains the `collection` of Field types provided
 
-        Any field inherting from :class:`kim.fields.TypeABC` is considered
+        Any field inherting from :class:`kim.fields.BaseType` is considered
         to be a valid field passed into a mapping.
 
     :param collection: Provided as a keyword arg to a `mapping` sets the data
@@ -39,7 +39,7 @@ class Mapping(MappingABC):
 
     .. seealso::
 
-        :class:`kim.fields.TypeABC`
+        :class:`kim.fields.BaseType`
 
     """
 
@@ -79,7 +79,7 @@ class Mapping(MappingABC):
         :param field: A field type
 
         .. seealso::
-            :class:`kim.fields.TypeABC`
+            :class:`kim.fields.BaseType`
 
         :returns: None
         """

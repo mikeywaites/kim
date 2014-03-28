@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 
-class TypeABC(object):
+class BaseType(object):
     def get_value(self, source_value):
         return source_value
 
 
-class String(TypeABC):
+class String(BaseType):
     pass
 
 
-class Integer(TypeABC):
+class Integer(BaseType):
     pass
 
 class MappedType(object):
@@ -36,8 +36,8 @@ class MappedType(object):
         return self.base_type.get_value(source_value)
 
 
-class Nested(TypeABC):
-    """Create a `Nested` mapping from a :class:`kim.mapping.MappingABC`
+class Nested(BaseType):
+    """Create a `Nested` mapping from a :class:`kim.mapping.BaseMapping`
     or Mapped :class:`kim.serializers.SerializerABC`
 
     Nested type allow you to build up reusable mapping structures.  They
@@ -68,7 +68,7 @@ class Nested(TypeABC):
     In this example that only the `name` field should be included.
 
     .. seealso::
-        :class:`TypeABC`
+        :class:`BaseType`
 
     """
 
@@ -76,12 +76,12 @@ class Nested(TypeABC):
         """:class:`Nested`
 
         :param name: name of this `Nested` type
-        :param mapped: a :class:`kim.mapping.MappingABC` or Mapped
+        :param mapped: a :class:`kim.mapping.BaseMapping` or Mapped
                    Serializer instance
         :param role: :class:`kim.roles.RolesABC` role
 
         .. seealso::
-            :class:`TypeABC`
+            :class:`BaseType`
         """
 
         self._mapping = None
@@ -103,21 +103,20 @@ class Nested(TypeABC):
         """Setter for mapping property
 
         the :param:`mapped` arg must be a valid
-        :class:`kim.mapping.MappingABC` or Mapped Serializer instance.
+        :class:`kim.mapping.BaseMapping` or Mapped Serializer instance.
 
         :raises: TypeError
         """
 
         #TODO sort out the cicular imports
-        from .serializers import Serializer
-        from .mapping import MappingABC
+        from .mapping import BaseMapping
 
         try:
             self._mapping = mapped.__mapping__
         except AttributeError:
             self._mapping = mapped
 
-        if not isinstance(mapped, MappingABC):
+        if not isinstance(mapped, BaseMapping):
             raise TypeError('Nested() must be called with a '
                             'mapping or a mapped serializer instance')
 
@@ -127,7 +126,7 @@ class Nested(TypeABC):
         If a `role` has been passed to the `Nested` type the mapping
         will be run through the role automatically
 
-        :returns: :class:`kim.mapping.MappingABC` type
+        :returns: :class:`kim.mapping.BaseMapping` type
 
         .. seealso::
             :class:`kim.roles.Role`

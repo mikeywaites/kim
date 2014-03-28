@@ -2,7 +2,7 @@ from inspect import isclass
 from collections import OrderedDict
 
 from .mapping import Mapping
-from .types import TypeABC, MappedType, MappedCollectionType
+from .types import BaseType, MappedType, MappedCollectionType
 
 
 class Field(object):
