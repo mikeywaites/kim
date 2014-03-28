@@ -52,14 +52,14 @@ class RoleTests(unittest.TestCase):
 
     def test_create_role_mapping_uses_mapping_type(self):
 
-        mapping = MyCustomMapping('users', types.String('name'))
+        mapping = MyCustomMapping('users', types.MappedType('name', types.String()))
         role = Role('public', 'name')
         mapped = create_mapping_from_role(role, mapping)
         self.assertIsInstance(mapped, MyCustomMapping)
 
     def test_create_mapping_from_role(self):
-        name = types.String('name')
-        email = types.String('email')
+        name =  types.MappedType('name', types.String())
+        email = types.MappedType('email', types.String())
 
         mapping = MyCustomMapping('users',
                                   name,

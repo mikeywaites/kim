@@ -27,7 +27,7 @@ class MappingTest(unittest.TestCase):
 
     def test_setting_mapping_fields(self):
 
-        name = types.String('name')
+        name = types.MappedType('name', types.String())
         not_a = NotAType('foo')
         mapping = Mapping('users', name, not_a)
         self.assertIn(name, mapping.fields)
@@ -41,15 +41,15 @@ class MappingTest(unittest.TestCase):
     def test_mapping_add_field(self):
 
         mapping = Mapping('users')
-        name = types.String('name')
+        name = types.MappedType('name', types.String())
 
         mapping.add_field(name)
         self.assertIn(name, mapping.fields)
 
     def test_iterate_over_mapping(self):
 
-        name = types.String('name')
-        email = types.String('email')
+        name = types.MappedType('name', types.String())
+        email = types.MappedType('email', types.String())
         mapping = Mapping('users', name, email)
 
         fields = [field for field in mapping]
