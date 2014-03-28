@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from .mapping import Mapping
-from .util import with_metaclass
 
 
 class Field(object):
@@ -54,17 +53,14 @@ class SerializerMetaclass(type):
         new_class.base_fields = declared_fields
         new_class.declared_fields = declared_fields
 
+        new_class.__mapping__ = mcs.build_mapping(name, new_class)
+
         return new_class
 
-
-class BaseSerializer(object):
-
-    def get_mapping(self):
-        """Return a :class:`kim.mapping.Mapping` built up from the
-        attributes on this Serializer."""
-
-        mapping = Mapping(self.__class__.__name__)
-        for name, field_wrapper in self.declared_fields.items():
+    @staticmethod
+    def build_mapping(name, new_class):
+        mapping = Mapping(name)
+        for name, field_wrapper in new_class.declared_fields.items():
             params = field_wrapper.params
             params.setdefault('source', name)
             field = field_wrapper.field_type(name=name, **params)
@@ -72,7 +68,11 @@ class BaseSerializer(object):
         return mapping
 
 
-class Serializer(with_metaclass(SerializerMetaclass, BaseSerializer)):
+class BaseSerializer(object):
+    pass
+
+
+class Serializer(BaseSerializer):
     """:class:`kim.serializer.Serializer` is a declarative wrapper for
     generating :class:`kim.mapping.Mapping`s. It also provides convinience
     methods for marshalling data against it's mapping.
@@ -96,3 +96,6 @@ class Serializer(with_metaclass(SerializerMetaclass, BaseSerializer)):
         :class:`kim.serializers.Field`
 
     """
+
+    __metaclass__ = SerializerMetaclass
+

@@ -98,7 +98,7 @@ class Nested(TypeABC):
 
         if isinstance(mapped, MappingABC):
             self._mapping = mapped
-        elif isinstance(mapped, Serializer):
+        elif issubclass(mapped, Serializer):
             self._mapping = mapped.__mapping__
         else:
             raise TypeError('Nested() must be called with a '
@@ -131,3 +131,17 @@ class Nested(TypeABC):
         #TODO sort out cicular dep's issue
         from .mapping import marshal
         return marshal(self.get_mapping(), source_value)
+
+
+class Collection(TypeABC):
+    def __init__(self, name, member_type=None, **member_type_params):
+        if not member_type:
+            raise TypeError('Collection() must be called with a member_type')
+        self.member_type = member_type
+        self.member_type_params = member_type_params
+        super(Collection, self).__init__(name)
+
+    def get_value(self, source_value):
+        member_type_instance = self.member_type('', **self.member_type_params)
+        return [member_type_instance.get_value(member) for member in source_value]
+
