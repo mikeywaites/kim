@@ -1,8 +1,9 @@
 from inspect import isclass
 from collections import OrderedDict
+import json
 
-from .mapping import Mapping
-from .types import BaseType, MappedType, MappedCollectionType
+from .mapping import Mapping, serialize
+from .types import MappedType, MappedCollectionType
 
 
 class Field(object):

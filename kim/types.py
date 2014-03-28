@@ -14,6 +14,7 @@ class String(BaseType):
 class Integer(BaseType):
     pass
 
+
 class MappedType(object):
     """Wrapper representing a :class:`kim.types.Type` in a
     :class:`kim.serializers.Serializer`.
@@ -116,7 +117,7 @@ class Nested(BaseType):
         except AttributeError:
             self._mapping = mapped
 
-        if not isinstance(mapped, BaseMapping):
+        if not isinstance(self._mapping, BaseMapping):
             raise TypeError('Nested() must be called with a '
                             'mapping or a mapped serializer instance')
 
@@ -145,8 +146,8 @@ class Nested(BaseType):
         """
 
         #TODO sort out cicular dep's issue
-        from .mapping import marshal
-        return marshal(self.get_mapping(), source_value)
+        from .mapping import serialize
+        return serialize(self.get_mapping(), source_value)
 
 
 class MappedCollectionType(MappedType):

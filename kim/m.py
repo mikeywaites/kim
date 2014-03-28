@@ -1,4 +1,4 @@
-from .mapping import Mapping, marshal
+from .mapping import Mapping, serialize
 
 
 class OtherInner(object):
@@ -33,7 +33,7 @@ the_mapping = Mapping(
     MappedCollectionType('nested_list', Nested(mapped=inner_mapping)),
 )
 
-print marshal(the_mapping, data)
+print serialize(the_mapping, data)
 
 
 from .serializers import Serializer, Field, Collection

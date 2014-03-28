@@ -86,7 +86,7 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
-def marshal(mapping, data):
+def serialize(mapping, data):
     output = {}
     for field in mapping.fields:
         source_value = getattr(data, field.source)
