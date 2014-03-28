@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from .exceptions import ValidationError
+from kim.exceptions import ValidationError
 
 
 class Validator(object):
@@ -43,7 +43,7 @@ class Validator(object):
         """
 
         if not self.validate(field_type, value):
-            raise ValidationError(self.get_error())
+            raise ValidationError(self.get_error(field_type, value))
 
     def get_error(self, field_type, value):
         """Return a humand readable error message for this validator
@@ -71,3 +71,18 @@ class TypedValidator(Validator):
             return False
 
         return True
+
+    def get_error(self, field_type, value):
+
+        return '{0} is not valid, must {1}'.format(value, self.type_)
+
+
+def validator(base=None, *args, **kwargs):
+
+    def wrap(f):
+        def wrapped_f(*args, **kwargs):
+            validator = base or Validator()
+            validator.validate = f
+            return validator.run(*args, **kwargs)
+        return wrapped_f
+    return wrap
