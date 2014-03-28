@@ -20,6 +20,8 @@ class Field(object):
     mapped_type_cls = MappedType
 
     def __init__(self, field_type, name=None, source=None):
+        if isclass(field_type):
+            field_type = field_type()
         self.field_type = field_type
         self.name = name
         self.source = source

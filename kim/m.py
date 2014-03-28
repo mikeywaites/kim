@@ -39,13 +39,13 @@ print marshal(the_mapping, data)
 from .serializers import Serializer, Field, Collection
 
 class NestedSerializer(Serializer):
-    d = Field(String())
+    d = Field(String)
 
 class ProperSerializer(Serializer):
-    a = Field(Integer())
-    b = Field(String(), name='hey', source='b')
+    a = Field(Integer)
+    b = Field(String, name='hey', source='b')
     c = Field(Nested(mapped=NestedSerializer))
-    l = Collection(Integer())
+    l = Collection(Integer)
     nested_list = Collection(Nested(mapped=NestedSerializer))
 
 print marshal(ProperSerializer.__mapping__, data)
