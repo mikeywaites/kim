@@ -6,3 +6,7 @@ class KimGoneWrong(Exception):
 
 class MappingError(KimGoneWrong):
     pass
+
+
+class ValidationError(KimGoneWrong):
+    pass
