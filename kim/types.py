@@ -112,11 +112,12 @@ class Nested(TypeABC):
         from .serializers import Serializer
         from .mapping import MappingABC
 
-        if isinstance(mapped, MappingABC):
-            self._mapping = mapped
-        elif issubclass(mapped, Serializer):
+        try:
             self._mapping = mapped.__mapping__
-        else:
+        except AttributeError:
+            self._mapping = mapped
+
+        if not isinstance(mapped, MappingABC):
             raise TypeError('Nested() must be called with a '
                             'mapping or a mapped serializer instance')
 

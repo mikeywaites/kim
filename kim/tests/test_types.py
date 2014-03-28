@@ -4,7 +4,7 @@
 import unittest
 
 from kim.roles import Role
-from kim.types import Nested, TypeABC, String, MappedType
+from kim.types import Nested, String, MappedType, MappedCollectionType, Integer
 from kim.mapping import Mapping
 
 
@@ -30,7 +30,11 @@ class MappedTypeTests(unittest.TestCase):
         mapped_type = MappedType('email', String(), source='email_address')
         self.assertEqual(mapped_type.get_value('foo'), 'foo')
 
-# collection tests
+
+class MappedCollectionTypeTests(unittest.TestCase):
+    def test_get_value(self):
+        mct = MappedCollectionType('l', Integer())
+        self.assertEqual(mct.get_value([1, 2, 3]), [1, 2, 3])
 
 
 class NestedTypeTests(unittest.TestCase):
