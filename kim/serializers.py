@@ -13,8 +13,7 @@ class Field(object):
         `source`
 
     .. seealso::
-
-    :class:`kim.serializers.Serializer`
+        :class:`kim.serializers.Serializer`
     """
 
     def __init__(self, field_type, **params):
@@ -23,7 +22,8 @@ class Field(object):
 
 
 class SerializerMetaclass(type):
- def __new__(mcs, name, bases, attrs):
+
+    def __new__(mcs, name, bases, attrs):
         # Adapted from Django forms -
         # https://github.com/django/django/blob/master/django/forms/forms.py#L73
 
@@ -37,7 +37,7 @@ class SerializerMetaclass(type):
         attrs['declared_fields'] = OrderedDict(current_fields)
 
         new_class = (super(SerializerMetaclass, mcs)
-            .__new__(mcs, name, bases, attrs))
+                     .__new__(mcs, name, bases, attrs))
 
         # Walk through the MRO.
         declared_fields = OrderedDict()
@@ -58,9 +58,11 @@ class SerializerMetaclass(type):
 
 
 class BaseSerializer(object):
+
     def get_mapping(self):
         """Return a :class:`kim.mapping.Mapping` built up from the
         attributes on this Serializer."""
+
         mapping = Mapping(self.__class__.__name__)
         for name, field_wrapper in self.declared_fields.items():
             params = field_wrapper.params
