@@ -1,6 +1,6 @@
 #from .exceptions import MappingError
 
-from .types import TypeABC
+from .types import TypeABC, MappedType
 
 
 class MappingABC(object):
@@ -70,7 +70,7 @@ class Mapping(MappingABC):
         """
 
         for item in items:
-            if isinstance(item, TypeABC):
+            if isinstance(item, MappedType):
                 self.add_field(item)
 
     def add_field(self, field):

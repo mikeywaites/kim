@@ -3,11 +3,6 @@
 
 
 class TypeABC(object):
-
-    def __init__(self, name=None, source=None):
-        self.name = name
-        self.source = source or name
-
     def get_value(self, source_value):
         return source_value
 
@@ -18,6 +13,27 @@ class String(TypeABC):
 
 class Integer(TypeABC):
     pass
+
+class MappedType(object):
+    """Wrapper representing a :class:`kim.types.Type` in a
+    :class:`kim.serializers.Serializer`.
+
+    :param field_type: The `Type` class to use for this `Field` (note this should
+        be a class, not an instantiated object)
+    :param **params: Extra params to be passed to the `Type` constructor, eg.
+        `source`
+
+    .. seealso::
+        :class:`kim.serializers.Serializer`
+    """
+
+    def __init__(self, name, base_type, source=None):
+        self.base_type = base_type
+        self.name = name
+        self.source = source or name
+
+    def get_value(self, source_value):
+        return self.base_type.get_value(source_value)
 
 
 class Nested(TypeABC):
@@ -56,7 +72,7 @@ class Nested(TypeABC):
 
     """
 
-    def __init__(self, name=None, mapped=None, role=None, *args, **kwargs):
+    def __init__(self, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
 
         :param name: name of this `Nested` type
@@ -133,15 +149,8 @@ class Nested(TypeABC):
         return marshal(self.get_mapping(), source_value)
 
 
-class Collection(TypeABC):
-    def __init__(self, name, member_type=None, **member_type_params):
-        if not member_type:
-            raise TypeError('Collection() must be called with a member_type')
-        self.member_type = member_type
-        self.member_type_params = member_type_params
-        super(Collection, self).__init__(name)
+class MappedCollectionType(MappedType):
 
     def get_value(self, source_value):
-        member_type_instance = self.member_type('', **self.member_type_params)
-        return [member_type_instance.get_value(member) for member in source_value]
+        return [self.base_type.get_value(member) for member in source_value]
 

@@ -2,25 +2,36 @@ from inspect import isclass
 from collections import OrderedDict
 
 from .mapping import Mapping
-from .types import TypeABC
+from .types import TypeABC, MappedType, MappedCollectionType
 
 
 class Field(object):
     """Wrapper representing a :class:`kim.types.Type` in a
     :class:`kim.serializers.Serializer`.
 
-    :param field_type: The `Type` class to use for this `Field` (note this should
-        be a class, not an instantiated object)
+    :param field_type: The `Type` to use for this `Field` (note this should
+        be an instantiated object)
     :param **params: Extra params to be passed to the `Type` constructor, eg.
         `source`
 
     .. seealso::
         :class:`kim.serializers.Serializer`
     """
+    mapped_type_cls = MappedType
 
-    def __init__(self, field_type, **params):
+    def __init__(self, field_type, name=None, source=None):
         self.field_type = field_type
-        self.params = params
+        self.name = name
+        self.source = source
+
+    def get_mapped_type(self, name):
+        name = self.name or name
+        source = self.source or name
+        return self.mapped_type_cls(name, self.field_type, source=source)
+
+
+class Collection(Field):
+    mapped_type_cls = MappedCollectionType
 
 
 class SerializerMetaclass(type):
@@ -63,23 +74,9 @@ class SerializerMetaclass(type):
     @staticmethod
     def build_mapping(name, new_class):
         mapping = Mapping(name)
+
         for name, field_wrapper in new_class.declared_fields.items():
-
-            field = field_wrapper.field_type
-
-            #Check field to see if has been instantiated..
-            if isclass(field):
-                field = field(name)
-
-            if not isinstance(field, TypeABC):
-                raise TypeError('field must beof type TypeABC()')
-
-            if not field.name:
-                field.name = name
-            if not field.source:
-                field.source = name
-
-            mapping.add_field(field)
+            mapping.add_field(field_wrapper.get_mapped_type(name))
 
         return mapping
 

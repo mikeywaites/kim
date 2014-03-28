@@ -18,34 +18,34 @@ class TheData(object):
     nested_list = [InnerData(), InnerData()]
 
 
-from .types import String, Integer, Nested, Collection
+from .types import String, Integer, Nested, MappedCollectionType, MappedType
 
 data = TheData()
 
-# inner_inner_mapping = Mapping('inner_2', String('e'))
-# inner_mapping = Mapping('inner_mapping', String('d'), Nested('nested_two', mapped=inner_inner_mapping))
-# the_mapping = Mapping(
-#     'the_mapping',
-#     String('a'),
-#     Integer('b'),
-#     Nested('c', mapped=inner_mapping),
-#     Collection('l', Integer),
-#     Collection('nested_list', Nested, mapped=inner_mapping),
-# )
+inner_inner_mapping = Mapping('inner_2', MappedType('e', String()))
+inner_mapping = Mapping('inner_mapping', MappedType('d', String()), MappedType('nested_two', Nested(mapped=inner_inner_mapping)))
+the_mapping = Mapping(
+    'the_mapping',
+    MappedType('a', String()),
+    MappedType('b', Integer()),
+    MappedType('c', Nested(mapped=inner_mapping)),
+    MappedCollectionType('l', Integer()),
+    MappedCollectionType('nested_list', Nested(mapped=inner_mapping)),
+)
 
-# print marshal(the_mapping, data)
+print marshal(the_mapping, data)
 
 
-from .serializers import Serializer, Field
+from .serializers import Serializer, Field, Collection
 
 class NestedSerializer(Serializer):
-    d = Field(String)
+    d = Field(String())
 
 class ProperSerializer(Serializer):
-    a = Field(Integer)
-    b = Field(String(name='hey', source='b'))
+    a = Field(Integer())
+    b = Field(String(), name='hey', source='b')
     c = Field(Nested(mapped=NestedSerializer))
-    #l = Field(Collection, member_type=Integer)
-    #nested_list = Field(Collection, member_type=Nested, mapped=NestedSerializer)
+    l = Collection(Integer())
+    nested_list = Collection(Nested(mapped=NestedSerializer))
 
 print marshal(ProperSerializer.__mapping__, data)
