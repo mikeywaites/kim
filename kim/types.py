@@ -4,7 +4,7 @@
 
 class TypeABC(object):
 
-    def __init__(self, name, source=None):
+    def __init__(self, name=None, source=None):
         self.name = name
         self.source = source or name
 
@@ -56,7 +56,7 @@ class Nested(TypeABC):
 
     """
 
-    def __init__(self, name, mapped=None, role=None, *args, **kwargs):
+    def __init__(self, name=None, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
 
         :param name: name of this `Nested` type
@@ -72,7 +72,7 @@ class Nested(TypeABC):
         self.mapping = mapped
         self.role = role
 
-        super(Nested, self).__init__(name, *args, **kwargs)
+        super(Nested, self).__init__(*args, **kwargs)
 
     @property
     def mapping(self):

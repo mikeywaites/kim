@@ -43,9 +43,9 @@ class NestedSerializer(Serializer):
 
 class ProperSerializer(Serializer):
     a = Field(Integer)
-    b = Field(String)
-    c = Field(Nested, mapped=NestedSerializer)
-    l = Field(Collection, member_type=Integer)
-    nested_list = Field(Collection, member_type=Nested, mapped=NestedSerializer)
+    b = Field(String(name='hey', source='b'))
+    c = Field(Nested(mapped=NestedSerializer))
+    #l = Field(Collection, member_type=Integer)
+    #nested_list = Field(Collection, member_type=Nested, mapped=NestedSerializer)
 
 print marshal(ProperSerializer.__mapping__, data)

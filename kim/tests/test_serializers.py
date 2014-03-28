@@ -13,7 +13,7 @@ class RoleTests(unittest.TestCase):
             a = Field(String)
             b = Field(Integer, source='c')
 
-        mapping = ASerializer().get_mapping()
+        mapping = ASerializer().__mapping__
 
         self.assertEqual(len(mapping.fields), 2)
 
@@ -35,7 +35,7 @@ class RoleTests(unittest.TestCase):
         class ASubclassedSerializer(ABaseSerializer):
             d = Field(String)
 
-        mapping = ASubclassedSerializer().get_mapping()
+        mapping = ASubclassedSerializer().__mapping__
 
         self.assertEqual(len(mapping.fields), 3)
 
@@ -63,7 +63,7 @@ class RoleTests(unittest.TestCase):
             b = Field(Integer, source='e')
             d = Field(String)
 
-        mapping = ASubclassedSerializer().get_mapping()
+        mapping = ASubclassedSerializer().__mapping__
 
         self.assertEqual(len(mapping.fields), 3)
 

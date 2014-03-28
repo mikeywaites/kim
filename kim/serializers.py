@@ -1,5 +1,8 @@
+from inspect import isclass
 from collections import OrderedDict
+
 from .mapping import Mapping
+from .types import TypeABC
 
 
 class Field(object):
@@ -61,10 +64,23 @@ class SerializerMetaclass(type):
     def build_mapping(name, new_class):
         mapping = Mapping(name)
         for name, field_wrapper in new_class.declared_fields.items():
-            params = field_wrapper.params
-            params.setdefault('source', name)
-            field = field_wrapper.field_type(name=name, **params)
+
+            field = field_wrapper.field_type
+
+            #Check field to see if has been instantiated..
+            if isclass(field):
+                field = field(name)
+
+            if not isinstance(field, TypeABC):
+                raise TypeError('field must beof type TypeABC()')
+
+            if not field.name:
+                field.name = name
+            if not field.source:
+                field.source = name
+
             mapping.add_field(field)
+
         return mapping
 
 
@@ -98,4 +114,3 @@ class Serializer(BaseSerializer):
     """
 
     __metaclass__ = SerializerMetaclass
-
