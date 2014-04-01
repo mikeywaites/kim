@@ -75,3 +75,14 @@ class TypedValidator(Validator):
     def get_error(self, field_type, value):
 
         return '{0} is not valid, must {1}'.format(value, self.type_)
+
+
+def validator(base=None, *args, **kwargs):
+
+    def wrap(f):
+        def wrapped_f(*args, **kwargs):
+            validator = base or Validator()
+            validator.validate = f
+            return validator.run(*args, **kwargs)
+        return wrapped_f
+    return wrap
