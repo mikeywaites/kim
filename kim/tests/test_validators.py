@@ -3,8 +3,8 @@
 
 import unittest
 
-from kim.validators import Validator, validator
-from kim.types import String
+from kim.validators import Validator, ValidationError
+from kim.types import String, MappedType
 
 
 class MyValidator(Validator):
@@ -19,16 +19,12 @@ class MyValidator(Validator):
 
 class ValidatorTests(unittest.TestCase):
 
-    def test_validator_decorator(self):
+    def test_validator_must_implement_validate_method(self):
 
-        @validator()
-        def my_validator(field_type, value):
+        class MyValidator(Validator):
 
-            if not value == "bar":
-                return False
+            pass
 
-            return True
-
-        v = my_validator()
-        import ipdb; ipdb.set_trace()
-        v.run(String('foo'), 'baz')
+        v = MyValidator()
+        with self.assertRaises(NotImplementedError):
+            v.run(MappedType('foo', String()), 'foo')

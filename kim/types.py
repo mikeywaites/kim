@@ -1,40 +1,71 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from .exceptions import ValidationError
+
 
 class BaseType(object):
+
+    default = None
+
+    error_message = 'An error ocurred validating this field'
+
+    def get_error_message(self, source_value):
+        """Return a valiation error message for this Type
+
+        :returns: an error message explaining the error that occured
+        """
+        return unicode(self.error_message)
+
     def get_value(self, source_value):
         return source_value
 
+    def validate(self, source_value):
+        """Validate the `source_value` is of a valid type. If `source_value`
+        is invalid a :class:`kim.exceptions.ValidationError` should be raised
 
-class String(BaseType):
-    pass
+        :param source_value: the value being validated.
+
+        e.g::
+            def validate(self, source_value):
+                if not isinstance(source_value, str):
+                    raise ValidationError("Invalid type")
+
+        :raises: :class:`kim.exceptions.ValidationError`
+        :returns: None
+        """
+        pass
+
+
+class TypedType(BaseType):
+
+    type_ = None
+
+    error_message = 'This field was of an incorrect type'
+
+    def validate(self, source_value):
+        """validates that source_value is of a given type
+
+        .. seealso::
+            :meth:`kim.types.BaseType.validate`
+
+        :raises: :class:`kim.exceptions.ValidationError`, TypeError
+        :returns: None
+        """
+        if not isinstance(source_value, self.type_):
+            raise ValidationError(self.get_error_message(source_value))
+
+
+class String(TypedType):
+
+    type_ = basestring
+
+    default = ''
 
 
 class Integer(BaseType):
-    pass
 
-
-class MappedType(object):
-    """Wrapper representing a :class:`kim.types.Type` in a
-    :class:`kim.serializers.Serializer`.
-
-    :param field_type: The `Type` class to use for this `Field` (note this should
-        be a class, not an instantiated object)
-    :param **params: Extra params to be passed to the `Type` constructor, eg.
-        `source`
-
-    .. seealso::
-        :class:`kim.serializers.Serializer`
-    """
-
-    def __init__(self, name, base_type, source=None):
-        self.base_type = base_type
-        self.name = name
-        self.source = source or name
-
-    def get_value(self, source_value):
-        return self.base_type.get_value(source_value)
+    default = int
 
 
 class Nested(BaseType):
@@ -150,8 +181,40 @@ class Nested(BaseType):
         return serialize(self.get_mapping(), source_value)
 
 
+class MappedType(object):
+    """Wrapper representing a :class:`kim.types.Type` in a
+    :class:`kim.serializers.Serializer`.
+
+    :param field_type: The `Type` class to use for this `Field` (note this should
+        be a class, not an instantiated object)
+    :param **params: Extra params to be passed to the `Type` constructor, eg.
+        `source`
+
+    .. seealso::
+        :class:`kim.serializers.Serializer`
+    """
+
+    def __init__(self, name, base_type, source=None, required=True, default=None):
+        self.base_type = base_type
+        self.name = name
+        self.source = source or name
+        self.required = required
+        self.default = base_type.default or default
+
+    def get_value(self, source_value):
+        return self.base_type.get_value(source_value)
+
+    def validate(self, source_value):
+        """Call validate on `base_type`.
+
+        """
+        if self.required and not source_value:
+            raise ValidationError("This is a required field")
+
+        return self.base_type.validate(source_value)
+
+
 class MappedCollectionType(MappedType):
 
     def get_value(self, source_value):
         return [self.base_type.get_value(member) for member in source_value]
-

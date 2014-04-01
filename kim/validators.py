@@ -75,27 +75,3 @@ class TypedValidator(Validator):
     def get_error(self, field_type, value):
 
         return '{0} is not valid, must {1}'.format(value, self.type_)
-
-
-def validator(base=None, *args, **kwargs):
-    """:func:`validator` is designed for use as a decortor that will allow
-    you to create :class:`Validator` types from functions
-
-    e.g::
-        @validator()
-        def my_validator(field_type, value):
-            if not value == "foo"
-                return False
-
-            return True
-
-    :return: new `Validator` instance
-    """
-
-    def wrap(f):
-        def wrapped_f(*args, **kwargs):
-            validator = base or Validator()
-            validator.validate = f
-            return validator
-        return wrapped_f
-    return wrap
