@@ -71,8 +71,7 @@ class TypedType(BaseType):
         :returns: None
         """
 
-        if (not source_value is None
-                and not isinstance(source_value, self.type_)):
+        if not isinstance(source_value, self.type_):
 
             raise ValidationError(self.get_error_message(source_value))
 
@@ -218,7 +217,7 @@ class Nested(BaseType):
         return serialize(self.get_mapping(), source_value)
 
 
-class TypeMapper(object):
+class BaseTypeMapper(object):
     """A `TypeMapper` is a Wrapper around kim `Types` used in `Mapping`
     structures.
 
@@ -275,14 +274,31 @@ class TypeMapper(object):
         """Call :meth:`validate` on `base_type`.
 
         """
-        if (self.required and not source_value or
-                not self.allow_none and source_value is None):
+        if self.required and not source_value:
             raise ValidationError("This is a required field")
+
+        elif self.allow_none and source_value is None:
+            return True
+
+        else:
+            return self.validate_type(source_value)
+
+
+class TypeMapper(BaseTypeMapper):
+
+    def validate_type(self, source_value):
+        """Call :meth:`validate` on `base_type`.
+
+        """
 
         return self.base_type.validate(source_value)
 
 
-class CollectionTypeMapper(TypeMapper):
+class CollectionTypeMapper(BaseTypeMapper):
+
+    def __init__(self, *args, **kwargs):
+        super(CollectionTypeMapper, self).__init__(*args, **kwargs)
+        self.default = list()
 
     def get_value(self, source_value):
 
@@ -292,11 +308,9 @@ class CollectionTypeMapper(TypeMapper):
 
         return [self.base_type.from_value(member) for member in source_value]
 
-    def validate(self, source_value):
+    def validate_type(self, source_value):
         """Call :meth:`validate` on `base_type`.
 
         """
-        if self.required and not source_value:
-            raise ValidationError("This is a required field")
 
         return [self.base_type.validate(mem) for mem in source_value]
