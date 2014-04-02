@@ -6,8 +6,8 @@ import unittest
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
-from kim.types import (Nested, String, MappedType,
-                       MappedCollectionType, Integer,
+from kim.types import (Nested, String, TypeMapper,
+                       CollectionTypeMapper, Integer,
                        BaseType, TypedType)
 
 
@@ -86,37 +86,37 @@ class IntegerTypeTests(unittest.TestCase):
         my_type.validate(1)
 
 
-class MappedTypeTests(unittest.TestCase):
+class TypeMapperTests(unittest.TestCase):
 
     def test_type_name_correctly_set(self):
 
-        mapped_type = MappedType('email', String())
+        mapped_type = TypeMapper('email', String())
         self.assertEqual(mapped_type.name, 'email')
 
     def test_source_set_from_type_name_when_not_specified(self):
 
-        mapped_type = MappedType('email', String())
+        mapped_type = TypeMapper('email', String())
         self.assertEqual(mapped_type.source, 'email')
 
     def test_set_custom_source_param(self):
 
-        mapped_type = MappedType('email', String(), source='email_address')
+        mapped_type = TypeMapper('email', String(), source='email_address')
         self.assertEqual(mapped_type.source, 'email_address')
 
     def test_get_value(self):
 
-        mapped_type = MappedType('email', String(), source='email_address')
+        mapped_type = TypeMapper('email', String(), source='email_address')
         self.assertEqual(mapped_type.get_value('foo'), 'foo')
 
     def test_from_value(self):
 
-        mapped_type = MappedType('email', String(), source='email_address')
+        mapped_type = TypeMapper('email', String(), source='email_address')
         self.assertEqual(mapped_type.from_value('foo'), 'foo')
 
 
-class MappedCollectionTypeTests(unittest.TestCase):
+class CollectionTypeMapperTests(unittest.TestCase):
     def test_get_value(self):
-        mct = MappedCollectionType('l', Integer())
+        mct = CollectionTypeMapper('l', Integer())
         self.assertEqual(mct.get_value([1, 2, 3]), [1, 2, 3])
 
 
@@ -157,7 +157,7 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_get_mapping_with_role_set(self):
 
-        name, email = MappedType('email', String()), MappedType('name', String())
+        name, email = TypeMapper('email', String()), TypeMapper('name', String())
 
         role = Role('foo', 'name')
         mapping = Mapping('users', name, email)
@@ -173,7 +173,7 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name, email = MappedType('email', String()), MappedType('name', String())
+        name, email = TypeMapper('email', String()), TypeMapper('name', String())
         mapping = Mapping('users', name, email)
 
         nested = Nested(mapped=mapping)

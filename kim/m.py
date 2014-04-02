@@ -18,19 +18,19 @@ class TheData(object):
     nested_list = [InnerData(), InnerData()]
 
 
-from .types import String, Integer, Nested, MappedCollectionType, MappedType
+from .types import String, Integer, Nested, CollectionTypeMapper, TypeMapper
 
 data = TheData()
 
-inner_inner_mapping = Mapping('inner_2', MappedType('e', String()))
-inner_mapping = Mapping('inner_mapping', MappedType('d', String()), MappedType('nested_two', Nested(mapped=inner_inner_mapping)))
+inner_inner_mapping = Mapping('inner_2', TypeMapper('e', String()))
+inner_mapping = Mapping('inner_mapping', TypeMapper('d', String()), TypeMapper('nested_two', Nested(mapped=inner_inner_mapping)))
 the_mapping = Mapping(
     'the_mapping',
-    MappedType('a', String()),
-    MappedType('b', Integer()),
-    MappedType('c', Nested(mapped=inner_mapping)),
-    MappedCollectionType('l', Integer()),
-    MappedCollectionType('nested_list', Nested(mapped=inner_mapping)),
+    TypeMapper('a', String()),
+    TypeMapper('b', Integer()),
+    TypeMapper('c', Nested(mapped=inner_mapping)),
+    CollectionTypeMapper('l', Integer()),
+    CollectionTypeMapper('nested_list', Nested(mapped=inner_mapping)),
 )
 
 #print serialize(the_mapping, data)

@@ -4,7 +4,7 @@
 import unittest
 
 from kim.serializers import Field, Serializer
-from kim.types import String, Integer, MappedType
+from kim.types import String, Integer, TypeMapper
 
 
 class SerializerTests(unittest.TestCase):
@@ -18,13 +18,13 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 2)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, MappedType))
+        self.assertTrue(isinstance(first_field, TypeMapper))
         self.assertTrue(isinstance(first_field.base_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, MappedType))
+        self.assertTrue(isinstance(second_field, TypeMapper))
         self.assertTrue(isinstance(second_field.base_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
@@ -42,19 +42,19 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 3)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, MappedType))
+        self.assertTrue(isinstance(first_field, TypeMapper))
         self.assertTrue(isinstance(first_field.base_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, MappedType))
+        self.assertTrue(isinstance(second_field, TypeMapper))
         self.assertTrue(isinstance(second_field.base_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
 
         third_field = mapping.fields[2]
-        self.assertTrue(isinstance(third_field, MappedType))
+        self.assertTrue(isinstance(third_field, TypeMapper))
         self.assertTrue(isinstance(third_field.base_type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
@@ -73,19 +73,19 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 3)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, MappedType))
+        self.assertTrue(isinstance(first_field, TypeMapper))
         self.assertTrue(isinstance(first_field.base_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, MappedType))
+        self.assertTrue(isinstance(second_field, TypeMapper))
         self.assertTrue(isinstance(second_field.base_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'e')
 
         third_field = mapping.fields[2]
-        self.assertTrue(isinstance(third_field, MappedType))
+        self.assertTrue(isinstance(third_field, TypeMapper))
         self.assertTrue(isinstance(third_field.base_type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')

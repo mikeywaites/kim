@@ -1,6 +1,6 @@
 #from .exceptions import MappingError
 
-from .types import BaseType, MappedType
+from .types import BaseType, TypeMapper
 from .exceptions import ValidationError
 
 
@@ -71,7 +71,7 @@ class Mapping(BaseMapping):
         """
 
         for item in items:
-            if isinstance(item, MappedType):
+            if isinstance(item, TypeMapper):
                 self.add_field(item)
 
     def add_field(self, field):

@@ -218,12 +218,12 @@ class Nested(BaseType):
         return serialize(self.get_mapping(), source_value)
 
 
-class MappedType(object):
-    """A `MappedType` is a Wrapper around kim `Types` used in `Mapping`
+class TypeMapper(object):
+    """A `TypeMapper` is a Wrapper around kim `Types` used in `Mapping`
     structures.
 
     e.g:
-        mapping = Mapping(MappedType('email', String))
+        mapping = Mapping(TypeMapper('email', String))
 
         The example above would map a :class:`kim.types.String`
         type to a field called 'email'.
@@ -234,9 +234,9 @@ class MappedType(object):
 
     :param source: specify attr used in marshaling and serialization
 
-    :param default: for a non required `MappedType` allow a default value
+    :param default: for a non required `TypeMapper` allow a default value
 
-    :param required: Specify wether this `MappedType` value is required
+    :param required: Specify wether this `TypeMapper` value is required
 
     .. seealso::
         :class:`kim.types.BaseType`
@@ -282,7 +282,7 @@ class MappedType(object):
         return self.base_type.validate(source_value)
 
 
-class MappedCollectionType(MappedType):
+class CollectionTypeMapper(TypeMapper):
 
     def get_value(self, source_value):
 
