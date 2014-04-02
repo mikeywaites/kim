@@ -18,6 +18,24 @@ class BaseType(object):
         return unicode(self.error_message)
 
     def get_value(self, source_value):
+        """:meth:`get_value` called during marshaling of data.
+
+        This method provides a hook for types to perform additonal operations
+        on the `source_value` being marshalled.
+
+        :returns: `source_value`
+        """
+        return source_value
+
+    def from_value(self, source_value):
+        """:meth:`from_value` called during serialization of data.
+
+        This method provides a hook for types to perform additonal operations
+        on the `source_value` being serialized.
+
+        :returns: `source_value`
+        """
+
         return source_value
 
     def validate(self, source_value):
@@ -202,10 +220,22 @@ class MappedType(object):
         self.default = base_type.default or default
 
     def get_value(self, source_value):
+        """Call the :meth:`get_value` method of `base_type`.
+
+        :returns: value returned from :meth:`get_value`
+        """
         return self.base_type.get_value(source_value)
 
+    def from_value(self, source_value):
+        """Call the :meth:`from_value` method of `base_type`.
+
+        :returns: value returned from :meth:`from_value`
+        """
+
+        return self.base_type.from_value(source_value)
+
     def validate(self, source_value):
-        """Call validate on `base_type`.
+        """Call :meth:`validate` on `base_type`.
 
         """
         if self.required and not source_value:
@@ -217,4 +247,18 @@ class MappedType(object):
 class MappedCollectionType(MappedType):
 
     def get_value(self, source_value):
+
         return [self.base_type.get_value(member) for member in source_value]
+
+    def from_value(self, source_value):
+
+        return [self.base_type.from_value(member) for member in source_value]
+
+    def validate(self, source_value):
+        """Call :meth:`validate` on `base_type`.
+
+        """
+        if self.required and not source_value:
+            raise ValidationError("This is a required field")
+
+        return [self.base_type.validate(mem) for mem in source_value]

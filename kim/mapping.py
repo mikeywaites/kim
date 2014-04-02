@@ -103,8 +103,9 @@ def mapping_iterator(mapping, data):
     """iterate over a `mapping` validating `data` for each mapped
     type defined in a `mapping`
 
-    Assuming a field validate, mapping_iterator will yield the field and
-    the value for the field pulled from `data`
+    Assuming a field validates, mapping_iterator will yield the field and
+    the value for the field pulled from `data` otherwise the errors dict
+    will be populated with the field name and error message.
 
     :raises: ValidationError
     """
@@ -119,19 +120,21 @@ def mapping_iterator(mapping, data):
             errors.setdefault(field.source, [])
             errors[field.source].append(e.message)
 
-        if field.source not in errors:
-            yield field, value
+        if field.source not in errors and not value:
+            value = field.default
+
+        yield field, value
 
     if errors:
         raise ValidationError(errors)
 
 
 def marshal(mapping, data):
-    """`marshall` data to an expected output for a
+    """`marshal` data to an expected output for a
     `mapping`
 
     :param mapping: :class:`kim.mapping.Mapping`
-    :param data: `dict` or collection of dicts to marshall to a `mapping`
+    :param data: `dict` or collection of dicts to marshal to a `mapping`
 
     :raises: TypeError
     :rtype: dict
@@ -147,7 +150,11 @@ def marshal(mapping, data):
 
 
 def serialize(mapping, data):
+    """Serialize data to an expected input for a `mapping`
+
+    """
     output = {}
+
     for field, value in mapping_iterator(mapping, data):
 
         output[field.name] = field.from_value(value)
