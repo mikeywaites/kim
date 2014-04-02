@@ -54,3 +54,13 @@ pprint(result)
 result['b'] = result['hey']
 print "===================="
 pprint(marshal(ProperSerializer.__mapping__, result))
+
+print "===================="
+
+result = ProperSerializer(data=data).serialize()
+pprint(result)
+print "===================="
+
+result['b'] = result['hey']
+result = ProperSerializer(input=result).marshal()
+pprint(result)

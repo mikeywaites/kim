@@ -2,7 +2,7 @@ from inspect import isclass
 from collections import OrderedDict
 import json
 
-from .mapping import Mapping, serialize
+from .mapping import Mapping, serialize, marshal
 from .types import TypeMapper, CollectionTypeMapper
 
 
@@ -110,11 +110,15 @@ class Serializer(BaseSerializer):
 
     __metaclass__ = SerializerMetaclass
 
-    def __init__(self, source_data=None):
-        self.source_data = source_data
+    def __init__(self, data=None, input=None):
+        self.source_data = data
+        self.input = input
 
     def serialize(self):
         return serialize(self.__mapping__, self.source_data)
 
     def json(self):
         return json.dumps(self.serialize())
+
+    def marshal(self):
+        return marshal(self.__mapping__, self.input)
