@@ -42,7 +42,7 @@ class NestedSerializer(Serializer):
     d = Field(String)
 
 class ProperSerializer(Serializer):
-    a = Field(String)
+    a = Field(Integer)
     b = Field(String, name='hey', source='b')
     c = Field(Nested(mapped=NestedSerializer))
     l = Collection(Integer)

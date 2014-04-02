@@ -87,18 +87,6 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
-def is_valid_dict(data):
-    """Returns a boolean indicating wether `data` is a valid
-    marshable type
-
-    :param data: object being checked for `dict` properties
-
-    :rtype: boolean
-    :returns: True or False
-    """
-    return isinstance(data, dict)
-
-
 def get_field_data(field, data):
     """Attempt to find the value for a `field` from `data`.
 
