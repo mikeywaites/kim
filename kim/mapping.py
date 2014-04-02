@@ -136,7 +136,7 @@ def marshal(mapping, data):
     :param mapping: :class:`kim.mapping.Mapping`
     :param data: `dict` or collection of dicts to marshal to a `mapping`
 
-    :raises: TypeError
+    :raises: TypeError, ValidationError
     :rtype: dict
     :returns: serializable object mapped from `mapping`
     """

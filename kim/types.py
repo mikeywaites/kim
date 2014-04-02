@@ -50,9 +50,9 @@ class BaseType(object):
                     raise ValidationError("Invalid type")
 
         :raises: :class:`kim.exceptions.ValidationError`
-        :returns: None
+        :returns: True
         """
-        pass
+        return True
 
 
 class TypedType(BaseType):
