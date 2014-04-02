@@ -290,7 +290,6 @@ class TypeMapper(BaseTypeMapper):
         """Call :meth:`validate` on `base_type`.
 
         """
-
         return self.base_type.validate(source_value)
 
 
