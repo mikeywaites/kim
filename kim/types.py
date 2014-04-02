@@ -191,11 +191,23 @@ class Nested(BaseType):
         return self.mapping
 
     def get_value(self, source_value):
-        """marshall the `mapping` for this nested type
+        """marshal the `mapping` for this nested type
 
-        :param source_value: data to marshall this `Nested` type to
+        :param source_value: data to marshal this `Nested` type to
 
         :returns: marshalled mapping
+        """
+
+        #TODO sort out cicular dep's issue
+        from .mapping import marshal
+        return marshal(self.get_mapping(), source_value)
+
+    def from_value(self, source_value):
+        """serialize `source_value` for this NestedType's mapping.
+
+        :param source_value: data to serialize this `Nested` type to
+
+        :returns: serialized mapping
         """
 
         #TODO sort out cicular dep's issue
@@ -204,19 +216,35 @@ class Nested(BaseType):
 
 
 class MappedType(object):
-    """Wrapper representing a :class:`kim.types.Type` in a
-    :class:`kim.serializers.Serializer`.
+    """A `MappedType` is a Wrapper around kim `Types` used in `Mapping`
+    structures.
 
-    :param field_type: The `Type` class to use for this `Field` (note this should
-        be a class, not an instantiated object)
-    :param **params: Extra params to be passed to the `Type` constructor, eg.
-        `source`
+    e.g:
+        mapping = Mapping(MappedType('email', String))
+
+        The example above would map a :class:`kim.types.String`
+        type to a field called 'email'.
+
+    :param name: The name of the field to marshal to.
+
+    :param base_type: The `Type` class or a `Type` instance
+
+    :param source: specify attr used in marshaling and serialization
+
+    :param default: for a non required `MappedType` allow a default value
+
+    :param required: Specify wether this `MappedType` value is required
 
     .. seealso::
+        :class:`kim.types.BaseType`
         :class:`kim.serializers.Serializer`
     """
 
-    def __init__(self, name, base_type, source=None, required=True, default=None):
+    def __init__(self, name, base_type,
+                 source=None,
+                 required=True,
+                 default=None):
+
         self.base_type = base_type
         self.name = name
         self.source = source or name
