@@ -49,6 +49,8 @@ class ProperSerializer(Serializer):
     nested_list = Collection(Nested(mapped=NestedSerializer))
 
 from pprint import pprint
-pprint(serialize(ProperSerializer.__mapping__, data))
+result = serialize(ProperSerializer.__mapping__, data)
+pprint(result)
+result['b'] = result['hey']
 print "===================="
-pprint(marshal(ProperSerializer.__mapping__, data))
+pprint(marshal(ProperSerializer.__mapping__, result))

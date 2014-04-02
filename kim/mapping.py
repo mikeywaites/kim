@@ -95,8 +95,10 @@ def get_field_data(field, data):
 
     :returns: the value for `field` from `data`
     """
-
-    return getattr(data, field.source, None)
+    if isinstance(data, dict):
+        return data.get(field.source)
+    else:
+        return getattr(data, field.source, None)
 
 
 def mapping_iterator(mapping, data):

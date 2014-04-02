@@ -109,3 +109,12 @@ class Serializer(BaseSerializer):
     """
 
     __metaclass__ = SerializerMetaclass
+
+    def __init__(self, source_data=None):
+        self.source_data = source_data
+
+    def serialize(self):
+        return serialize(self.__mapping__, self.source_data)
+
+    def json(self):
+        return json.dumps(self.serialize())

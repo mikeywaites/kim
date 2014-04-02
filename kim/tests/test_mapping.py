@@ -99,6 +99,15 @@ class MappingIteratorTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
+    def test_field_value_yielded_from_dict_when_valid(self):
+
+        data = {'name': 'foo', 'id': 1}
+
+        exp = [(self.name, 'foo'), (self.id, 1)]
+        result = [(f, v) for f, v in mapping_iterator(self.mapping, data)]
+
+        self.assertEqual(exp, result)
+
     def test_non_required_mapped_type_uses_default_value(self):
 
         name = types.TypeMapper('name', types.String(),
