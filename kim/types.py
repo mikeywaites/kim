@@ -70,10 +70,13 @@ class TypedType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
-        if source_value and not isinstance(source_value, self.type_):
+
+        if (not source_value is None
+                and not isinstance(source_value, self.type_)):
+
             raise ValidationError(self.get_error_message(source_value))
 
-        return True
+        return super(TypedType, self).validate(source_value)
 
 
 class String(TypedType):
@@ -243,12 +246,14 @@ class MappedType(object):
     def __init__(self, name, base_type,
                  source=None,
                  required=True,
+                 allow_none=True,
                  default=None):
 
         self.base_type = base_type
         self.name = name
         self.source = source or name
         self.required = required
+        self.allow_none = allow_none
         self.default = base_type.default or default
 
     def get_value(self, source_value):
@@ -270,7 +275,8 @@ class MappedType(object):
         """Call :meth:`validate` on `base_type`.
 
         """
-        if self.required and not source_value:
+        if (self.required and not source_value or
+                not self.allow_none and source_value is None):
             raise ValidationError("This is a required field")
 
         return self.base_type.validate(source_value)
