@@ -83,7 +83,9 @@ class String(TypedType):
     default = ''
 
 
-class Integer(BaseType):
+class Integer(TypedType):
+
+    type_ = int
 
     default = int
 
