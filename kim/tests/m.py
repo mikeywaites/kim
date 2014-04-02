@@ -1,4 +1,4 @@
-from .mapping import Mapping, serialize, marshal
+from ..mapping import Mapping, serialize, marshal
 
 
 class OtherInner(object):
@@ -18,7 +18,7 @@ class TheData(object):
     nested_list = [InnerData(), InnerData()]
 
 
-from .types import String, Integer, Nested, CollectionTypeMapper, TypeMapper
+from ..types import String, Integer, Nested, CollectionTypeMapper, TypeMapper
 
 data = TheData()
 
@@ -36,7 +36,7 @@ the_mapping = Mapping(
 #print serialize(the_mapping, data)
 
 
-from .serializers import Serializer, Field, Collection
+from ..serializers import Serializer, Field, Collection
 
 class NestedSerializer(Serializer):
     d = Field(String)
