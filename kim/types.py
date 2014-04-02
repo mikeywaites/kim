@@ -1,40 +1,96 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from .exceptions import ValidationError
+
 
 class BaseType(object):
+
+    default = None
+
+    error_message = 'An error ocurred validating this field'
+
+    def get_error_message(self, source_value):
+        """Return a valiation error message for this Type
+
+        :returns: an error message explaining the error that occured
+        """
+        return unicode(self.error_message)
+
     def get_value(self, source_value):
+        """:meth:`get_value` called during marshaling of data.
+
+        This method provides a hook for types to perform additonal operations
+        on the `source_value` being marshalled.
+
+        :returns: `source_value`
+        """
         return source_value
 
+    def from_value(self, source_value):
+        """:meth:`from_value` called during serialization of data.
 
-class String(BaseType):
-    pass
+        This method provides a hook for types to perform additonal operations
+        on the `source_value` being serialized.
+
+        :returns: `source_value`
+        """
+
+        return source_value
+
+    def validate(self, source_value):
+        """Validate the `source_value` is of a valid type. If `source_value`
+        is invalid a :class:`kim.exceptions.ValidationError` should be raised
+
+        :param source_value: the value being validated.
+
+        e.g::
+            def validate(self, source_value):
+                if not isinstance(source_value, str):
+                    raise ValidationError("Invalid type")
+
+        :raises: :class:`kim.exceptions.ValidationError`
+        :returns: True
+        """
+        return True
 
 
-class Integer(BaseType):
-    pass
+class TypedType(BaseType):
+
+    type_ = None
+
+    error_message = 'This field was of an incorrect type'
+
+    def validate(self, source_value):
+        """validates that source_value is of a given type
+
+        .. seealso::
+            :meth:`kim.types.BaseType.validate`
+
+        :raises: :class:`kim.exceptions.ValidationError`, TypeError
+        :returns: None
+        """
+
+        if (not source_value is None
+                and not isinstance(source_value, self.type_)):
+
+            raise ValidationError(self.get_error_message(source_value))
+
+        return super(TypedType, self).validate(source_value)
 
 
-class MappedType(object):
-    """Wrapper representing a :class:`kim.types.Type` in a
-    :class:`kim.serializers.Serializer`.
+class String(TypedType):
 
-    :param field_type: The `Type` class to use for this `Field` (note this should
-        be a class, not an instantiated object)
-    :param **params: Extra params to be passed to the `Type` constructor, eg.
-        `source`
+    type_ = basestring
 
-    .. seealso::
-        :class:`kim.serializers.Serializer`
-    """
+    default = ''
 
-    def __init__(self, name, base_type, source=None):
-        self.base_type = base_type
-        self.name = name
-        self.source = source or name
 
-    def get_value(self, source_value):
-        return self.base_type.get_value(source_value)
+class Integer(TypedType):
+
+    type_ = int
+
+    default = int
 
 
 class Nested(BaseType):
@@ -138,11 +194,23 @@ class Nested(BaseType):
         return self.mapping
 
     def get_value(self, source_value):
-        """marshall the `mapping` for this nested type
+        """marshal the `mapping` for this nested type
 
-        :param source_value: data to marshall this `Nested` type to
+        :param source_value: data to marshal this `Nested` type to
 
         :returns: marshalled mapping
+        """
+
+        #TODO sort out cicular dep's issue
+        from .mapping import marshal
+        return marshal(self.get_mapping(), source_value)
+
+    def from_value(self, source_value):
+        """serialize `source_value` for this NestedType's mapping.
+
+        :param source_value: data to serialize this `Nested` type to
+
+        :returns: serialized mapping
         """
 
         #TODO sort out cicular dep's issue
@@ -150,8 +218,85 @@ class Nested(BaseType):
         return serialize(self.get_mapping(), source_value)
 
 
+class MappedType(object):
+    """A `MappedType` is a Wrapper around kim `Types` used in `Mapping`
+    structures.
+
+    e.g:
+        mapping = Mapping(MappedType('email', String))
+
+        The example above would map a :class:`kim.types.String`
+        type to a field called 'email'.
+
+    :param name: The name of the field to marshal to.
+
+    :param base_type: The `Type` class or a `Type` instance
+
+    :param source: specify attr used in marshaling and serialization
+
+    :param default: for a non required `MappedType` allow a default value
+
+    :param required: Specify wether this `MappedType` value is required
+
+    .. seealso::
+        :class:`kim.types.BaseType`
+        :class:`kim.serializers.Serializer`
+    """
+
+    def __init__(self, name, base_type,
+                 source=None,
+                 required=True,
+                 allow_none=True,
+                 default=None):
+
+        self.base_type = base_type
+        self.name = name
+        self.source = source or name
+        self.required = required
+        self.allow_none = allow_none
+        self.default = base_type.default or default
+
+    def get_value(self, source_value):
+        """Call the :meth:`get_value` method of `base_type`.
+
+        :returns: value returned from :meth:`get_value`
+        """
+        return self.base_type.get_value(source_value)
+
+    def from_value(self, source_value):
+        """Call the :meth:`from_value` method of `base_type`.
+
+        :returns: value returned from :meth:`from_value`
+        """
+
+        return self.base_type.from_value(source_value)
+
+    def validate(self, source_value):
+        """Call :meth:`validate` on `base_type`.
+
+        """
+        if (self.required and not source_value or
+                not self.allow_none and source_value is None):
+            raise ValidationError("This is a required field")
+
+        return self.base_type.validate(source_value)
+
+
 class MappedCollectionType(MappedType):
 
     def get_value(self, source_value):
+
         return [self.base_type.get_value(member) for member in source_value]
 
+    def from_value(self, source_value):
+
+        return [self.base_type.from_value(member) for member in source_value]
+
+    def validate(self, source_value):
+        """Call :meth:`validate` on `base_type`.
+
+        """
+        if self.required and not source_value:
+            raise ValidationError("This is a required field")
+
+        return [self.base_type.validate(mem) for mem in source_value]
