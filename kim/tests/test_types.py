@@ -4,8 +4,86 @@
 import unittest
 
 from kim.roles import Role
-from kim.types import Nested, String, MappedType, MappedCollectionType, Integer
 from kim.mapping import Mapping
+from kim.exceptions import ValidationError
+from kim.types import (Nested, String, MappedType,
+                       MappedCollectionType, Integer,
+                       BaseType, TypedType)
+
+
+class BaseTypeTests(unittest.TestCase):
+
+    def test_get_value(self):
+
+        my_type = BaseType()
+        self.assertEqual(my_type.get_value('foo'), 'foo')
+
+    def test_from_value(self):
+
+        my_type = BaseType()
+        self.assertEqual(my_type.from_value('foo'), 'foo')
+
+    def test_validate(self):
+
+        my_type = BaseType()
+        self.assertTrue(my_type.validate('foo'), True)
+
+
+class TypedTypeTests(unittest.TestCase):
+
+    def test_validate_allows_none(self):
+
+        class MyType(TypedType):
+
+            type_ = list
+
+        my_type = MyType()
+        self.assertTrue(my_type.validate(None))
+
+    def test_validate_requires_valid_type_when_not_is_none(self):
+        class MyType(TypedType):
+
+            type_ = list
+
+        my_type = MyType()
+        with self.assertRaises(ValidationError):
+            self.assertTrue(my_type.validate(''))
+
+    def test_validate(self):
+
+        class MyType(TypedType):
+
+            type_ = list
+
+        self.assertTrue(MyType().validate([]))
+
+
+class StringTypeTests(unittest.TestCase):
+
+    def test_validate_requires_valid_string_type(self):
+
+        my_type = String()
+        with self.assertRaises(ValidationError):
+            my_type.validate(0)
+
+    def test_validate_string_type(self):
+
+        my_type = String()
+        my_type.validate(u'foo')
+
+
+class IntegerTypeTests(unittest.TestCase):
+
+    def test_validate_requires_valid_string_type(self):
+
+        my_type = Integer()
+        with self.assertRaises(ValidationError):
+            my_type.validate('')
+
+    def test_validate_string_type(self):
+
+        my_type = Integer()
+        my_type.validate(1)
 
 
 class MappedTypeTests(unittest.TestCase):
@@ -29,6 +107,11 @@ class MappedTypeTests(unittest.TestCase):
 
         mapped_type = MappedType('email', String(), source='email_address')
         self.assertEqual(mapped_type.get_value('foo'), 'foo')
+
+    def test_from_value(self):
+
+        mapped_type = MappedType('email', String(), source='email_address')
+        self.assertEqual(mapped_type.from_value('foo'), 'foo')
 
 
 class MappedCollectionTypeTests(unittest.TestCase):
