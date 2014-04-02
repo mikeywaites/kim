@@ -4,7 +4,8 @@
 import unittest
 
 from kim import types
-from kim.mapping import Mapping
+from kim.exceptions import ValidationError
+from kim.mapping import Mapping, mapping_iterator
 
 
 class NotAType(object):
@@ -55,3 +56,55 @@ class MappingTest(unittest.TestCase):
         fields = [field for field in mapping]
         self.assertEqual(fields[0], name)
         self.assertEqual(fields[1], email)
+
+
+class MappingIteratorTests(unittest.TestCase):
+
+    def setUp(self):
+
+        name = types.MappedType('name', types.String())
+        id = types.MappedType('id', types.Integer())
+        self.name = name
+        self.id = id
+        self.mapping = Mapping('users', name, id)
+
+    def test_iterator_with_invalid_data(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
+
+        with self.assertRaises(ValidationError):
+            [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+
+    def test_field_appears_in_errors_when_invalid(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
+
+        try:
+            [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+        except ValidationError as e:
+            self.assertIn('id', e.message)
+
+    def test_field_value_yielded_when_valid(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 1
+
+        exp = [(self.name, 'foo'), (self.id, 1)]
+        result = [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+
+        self.assertEqual(exp, result)
+
+    def test_non_required_mapped_type_uses_default_value(self):
+
+        name = types.MappedType('name', types.String(),
+                                required=False, default='baz')
+        mapping = Mapping('user', name)
+        result = [(f, v) for f, v in mapping_iterator(mapping, {})]
+        exp = [(name, 'baz')]
+
+        self.assertEqual(result, exp)
