@@ -177,7 +177,7 @@ def serialize(mapping, data):
         if field.source not in errors and not value:
             value = field.default
 
-        output[field.name] = field.marshal_value(value)
+        output[field.name] = field.serialize_value(value)
 
     if errors:
         raise ValidationError(errors)
