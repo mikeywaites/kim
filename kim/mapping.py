@@ -1,5 +1,7 @@
 #from .exceptions import MappingError
 
+from collections import defaultdict
+
 from .types import BaseTypeMapper
 from .exceptions import ValidationError
 
@@ -105,14 +107,13 @@ def mapping_iterator(mapping, data):
     :raises: ValidationError
     """
 
-    errors = dict()
+    errors = defaultdict(list)
 
     for field in mapping.fields:
         value = get_field_data(field, data)
         try:
             field.validate(value)
         except ValidationError as e:
-            errors.setdefault(field.source, [])
             errors[field.source].append(e.message)
 
         if field.source not in errors and not value:
