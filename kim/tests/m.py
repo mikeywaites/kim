@@ -37,8 +37,10 @@ the_mapping = Mapping(
 
 from ..serializers import Serializer, Field, Collection
 
+
 class NestedSerializer(Serializer):
     d = Field(String)
+
 
 class ProperSerializer(Serializer):
     a = Field(Integer)
