@@ -22,10 +22,9 @@ from ..types import String, Integer, Nested, CollectionTypeMapper, TypeMapper
 
 data = TheData()
 
-inner_inner_mapping = Mapping('inner_2', TypeMapper('e', String()))
-inner_mapping = Mapping('inner_mapping', TypeMapper('d', String()), TypeMapper('nested_two', Nested(mapped=inner_inner_mapping)))
+inner_inner_mapping = Mapping(TypeMapper('e', String()))
+inner_mapping = Mapping(TypeMapper('d', String()), TypeMapper('nested_two', Nested(mapped=inner_inner_mapping)))
 the_mapping = Mapping(
-    'the_mapping',
     TypeMapper('a', String()),
     TypeMapper('b', Integer()),
     TypeMapper('c', Nested(mapped=inner_mapping)),

@@ -16,32 +16,22 @@ class NotAType(object):
 
 class MappingTest(unittest.TestCase):
 
-    def test_name_arg_required_for_mapping(self):
-
-        with self.assertRaises(TypeError):
-            Mapping()
-
-    def test_name_correctly_set_for_mapping(self):
-
-        mapping = Mapping('users')
-        self.assertEqual(mapping.name, 'users')
-
     def test_setting_mapping_fields(self):
 
         name = types.TypeMapper('name', types.String())
         not_a = NotAType('foo')
-        mapping = Mapping('users', name, not_a)
+        mapping = Mapping(name, not_a)
         self.assertIn(name, mapping.fields)
         self.assertNotIn(not_a, mapping.fields)
 
     def test_set_custom_mapping_colleciton(self):
 
-        mapping = Mapping('users', collection=set())
+        mapping = Mapping(collection=set())
         self.assertIsInstance(mapping.fields, set)
 
     def test_mapping_add_field(self):
 
-        mapping = Mapping('users')
+        mapping = Mapping()
         name = types.TypeMapper('name', types.String())
 
         mapping.add_field(name)
@@ -51,7 +41,7 @@ class MappingTest(unittest.TestCase):
 
         name = types.TypeMapper('name', types.String())
         email = types.TypeMapper('email', types.String())
-        mapping = Mapping('users', name, email)
+        mapping = Mapping(name, email)
 
         fields = [field for field in mapping]
         self.assertEqual(fields[0], name)
@@ -66,7 +56,7 @@ class MappingIteratorTests(unittest.TestCase):
         id = types.TypeMapper('id', types.Integer())
         self.name = name
         self.id = id
-        self.mapping = Mapping('users', name, id)
+        self.mapping = Mapping(name, id)
 
     def test_iterator_with_invalid_data(self):
 
@@ -112,7 +102,7 @@ class MappingIteratorTests(unittest.TestCase):
 
         name = types.TypeMapper('name', types.String(),
                                 required=False, default='baz')
-        mapping = Mapping('user', name)
+        mapping = Mapping(name)
         result = [(f, v) for f, v in mapping_iterator(mapping, {})]
         exp = [(name, 'baz')]
 

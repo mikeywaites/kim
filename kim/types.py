@@ -102,9 +102,8 @@ class Nested(BaseType):
     use cases.
 
     e.g::
-        food = Mapping('food', String('type'), String('name'))
-        user_mapping = Mapping('users',
-                               String('name'),
+        food = Mapping(String('type'), String('name'))
+        user_mapping = Mapping(String('name'),
                                Nested('foods', food_mapping)
 
     a Nested type may also specify a role to allow flexibly changing the
@@ -115,9 +114,8 @@ class Nested(BaseType):
 
     e.g::
         public_food_role = Role('public', 'name')
-        food = Mapping('food', String('type'), String('name'))
-        user_mapping = Mapping('users',
-                               String('name'),
+        food = Mapping(String('type'), String('name'))
+        user_mapping = Mapping(String('name'),
                                Nested('foods', food_mapping,
                                       role=public_food_role)
 

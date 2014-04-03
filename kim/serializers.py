@@ -71,7 +71,7 @@ class SerializerMetaclass(type):
 
     @staticmethod
     def build_mapping(name, new_class):
-        mapping = Mapping(name)
+        mapping = Mapping()
 
         for name, field_wrapper in new_class.declared_fields.items():
             mapping.add_field(field_wrapper.get_mapped_type(name))

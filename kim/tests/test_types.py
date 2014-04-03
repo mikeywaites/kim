@@ -181,20 +181,20 @@ class NestedTypeTests(unittest.TestCase):
     def test_nested_type_sets_role(self):
 
         role = Role('foo')
-        mapping = Mapping('users')
+        mapping = Mapping()
         nested = Nested(mapped=mapping, role=role)
         self.assertEqual(nested.role, role)
 
     def test_nested_type_with_core_mapping_type(self):
 
-        mapping = Mapping('users')
+        mapping = Mapping()
         nested = Nested(mapped=mapping)
         self.assertEqual(nested.mapping, mapping)
 
     def test_set_new_mapping_on_nested_type(self):
 
-        mapping = Mapping('users')
-        new_mapping = Mapping('people')
+        mapping = Mapping()
+        new_mapping = Mapping()
 
         nested = Nested(mapped=mapping)
         nested.mapping = new_mapping
@@ -202,7 +202,7 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_get_mapping_with_no_role(self):
 
-        mapping = Mapping('users')
+        mapping = Mapping()
         nested = Nested(mapped=mapping)
         self.assertEqual(nested.get_mapping(), mapping)
 
@@ -211,7 +211,7 @@ class NestedTypeTests(unittest.TestCase):
         name, email = TypeMapper('email', String()), TypeMapper('name', String())
 
         role = Role('foo', 'name')
-        mapping = Mapping('users', name, email)
+        mapping = Mapping(name, email)
         nested = Nested(mapped=mapping, role=role)
 
         mapped = nested.get_mapping()
@@ -225,7 +225,7 @@ class NestedTypeTests(unittest.TestCase):
             email = 'bar@bar.com'
 
         name, email = TypeMapper('email', String()), TypeMapper('name', String())
-        mapping = Mapping('users', name, email)
+        mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
         output = nested.get_value(Inner())
@@ -243,7 +243,7 @@ class NestedTypeTests(unittest.TestCase):
             email = 'bar@bar.com'
 
         name, email = TypeMapper('email', String()), TypeMapper('name', String())
-        mapping = Mapping('users', name, email)
+        mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
         output = nested.from_value(Inner())
