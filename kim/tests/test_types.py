@@ -253,5 +253,29 @@ class NestedTypeTests(unittest.TestCase):
         }
         self.assertDictEqual(output, exp)
 
-    def test_nested_validation_validates_mapped_fields(self):
-        pass
+    def test_nested_validation_validates_mapped_fields_serialize(self):
+
+        name, email = TypeMapper('email', String(), 'email_source'), TypeMapper('name', String())
+        mapping = Mapping(name, email)
+
+        nested = Nested(mapped=mapping)
+
+        output = nested.validate_for_serialize({'name': 'foo', 'email_source': 'foo@bar.com'})
+        self.assertTrue(output)
+
+        run = lambda: nested.validate_for_serialize({'name': 123, 'email_source': 'foo@bar.com'})
+        self.assertRaises(ValidationError, run)
+
+    def test_nested_validation_validates_mapped_fields_marshal(self):
+
+        name, email = TypeMapper('email', String(), 'email_source'), TypeMapper('name', String())
+        mapping = Mapping(name, email)
+
+        nested = Nested(mapped=mapping)
+
+        output = nested.validate_for_marshal({'name': 'foo', 'email': 'foo@bar.com'})
+        self.assertTrue(output)
+
+        run = lambda: nested.validate_for_marshal({'name': 123, 'email': 'foo@bar.com'})
+        self.assertRaises(ValidationError, run)
+
