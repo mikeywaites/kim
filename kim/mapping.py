@@ -144,7 +144,7 @@ def marshal(mapping, data):
     for field in mapping.fields:
         value = get_attribute(data, field.name)
         try:
-            field.validate_to(value)
+            field.validate_for_marshal(value)
         except ValidationError as e:
             errors.setdefault(field.name, [])
             errors[field.name].append(e.message)
@@ -169,7 +169,7 @@ def serialize(mapping, data):
     for field in mapping.fields:
         value = get_attribute(data, field.source)
         try:
-            field.validate_from(value)
+            field.validate_for_serialize(value)
         except ValidationError as e:
             errors.setdefault(field.source, [])
             errors[field.source].append(e.message)

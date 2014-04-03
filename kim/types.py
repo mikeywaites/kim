@@ -55,10 +55,10 @@ class BaseType(object):
         """
         return True
 
-    def validate_to(self, source_value):
+    def validate_for_marshal(self, source_value):
         return self.validate(source_value)
 
-    def validate_from(self, source_value):
+    def validate_for_serialize(self, source_value):
         return self.validate(source_value)
 
 
@@ -221,7 +221,7 @@ class Nested(BaseType):
         from .mapping import serialize
         return serialize(self.get_mapping(), source_value)
 
-    def validate_to(self, source_value):
+    def validate_for_marshal(self, source_value):
         """iterates Nested mapping calling validate for each
         field in the mapping.  Errors from each field will be stored
         and finally raised in a collection of errors
@@ -236,16 +236,16 @@ class Nested(BaseType):
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
-                field.validate_to(value)
+                field.validate_for_marshal(value)
             except ValidationError as e:
                 errors[field.name].append(e.message)
 
         if errors:
             raise ValidationError(errors)
         else:
-            return super(Nested, self).validate_to(source_value)
+            return super(Nested, self).validate_for_marshal(source_value)
 
-    def validate_from(self, source_value):
+    def validate_for_serialize(self, source_value):
         """iterates Nested mapping calling validate for each
         field in the mapping.  Errors from each field will be stored
         and finally raised in a collection of errors
@@ -260,14 +260,14 @@ class Nested(BaseType):
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.source)
             try:
-                field.validate_from(value)
+                field.validate_for_serialize(value)
             except ValidationError as e:
                 errors[field.source].append(e.message)
 
         if errors:
             raise ValidationError(errors)
         else:
-            return super(Nested, self).validate_to(source_value)
+            return super(Nested, self).validate_for_marshal(source_value)
 
 
 class BaseTypeMapper(object):
@@ -336,10 +336,10 @@ class BaseTypeMapper(object):
         else:
             return self.validate_type(source_value)
 
-    def validate_to(self, source_value):
+    def validate_for_marshal(self, source_value):
         return self.validate(source_value)
 
-    def validate_from(self, source_value):
+    def validate_for_serialize(self, source_value):
         return self.validate(source_value)
 
 
