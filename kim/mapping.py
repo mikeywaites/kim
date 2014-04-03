@@ -80,7 +80,7 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
-def get_field_data(attr, data):
+def get_attribute(data, attr):
     """Attempt to find the value for a `field` from `data`.
 
     :param data: dict like object containing input data
@@ -111,7 +111,7 @@ def mapping_iterator(mapping, data, attr_name):
         attr = getattr(field, attr_name)
         value = get_field_data(attr, data)
         try:
-            field.validate(value)
+            field.validate(value, attr_name)
         except ValidationError as e:
             errors.setdefault(attr, [])
             errors[attr].append(e.message)
@@ -138,21 +138,47 @@ def marshal(mapping, data):
     """
 
     output = {}
-    for field, value in mapping_iterator(mapping, data, 'name'):
+    errors = dict()
+
+    for field in mapping.fields:
+        value = get_attribute(data, field.name)
+        try:
+            field.validate_to(value)
+        except ValidationError as e:
+            errors.setdefault(field.name, [])
+            errors[field.name].append(e.message)
+
+        if field.name not in errors and not value:
+            value = field.default
 
         output[field.source] = field.get_value(value)
 
-    return output
+    if errors:
+        raise ValidationError(errors)
 
+    return output
 
 def serialize(mapping, data):
     """Serialize data to an expected input for a `mapping`
 
     """
     output = {}
+    errors = dict()
 
-    for field, value in mapping_iterator(mapping, data, 'source'):
+    for field in mapping.fields:
+        value = get_attribute(data, field.source)
+        try:
+            field.validate_from(value)
+        except ValidationError as e:
+            errors.setdefault(field.source, [])
+            errors[field.source].append(e.message)
 
-        output[field.name] = field.from_value(value)
+        if field.source not in errors and not value:
+            value = field.default
+
+        output[field.name] = field.get_value(value)
+
+    if errors:
+        raise ValidationError(errors)
 
     return output

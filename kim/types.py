@@ -54,6 +54,12 @@ class BaseType(object):
         """
         return True
 
+    def validate_to(self, source_value):
+        return self.validate(source_value)
+
+    def validate_from(self, source_value):
+        return self.validate(source_value)
+
 
 class TypedType(BaseType):
 
@@ -214,7 +220,7 @@ class Nested(BaseType):
         from .mapping import serialize
         return serialize(self.get_mapping(), source_value)
 
-    def validate(self, source_value):
+    def validate_to(self, source_value):
         """iterates Nested mapping calling validate for each
         field in the mapping.  Errors from each field will be stored
         and finally raised in a collection of errors
@@ -223,12 +229,13 @@ class Nested(BaseType):
         :returns: True
         """
 
-        from .mapping import get_field_data
+        from .mapping import get_attribute
 
         errors = {}
         for field in self.mapping.fields:
+            value = get_attribute(source_value, field.name)
             try:
-                field.validate(get_field_data(field, source_value))
+                field.validate_to(value)
             except ValidationError as e:
                 errors.setdefault(field.name, [])
                 errors[field.name].append(e.message)
@@ -236,7 +243,32 @@ class Nested(BaseType):
         if errors:
             raise ValidationError(errors)
         else:
-            return super(Nested, self).validate(source_value)
+            return super(Nested, self).validate_to(source_value)
+
+    def validate_from(self, source_value):
+        """iterates Nested mapping calling validate for each
+        field in the mapping.  Errors from each field will be stored
+        and finally raised in a collection of errors
+
+        :raises: ValidationError
+        :returns: True
+        """
+
+        from .mapping import get_attribute
+
+        errors = {}
+        for field in self.mapping.fields:
+            value = get_attribute(source_value, field.source)
+            try:
+                field.validate_from(value)
+            except ValidationError as e:
+                errors.setdefault(field.source, [])
+                errors[field.source].append(e.message)
+
+        if errors:
+            raise ValidationError(errors)
+        else:
+            return super(Nested, self).validate_to(source_value)
 
 
 class BaseTypeMapper(object):
@@ -299,11 +331,17 @@ class BaseTypeMapper(object):
         if self.required and not source_value:
             raise ValidationError("This is a required field")
 
-        elif self.allow_none and source_value is None:
-            return True
+        elif not self.allow_none and source_value is None:
+            raise ValidationError("This field cannot be None")
 
         else:
             return self.validate_type(source_value)
+
+    def validate_to(self, source_value):
+        return self.validate(source_value)
+
+    def validate_from(self, source_value):
+        return self.validate(source_value)
 
 
 class TypeMapper(BaseTypeMapper):
