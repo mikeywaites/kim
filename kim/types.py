@@ -18,8 +18,8 @@ class BaseType(object):
         """
         return unicode(self.error_message)
 
-    def get_value(self, source_value):
-        """:meth:`get_value` called during marshaling of data.
+    def marshal_value(self, source_value):
+        """:meth:`marshal_value` called during marshaling of data.
 
         This method provides a hook for types to perform additonal operations
         on the `source_value` being marshalled.
@@ -28,8 +28,8 @@ class BaseType(object):
         """
         return source_value
 
-    def from_value(self, source_value):
-        """:meth:`from_value` called during serialization of data.
+    def serialize_value(self, source_value):
+        """:meth:`serialize_value` called during serialization of data.
 
         This method provides a hook for types to perform additonal operations
         on the `source_value` being serialized.
@@ -197,7 +197,7 @@ class Nested(BaseType):
 
         return self.mapping
 
-    def get_value(self, source_value):
+    def marshal_value(self, source_value):
         """marshal the `mapping` for this nested type
 
         :param source_value: data to marshal this `Nested` type to
@@ -209,7 +209,7 @@ class Nested(BaseType):
         from .mapping import marshal
         return marshal(self.get_mapping(), source_value)
 
-    def from_value(self, source_value):
+    def serialize_value(self, source_value):
         """serialize `source_value` for this NestedType's mapping.
 
         :param source_value: data to serialize this `Nested` type to
@@ -308,20 +308,20 @@ class BaseTypeMapper(object):
         self.allow_none = allow_none
         self.default = base_type.default or default
 
-    def get_value(self, source_value):
-        """Call the :meth:`get_value` method of `base_type`.
+    def marshal_value(self, source_value):
+        """Call the :meth:`marshal_value` method of `base_type`.
 
-        :returns: value returned from :meth:`get_value`
+        :returns: value returned from :meth:`marshal_value`
         """
-        return self.base_type.get_value(source_value)
+        return self.base_type.marshal_value(source_value)
 
-    def from_value(self, source_value):
-        """Call the :meth:`from_value` method of `base_type`.
+    def serialize_value(self, source_value):
+        """Call the :meth:`serialize_value` method of `base_type`.
 
-        :returns: value returned from :meth:`from_value`
+        :returns: value returned from :meth:`serialize_value`
         """
 
-        return self.base_type.from_value(source_value)
+        return self.base_type.serialize_value(source_value)
 
     def validate(self, source_value):
         """Call :meth:`validate` on `base_type`.
@@ -358,13 +358,13 @@ class CollectionTypeMapper(BaseTypeMapper):
         super(CollectionTypeMapper, self).__init__(*args, **kwargs)
         self.default = list()
 
-    def get_value(self, source_value):
+    def marshal_value(self, source_value):
 
-        return [self.base_type.get_value(member) for member in source_value]
+        return [self.base_type.marshal_value(member) for member in source_value]
 
-    def from_value(self, source_value):
+    def serialize_value(self, source_value):
 
-        return [self.base_type.from_value(member) for member in source_value]
+        return [self.base_type.serialize_value(member) for member in source_value]
 
     def validate_type(self, source_value):
         """Call :meth:`validate` on `base_type`.

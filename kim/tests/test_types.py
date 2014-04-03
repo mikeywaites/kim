@@ -13,15 +13,15 @@ from kim.types import (Nested, String, TypeMapper,
 
 class BaseTypeTests(unittest.TestCase):
 
-    def test_get_value(self):
+    def test_marshal_value(self):
 
         my_type = BaseType()
-        self.assertEqual(my_type.get_value('foo'), 'foo')
+        self.assertEqual(my_type.marshal_value('foo'), 'foo')
 
-    def test_from_value(self):
+    def test_serialize_value(self):
 
         my_type = BaseType()
-        self.assertEqual(my_type.from_value('foo'), 'foo')
+        self.assertEqual(my_type.serialize_value('foo'), 'foo')
 
     def test_validate(self):
 
@@ -94,15 +94,15 @@ class TypeMapperTests(unittest.TestCase):
         mapped_type = TypeMapper('email', String(), source='email_address')
         self.assertEqual(mapped_type.source, 'email_address')
 
-    def test_get_value(self):
+    def test_marshal_value(self):
 
         mapped_type = TypeMapper('email', String(), source='email_address')
-        self.assertEqual(mapped_type.get_value('foo'), 'foo')
+        self.assertEqual(mapped_type.marshal_value('foo'), 'foo')
 
-    def test_from_value(self):
+    def test_serialize_value(self):
 
         mapped_type = TypeMapper('email', String(), source='email_address')
-        self.assertEqual(mapped_type.from_value('foo'), 'foo')
+        self.assertEqual(mapped_type.serialize_value('foo'), 'foo')
 
     def test_validate_raises_error_when_required_and_value_null(self):
 
@@ -144,15 +144,15 @@ class TypeMapperTests(unittest.TestCase):
 
 class CollectionTypeMapperTests(unittest.TestCase):
 
-    def test_get_value(self):
+    def test_marshal_value(self):
 
         mct = CollectionTypeMapper('l', Integer())
-        self.assertEqual(mct.get_value([1, 2, 3]), [1, 2, 3])
+        self.assertEqual(mct.marshal_value([1, 2, 3]), [1, 2, 3])
 
-    def test_from_value(self):
+    def test_serialize_value(self):
 
         mct = CollectionTypeMapper('l', Integer())
-        self.assertEqual(mct.from_value([1, 2, 3]), [1, 2, 3])
+        self.assertEqual(mct.serialize_value([1, 2, 3]), [1, 2, 3])
 
     def test_validate_iterates_type(self):
 
@@ -217,7 +217,7 @@ class NestedTypeTests(unittest.TestCase):
         mapped = nested.get_mapping()
         self.assertNotEqual(mapped, mapping)
 
-    def test_get_value(self):
+    def test_marshal_value(self):
 
         class Inner(object):
 
@@ -228,14 +228,14 @@ class NestedTypeTests(unittest.TestCase):
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
-        output = nested.get_value(Inner())
+        output = nested.marshal_value(Inner())
         exp = {
             'name': 'foo',
             'email': 'bar@bar.com'
         }
         self.assertDictEqual(output, exp)
 
-    def test_from_value(self):
+    def test_serialize_value(self):
 
         class Inner(object):
 
@@ -246,7 +246,7 @@ class NestedTypeTests(unittest.TestCase):
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
-        output = nested.from_value(Inner())
+        output = nested.serialize_value(Inner())
         exp = {
             'name': 'foo',
             'email': 'bar@bar.com'

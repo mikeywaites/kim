@@ -152,7 +152,7 @@ def marshal(mapping, data):
         if field.name not in errors and not value:
             value = field.default
 
-        output[field.source] = field.get_value(value)
+        output[field.source] = field.marshal_value(value)
 
     if errors:
         raise ValidationError(errors)
@@ -177,7 +177,7 @@ def serialize(mapping, data):
         if field.source not in errors and not value:
             value = field.default
 
-        output[field.name] = field.get_value(value)
+        output[field.name] = field.marshal_value(value)
 
     if errors:
         raise ValidationError(errors)
