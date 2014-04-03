@@ -1,5 +1,7 @@
 #from .exceptions import MappingError
 
+from collections import defaultdict
+
 from .types import BaseTypeMapper
 from .exceptions import ValidationError
 
@@ -105,7 +107,7 @@ def mapping_iterator(mapping, data, attr_name):
     :raises: ValidationError
     """
 
-    errors = dict()
+    errors = defaultdict(list)
 
     for field in mapping.fields:
         attr = getattr(field, attr_name)
@@ -113,7 +115,6 @@ def mapping_iterator(mapping, data, attr_name):
         try:
             field.validate(value, attr_name)
         except ValidationError as e:
-            errors.setdefault(attr, [])
             errors[attr].append(e.message)
 
         if attr not in errors and not value:

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from collections import defaultdict
 from .exceptions import ValidationError
 
 
@@ -231,13 +232,12 @@ class Nested(BaseType):
 
         from .mapping import get_attribute
 
-        errors = {}
-        for field in self.mapping.fields:
+        errors = defaultdict(list)
+        for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
                 field.validate_to(value)
             except ValidationError as e:
-                errors.setdefault(field.name, [])
                 errors[field.name].append(e.message)
 
         if errors:
@@ -256,13 +256,12 @@ class Nested(BaseType):
 
         from .mapping import get_attribute
 
-        errors = {}
-        for field in self.mapping.fields:
+        errors = defaultdict(list)
+        for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.source)
             try:
                 field.validate_from(value)
             except ValidationError as e:
-                errors.setdefault(field.source, [])
                 errors[field.source].append(e.message)
 
         if errors:
