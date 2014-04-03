@@ -252,3 +252,6 @@ class NestedTypeTests(unittest.TestCase):
             'email': 'bar@bar.com'
         }
         self.assertDictEqual(output, exp)
+
+    def test_nested_validation_validates_mapped_fields(self):
+        pass

@@ -214,6 +214,30 @@ class Nested(BaseType):
         from .mapping import serialize
         return serialize(self.get_mapping(), source_value)
 
+    def validate(self, source_value):
+        """iterates Nested mapping calling validate for each
+        field in the mapping.  Errors from each field will be stored
+        and finally raised in a collection of errors
+
+        :raises: ValidationError
+        :returns: True
+        """
+
+        from .mapping import get_field_data
+
+        errors = {}
+        for field in self.mapping.fields:
+            try:
+                field.validate(get_field_data(field, source_value))
+            except ValidationError as e:
+                errors.setdefault(field.name, [])
+                errors[field.name].append(e.message)
+
+        if errors:
+            raise ValidationError(errors)
+        else:
+            return super(Nested, self).validate(source_value)
+
 
 class BaseTypeMapper(object):
     """A `TypeMapper` is a Wrapper around kim `Types` used in `Mapping`
