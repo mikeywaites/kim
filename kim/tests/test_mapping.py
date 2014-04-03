@@ -107,3 +107,15 @@ class MappingIteratorTests(unittest.TestCase):
         exp = [(name, 'baz')]
 
         self.assertEqual(result, exp)
+
+    def test_field_value_yielded_when_valid_different_field_attr(self):
+        name = types.TypeMapper('name', types.String(), source='different_name')
+        id = types.TypeMapper('id', types.Integer())
+        mapping = Mapping(name, id)
+
+        data = {'different_name': 'bar', 'id': 1}
+
+        exp = [(name, 'bar'), (id, 1)]
+        result = [(f, v) for f, v in mapping_iterator(mapping, data, 'source')]
+
+        self.assertEqual(exp, result)
