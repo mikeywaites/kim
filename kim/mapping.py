@@ -1,6 +1,6 @@
 #from .exceptions import MappingError
 
-from .types import BaseType, TypeMapper
+from .types import BaseTypeMapper
 from .exceptions import ValidationError
 
 
@@ -20,15 +20,12 @@ class Mapping(BaseMapping):
      e.g.::
 
         my_mapping = Mapping(
-            'my_mapping',
              String('name'),
              Integer('id'),
         )
 
     The first argument to the Mapping type is the name of this mapping,
     the following arguments may be any mixture of `Field` types.
-
-    :param name: The user defined name of this `mapping`
 
     :param fields: contains the `collection` of Field types provided
 
@@ -48,15 +45,11 @@ class Mapping(BaseMapping):
         """:class:`kim.mapping.Mapping` constructor.
 
         """
-        try:
-            mapping_name, args = args[0], args[1:]
-        except IndexError:
-            raise TypeError("Mapping() takes at least one argument")
+        mapped_types = args[0:]
 
-        self.name = mapping_name
         self.fields = kwargs.get('collection', list())
 
-        self._arg_loop(args)
+        self._arg_loop(mapped_types)
 
     def __iter__(self):
         return iter(self.fields)
@@ -71,7 +64,7 @@ class Mapping(BaseMapping):
         """
 
         for item in items:
-            if isinstance(item, TypeMapper):
+            if isinstance(item, BaseTypeMapper):
                 self.add_field(item)
 
     def add_field(self, field):

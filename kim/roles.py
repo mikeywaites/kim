@@ -98,7 +98,6 @@ def create_mapping_from_role(role, mapping):
     # TODO what other args, kwargs can a mapping have?
     MappingKlass = mapping.__class__
     return MappingKlass(
-        mapping.name,
         *fields
     )
 

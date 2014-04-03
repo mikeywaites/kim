@@ -71,8 +71,7 @@ class TypedType(BaseType):
         :returns: None
         """
 
-        if (not source_value is None
-                and not isinstance(source_value, self.type_)):
+        if not isinstance(source_value, self.type_):
 
             raise ValidationError(self.get_error_message(source_value))
 
@@ -103,9 +102,8 @@ class Nested(BaseType):
     use cases.
 
     e.g::
-        food = Mapping('food', String('type'), String('name'))
-        user_mapping = Mapping('users',
-                               String('name'),
+        food = Mapping(String('type'), String('name'))
+        user_mapping = Mapping(String('name'),
                                Nested('foods', food_mapping)
 
     a Nested type may also specify a role to allow flexibly changing the
@@ -116,9 +114,8 @@ class Nested(BaseType):
 
     e.g::
         public_food_role = Role('public', 'name')
-        food = Mapping('food', String('type'), String('name'))
-        user_mapping = Mapping('users',
-                               String('name'),
+        food = Mapping(String('type'), String('name'))
+        user_mapping = Mapping(String('name'),
                                Nested('foods', food_mapping,
                                       role=public_food_role)
 
@@ -217,8 +214,32 @@ class Nested(BaseType):
         from .mapping import serialize
         return serialize(self.get_mapping(), source_value)
 
+    def validate(self, source_value):
+        """iterates Nested mapping calling validate for each
+        field in the mapping.  Errors from each field will be stored
+        and finally raised in a collection of errors
 
-class TypeMapper(object):
+        :raises: ValidationError
+        :returns: True
+        """
+
+        from .mapping import get_field_data
+
+        errors = {}
+        for field in self.mapping.fields:
+            try:
+                field.validate(get_field_data(field, source_value))
+            except ValidationError as e:
+                errors.setdefault(field.name, [])
+                errors[field.name].append(e.message)
+
+        if errors:
+            raise ValidationError(errors)
+        else:
+            return super(Nested, self).validate(source_value)
+
+
+class BaseTypeMapper(object):
     """A `TypeMapper` is a Wrapper around kim `Types` used in `Mapping`
     structures.
 
@@ -275,14 +296,30 @@ class TypeMapper(object):
         """Call :meth:`validate` on `base_type`.
 
         """
-        if (self.required and not source_value or
-                not self.allow_none and source_value is None):
+        if self.required and not source_value:
             raise ValidationError("This is a required field")
 
+        elif self.allow_none and source_value is None:
+            return True
+
+        else:
+            return self.validate_type(source_value)
+
+
+class TypeMapper(BaseTypeMapper):
+
+    def validate_type(self, source_value):
+        """Call :meth:`validate` on `base_type`.
+
+        """
         return self.base_type.validate(source_value)
 
 
-class CollectionTypeMapper(TypeMapper):
+class CollectionTypeMapper(BaseTypeMapper):
+
+    def __init__(self, *args, **kwargs):
+        super(CollectionTypeMapper, self).__init__(*args, **kwargs)
+        self.default = list()
 
     def get_value(self, source_value):
 
@@ -292,11 +329,9 @@ class CollectionTypeMapper(TypeMapper):
 
         return [self.base_type.from_value(member) for member in source_value]
 
-    def validate(self, source_value):
+    def validate_type(self, source_value):
         """Call :meth:`validate` on `base_type`.
 
         """
-        if self.required and not source_value:
-            raise ValidationError("This is a required field")
 
         return [self.base_type.validate(mem) for mem in source_value]
