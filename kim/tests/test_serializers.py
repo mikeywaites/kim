@@ -89,3 +89,23 @@ class SerializerTests(unittest.TestCase):
         self.assertTrue(isinstance(third_field.base_type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
+
+    def test_serialize(self):
+        class ASerializer(Serializer):
+            a = Field(String())
+            b = Field(Integer, source='c')
+
+        s = ASerializer({'a': 'hello', 'c': 123})
+
+        result = s.serialize()
+        self.assertEqual(result, {'a': 'hello', 'b': 123})
+
+    def test_marshal(self):
+        class ASerializer(Serializer):
+            a = Field(String())
+            b = Field(Integer, source='c')
+
+        s = ASerializer(input={'a': 'hello', 'b': 123})
+
+        result = s.marshal()
+        self.assertEqual(result, {'a': 'hello', 'c': 123})

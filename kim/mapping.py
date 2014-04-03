@@ -80,7 +80,7 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
-def get_field_data(field, data):
+def get_field_data(attr, data):
     """Attempt to find the value for a `field` from `data`.
 
     :param data: dict like object containing input data
@@ -89,12 +89,12 @@ def get_field_data(field, data):
     :returns: the value for `field` from `data`
     """
     if isinstance(data, dict):
-        return data.get(field.source)
+        return data.get(attr)
     else:
-        return getattr(data, field.source, None)
+        return getattr(data, attr, None)
 
 
-def mapping_iterator(mapping, data):
+def mapping_iterator(mapping, data, attr_name):
     """iterate over a `mapping` validating `data` for each mapped
     type defined in a `mapping`
 
@@ -108,14 +108,15 @@ def mapping_iterator(mapping, data):
     errors = dict()
 
     for field in mapping.fields:
-        value = get_field_data(field, data)
+        attr = getattr(field, attr_name)
+        value = get_field_data(attr, data)
         try:
             field.validate(value)
         except ValidationError as e:
-            errors.setdefault(field.source, [])
-            errors[field.source].append(e.message)
+            errors.setdefault(attr, [])
+            errors[attr].append(e.message)
 
-        if field.source not in errors and not value:
+        if attr not in errors and not value:
             value = field.default
 
         yield field, value
@@ -137,9 +138,9 @@ def marshal(mapping, data):
     """
 
     output = {}
-    for field, value in mapping_iterator(mapping, data):
+    for field, value in mapping_iterator(mapping, data, 'name'):
 
-        output[field.name] = field.get_value(value)
+        output[field.source] = field.get_value(value)
 
     return output
 
@@ -150,7 +151,7 @@ def serialize(mapping, data):
     """
     output = {}
 
-    for field, value in mapping_iterator(mapping, data):
+    for field, value in mapping_iterator(mapping, data, 'source'):
 
         output[field.name] = field.from_value(value)
 

@@ -65,7 +65,7 @@ class MappingIteratorTests(unittest.TestCase):
             id = 'bar'
 
         with self.assertRaises(ValidationError):
-            [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+            [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
 
     def test_field_appears_in_errors_when_invalid(self):
 
@@ -74,7 +74,7 @@ class MappingIteratorTests(unittest.TestCase):
             id = 'bar'
 
         try:
-            [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+            [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
         except ValidationError as e:
             self.assertIn('id', e.message)
 
@@ -85,7 +85,7 @@ class MappingIteratorTests(unittest.TestCase):
             id = 1
 
         exp = [(self.name, 'foo'), (self.id, 1)]
-        result = [(f, v) for f, v in mapping_iterator(self.mapping, Data())]
+        result = [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
 
         self.assertEqual(exp, result)
 
@@ -94,7 +94,7 @@ class MappingIteratorTests(unittest.TestCase):
         data = {'name': 'foo', 'id': 1}
 
         exp = [(self.name, 'foo'), (self.id, 1)]
-        result = [(f, v) for f, v in mapping_iterator(self.mapping, data)]
+        result = [(f, v) for f, v in mapping_iterator(self.mapping, data, 'name')]
 
         self.assertEqual(exp, result)
 
@@ -103,7 +103,7 @@ class MappingIteratorTests(unittest.TestCase):
         name = types.TypeMapper('name', types.String(),
                                 required=False, default='baz')
         mapping = Mapping(name)
-        result = [(f, v) for f, v in mapping_iterator(mapping, {})]
+        result = [(f, v) for f, v in mapping_iterator(mapping, {}, 'name')]
         exp = [(name, 'baz')]
 
         self.assertEqual(result, exp)
