@@ -227,7 +227,7 @@ class Nested(BaseType):
         from .mapping import get_field_data
 
         errors = defaultdict(list)
-        for field in self.mapping.fields:
+        for field in self.get_mapping().fields:
             try:
                 field.validate(get_field_data(field, source_value))
             except ValidationError as e:
