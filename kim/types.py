@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from collections import defaultdict
 from .exceptions import ValidationError
 
 
@@ -225,12 +226,11 @@ class Nested(BaseType):
 
         from .mapping import get_field_data
 
-        errors = {}
+        errors = defaultdict(list)
         for field in self.mapping.fields:
             try:
                 field.validate(get_field_data(field, source_value))
             except ValidationError as e:
-                errors.setdefault(field.name, [])
                 errors[field.name].append(e.message)
 
         if errors:
