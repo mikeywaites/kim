@@ -74,8 +74,30 @@ class SerializerMetaclass(type):
         return mapping
 
 
+class SerializerOpts(object):
+
+    def __init__(self, meta):
+
+        self.roles = getattr(meta, 'roles', {})
+
+
 class BaseSerializer(object):
-    pass
+
+    class Meta:
+        """meta class for providing extra options for a serializer
+
+        Options::
+
+            Roles may be assigned to a serializer using the roles
+            meta option.  roles should be specified as a dict of
+            role name: Role() instance.
+
+            roles = {'public': whitelist('field_a', 'field_b')}
+
+            .. seealso::
+                :class:`kim.roles.Role`
+
+        """
 
 
 class Serializer(BaseSerializer):
