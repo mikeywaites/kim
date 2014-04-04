@@ -1,16 +1,16 @@
 import unittest
 
 from kim.serializers import Serializer, Field
-from kim import types
+from kim.types import String, Collection, Nested, Integer
 
 
 class BasicAcceptanceTests(unittest.TestCase):
     def test_collections_of_nested(self):
         class Inner(Serializer):
-            name = Field(types.String())
+            name = Field(String())
 
         class Outer(Serializer):
-            people = Field(types.Collection(types.Nested(mapped=Inner)))
+            people = Field(Collection(Nested(mapped=Inner)))
 
         data = {'people': [{'name': 'Jack'}, {'name': 'Mike'}]}
 
@@ -20,7 +20,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
     def test_collections_of_collections(self):
         class Outer(Serializer):
-            rooms = Field(types.Collection(types.Collection(types.Integer())))
+            rooms = Field(Collection(Collection(Integer())))
 
         data = {'rooms': [[1, 2, 3], [4, 5, 6]]}
 
