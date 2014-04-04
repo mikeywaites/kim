@@ -27,3 +27,30 @@ class BasicAcceptanceTests(unittest.TestCase):
         result = Outer(data).serialize()
 
         self.assertEquals(result, data)
+
+    def test_self_nesting(self):
+        class Inner(Serializer):
+            name = Field(String(), source='user_name')
+
+        class Outer(Serializer):
+            user = Field(Nested(Inner), source='__self__')
+
+        data = {'user_name': 'jack'}
+
+        result = Outer(data).serialize()
+
+        self.assertEquals(result, {'user': {'name': 'jack'}})
+
+    def test_self_nesting_marshal(self):
+        class Inner(Serializer):
+            name = Field(String(), source='user_name')
+
+        class Outer(Serializer):
+            user = Field(Nested(Inner), source='__self__')
+            status = Field(Integer())
+
+        data = {'user': {'name': 'jack'}, 'status': 200}
+
+        result = Outer(input=data).marshal()
+
+        self.assertEquals(result, {'user_name': 'jack', 'status': 200})

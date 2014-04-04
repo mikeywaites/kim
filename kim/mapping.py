@@ -90,7 +90,9 @@ def get_attribute(data, attr):
 
     :returns: the value for `field` from `data`
     """
-    if isinstance(data, dict):
+    if attr == '__self__':
+        return data
+    elif isinstance(data, dict):
         return data.get(attr)
     else:
         return getattr(data, attr, None)
@@ -121,7 +123,11 @@ def marshal(mapping, data):
         if field.name not in errors and not value:
             value = field.default
 
-        output[field.source] = field.marshal_value(value)
+        if field.source == '__self__':
+            output.update(field.marshal_value(value))
+        else:
+            output[field.source] = field.marshal_value(value)
+
 
     if errors:
         raise ValidationError(errors)
