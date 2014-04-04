@@ -191,13 +191,10 @@ class SerializerTests(unittest.TestCase):
 
         public = whitelist('public', 'email')
 
-        name = Field(String())
-        email = Field(String())
-
         class MySerializer(Serializer):
 
-            a = name
-            b = email
+            name = Field(String())
+            email = Field(String())
 
             class Meta:
 
@@ -207,5 +204,5 @@ class SerializerTests(unittest.TestCase):
         name_role = whitelist('name_role', 'name')
 
         mapped = serializer.get_mapping(role=name_role)
-        field1 = mapped.fields[0]
-        self.assertEqual(name.name, field1.name)
+        self.assertEqual(len(mapped.fields), 1)
+        self.assertEqual(mapped.fields[0].name, 'name')
