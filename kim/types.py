@@ -267,7 +267,7 @@ class Nested(BaseType):
         if errors:
             raise ValidationError(errors)
         else:
-            return super(Nested, self).validate_for_marshal(source_value)
+            return super(Nested, self).validate_for_serialize(source_value)
 
 
 class BaseTypeMapper(object):
