@@ -96,36 +96,6 @@ def get_attribute(data, attr):
         return getattr(data, attr, None)
 
 
-def mapping_iterator(mapping, data, attr_name):
-    """iterate over a `mapping` validating `data` for each mapped
-    type defined in a `mapping`
-
-    Assuming a field validates, mapping_iterator will yield the field and
-    the value for the field pulled from `data` otherwise the errors dict
-    will be populated with the field name and error message.
-
-    :raises: ValidationError
-    """
-
-    errors = defaultdict(list)
-
-    for field in mapping.fields:
-        attr = getattr(field, attr_name)
-        value = get_field_data(attr, data)
-        try:
-            field.validate(value, attr_name)
-        except ValidationError as e:
-            errors[attr].append(e.message)
-
-        if attr not in errors and not value:
-            value = field.default
-
-        yield field, value
-
-    if errors:
-        raise ValidationError(errors)
-
-
 def marshal(mapping, data):
     """`marshal` data to an expected output for a
     `mapping`
@@ -139,14 +109,13 @@ def marshal(mapping, data):
     """
 
     output = {}
-    errors = dict()
+    errors = defaultdict(list)
 
     for field in mapping.fields:
         value = get_attribute(data, field.name)
         try:
             field.validate_for_marshal(value)
         except ValidationError as e:
-            errors.setdefault(field.name, [])
             errors[field.name].append(e.message)
 
         if field.name not in errors and not value:
@@ -164,14 +133,13 @@ def serialize(mapping, data):
 
     """
     output = {}
-    errors = dict()
+    errors = defaultdict(list)
 
     for field in mapping.fields:
         value = get_attribute(data, field.source)
         try:
             field.validate_for_serialize(value)
         except ValidationError as e:
-            errors.setdefault(field.source, [])
             errors[field.source].append(e.message)
 
         if field.source not in errors and not value:
