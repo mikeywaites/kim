@@ -1,12 +1,16 @@
 
 
-class KimGoneWrong(Exception):
+class KimError(Exception):
     pass
 
 
-class MappingError(KimGoneWrong):
+class MappingError(KimError):
     pass
 
 
-class ValidationError(KimGoneWrong):
+class ValidationError(KimError):
+    pass
+
+
+class RoleNotFound(KimError):
     pass
