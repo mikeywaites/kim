@@ -137,10 +137,10 @@ def serialize(mapping, data):
 
     for field in mapping.fields:
         value = get_attribute(data, field.source)
-        try:
-            field.validate_for_serialize(value)
-        except ValidationError as e:
-            errors[field.source].append(e.message)
+        # try:
+        field.validate_for_serialize(value)
+        # except ValidationError as e:
+        #     errors[field.source].append(e.message)
 
         if field.source not in errors and not value:
             value = field.default

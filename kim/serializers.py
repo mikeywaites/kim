@@ -3,7 +3,7 @@ from collections import OrderedDict
 import json
 
 from .mapping import Mapping, serialize, marshal
-from .types import TypeMapper, CollectionTypeMapper
+from .types import TypeMapper
 
 
 class Field(object):
@@ -18,7 +18,6 @@ class Field(object):
     .. seealso::
         :class:`kim.serializers.Serializer`
     """
-    mapped_type_cls = TypeMapper
 
     def __init__(self, field_type, name=None, source=None):
         if isclass(field_type):
@@ -30,11 +29,7 @@ class Field(object):
     def get_mapped_type(self, name):
         name = self.name or name
         source = self.source or name
-        return self.mapped_type_cls(name, self.field_type, source=source)
-
-
-class Collection(Field):
-    mapped_type_cls = CollectionTypeMapper
+        return TypeMapper(name, self.field_type, source=source)
 
 
 class SerializerMetaclass(type):

@@ -7,7 +7,7 @@ from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, TypeMapper,
-                       CollectionTypeMapper, Integer,
+                       Collection, Integer,
                        BaseType, TypedType)
 
 
@@ -142,33 +142,23 @@ class TypeMapperTests(unittest.TestCase):
         self.assertEqual(mapped_type.allow_none, False)
 
 
-class CollectionTypeMapperTests(unittest.TestCase):
+class CollectionTypeTests(unittest.TestCase):
 
     def test_marshal_value(self):
 
-        mct = CollectionTypeMapper('l', Integer())
-        self.assertEqual(mct.marshal_value([1, 2, 3]), [1, 2, 3])
+        c = Collection(Integer())
+        self.assertEqual(c.marshal_value([1, 2, 3]), [1, 2, 3])
 
     def test_serialize_value(self):
 
-        mct = CollectionTypeMapper('l', Integer())
-        self.assertEqual(mct.serialize_value([1, 2, 3]), [1, 2, 3])
+        c = Collection(Integer())
+        self.assertEqual(c.serialize_value([1, 2, 3]), [1, 2, 3])
 
     def test_validate_iterates_type(self):
 
-        mct = CollectionTypeMapper('l', Integer())
+        c = Collection(Integer())
         with self.assertRaises(ValidationError):
-            mct.validate([1, '2', 3])
-
-    def test_required_collection_with_null_value(self):
-        mct = CollectionTypeMapper('l', Integer(), required=True)
-        with self.assertRaises(ValidationError):
-            mct.validate([])
-
-    def test_not_allow_none(self):
-        mct = CollectionTypeMapper('l', Integer(), allow_none=False)
-        with self.assertRaises(ValidationError):
-            mct.validate(None)
+            c.validate([1, '2', 3])
 
 
 class NestedTypeTests(unittest.TestCase):

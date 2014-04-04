@@ -18,24 +18,23 @@ class TheData(object):
     nested_list = [InnerData(), InnerData()]
 
 
-from ..types import String, Integer, Nested, CollectionTypeMapper, TypeMapper
+from ..types import String, Integer, Nested, TypeMapper, Collection
 
 data = TheData()
 
 inner_inner_mapping = Mapping(TypeMapper('e', String()))
 inner_mapping = Mapping(TypeMapper('d', String()), TypeMapper('nested_two', Nested(mapped=inner_inner_mapping)))
 the_mapping = Mapping(
-    TypeMapper('a', String()),
-    TypeMapper('b', Integer()),
+    TypeMapper('a', Integer()),
+    TypeMapper('b', String()),
     TypeMapper('c', Nested(mapped=inner_mapping)),
-    CollectionTypeMapper('l', Integer()),
-    CollectionTypeMapper('nested_list', Nested(mapped=inner_mapping)),
+    TypeMapper('l', Collection(Integer())),
+    TypeMapper('nested_list', Collection(Nested(mapped=inner_mapping))),
 )
+print serialize(the_mapping, data)
 
-#print serialize(the_mapping, data)
 
-
-from ..serializers import Serializer, Field, Collection
+from ..serializers import Serializer, Field
 
 
 class NestedSerializer(Serializer):
@@ -46,8 +45,8 @@ class ProperSerializer(Serializer):
     a = Field(Integer)
     b = Field(String, name='hey', source='b')
     c = Field(Nested(mapped=NestedSerializer))
-    l = Collection(Integer)
-    nested_list = Collection(Nested(mapped=NestedSerializer))
+    l = Field(Collection(Integer()))
+    nested_list = Field(Collection(Nested(mapped=NestedSerializer)))
 
 from pprint import pprint
 result = serialize(ProperSerializer.__mapping__, data)

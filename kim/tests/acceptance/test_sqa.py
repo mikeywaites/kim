@@ -3,7 +3,7 @@
 
 import unittest
 
-from kim.serializers import Serializer, Field, Collection
+from kim.serializers import Serializer, Field
 from kim.roles import Role
 from kim import types
 
@@ -73,12 +73,13 @@ class UserSerializer(Serializer):
 
     id = Field(types.Integer)
     full_name = Field(types.String, source='name')
-    contacts = Collection(types.Nested(mapped=ContactSerializer,
+    contacts = Field(
+                    types.Collection(types.Nested(mapped=ContactSerializer,
                                        role=Role('public',
                                                  'phone',
-                                                 'address')),
-                          source='contact_details')
-
+                                                 'address'))),
+                    source='contact_details'
+                )
 
 class SQAAcceptanceTests(unittest.TestCase):
 

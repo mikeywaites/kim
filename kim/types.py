@@ -352,23 +352,24 @@ class TypeMapper(BaseTypeMapper):
         return self.base_type.validate(source_value)
 
 
-class CollectionTypeMapper(BaseTypeMapper):
-
-    def __init__(self, *args, **kwargs):
-        super(CollectionTypeMapper, self).__init__(*args, **kwargs)
+class Collection(BaseType):
+    def __init__(self, inner_type, *args, **kwargs):
+        self.inner_type = inner_type
         self.default = list()
 
     def marshal_value(self, source_value):
 
-        return [self.base_type.marshal_value(member) for member in source_value]
+        return [self.inner_type.marshal_value(member) for member in source_value]
 
     def serialize_value(self, source_value):
 
-        return [self.base_type.serialize_value(member) for member in source_value]
+        return [self.inner_type.serialize_value(member) for member in source_value]
 
-    def validate_type(self, source_value):
+    def validate(self, source_value):
         """Call :meth:`validate` on `base_type`.
 
         """
+        # should also validate that it is a collection
+        return [self.inner_type.validate(mem) for mem in source_value]
 
-        return [self.base_type.validate(mem) for mem in source_value]
+
