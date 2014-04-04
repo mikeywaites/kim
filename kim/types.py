@@ -299,14 +299,14 @@ class BaseTypeMapper(object):
                  source=None,
                  required=True,
                  allow_none=True,
-                 default=None):
+                 **options):
 
         self.base_type = base_type
         self.name = name
         self.source = source or name
         self.required = required
         self.allow_none = allow_none
-        self.default = base_type.default or default
+        self.default = options.pop('default', base_type.default)
 
     def marshal_value(self, source_value):
         """Call the :meth:`marshal_value` method of `base_type`.
@@ -352,24 +352,44 @@ class TypeMapper(BaseTypeMapper):
         return self.base_type.validate(source_value)
 
 
-class Collection(BaseType):
+class Collection(TypedType):
+
+    type_ = list
+
+    default = list()
+
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
-        self.default = list()
+        if not is_valid_type(self.inner_type):
+            raise TypeError("Collection() requires a valid Type "
+                            "as its first argument")
+
+        super(Collection, self).__init__(*args, **kwargs)
 
     def marshal_value(self, source_value):
 
-        return [self.inner_type.marshal_value(member) for member in source_value]
+        return [self.inner_type.marshal_value(member)
+                for member in source_value]
 
     def serialize_value(self, source_value):
 
-        return [self.inner_type.serialize_value(member) for member in source_value]
+        return [self.inner_type.serialize_value(member)
+                for member in source_value]
 
     def validate(self, source_value):
         """Call :meth:`validate` on `base_type`.
 
         """
-        # should also validate that it is a collection
+        super(Collection, self).validate(source_value)
         return [self.inner_type.validate(mem) for mem in source_value]
 
 
+def is_valid_type(type_):
+    """Validate that `type_` is an instance or subclass of
+    :class:`kim.types.BaseType`.
+
+    :rtype: boolean
+    :returns: True or False
+    """
+
+    return isinstance(type_, BaseType) or issubclass(type_, BaseType)

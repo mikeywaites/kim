@@ -160,6 +160,17 @@ class CollectionTypeTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             c.validate([1, '2', 3])
 
+    def test_collection_requires_list_type(self):
+
+        c = Collection(Integer())
+        with self.assertRaises(ValidationError):
+            c.validate('foo')
+
+    def test_collection_requires_valid_inner_type(self):
+
+        with self.assertRaises(TypeError):
+            Collection(object())
+
 
 class NestedTypeTests(unittest.TestCase):
 
