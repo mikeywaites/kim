@@ -3,8 +3,10 @@
 
 import unittest
 
+from kim.exceptions import RoleNotFound
 from kim.serializers import Field, Serializer
 from kim.types import String, Integer, TypeMapper
+from kim.roles import whitelist
 
 
 class SerializerTests(unittest.TestCase):
@@ -109,3 +111,101 @@ class SerializerTests(unittest.TestCase):
 
         result = s.marshal()
         self.assertEqual(result, {'a': 'hello', 'c': 123})
+
+    def test_serializer_opts_with_role(self):
+
+        public = whitelist('public', 'a')
+
+        class MySerializer(Serializer):
+
+            a = Field(String())
+            b = Field(String())
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer()
+        exp = {
+            'public': public
+        }
+        self.assertEqual(serializer.opts.roles, exp)
+
+    def test__get_mapping_with_no_role_specified(self):
+
+        name = Field(String())
+        email = Field(String())
+
+        class MySerializer(Serializer):
+
+            a = name
+            b = email
+
+        serializer = MySerializer()
+
+        mapped = serializer.get_mapping()
+        field1, field2 = mapped.fields[0], mapped.fields[1]
+        self.assertEqual(name.field_type, field1.base_type)
+        self.assertEqual(email.field_type, field2.base_type)
+
+    def test_get_mapping_with_role_name(self):
+
+        public = whitelist('public', 'email')
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer()
+
+        mapped = serializer.get_mapping(role='public')
+        self.assertEqual(len(mapped.fields), 1)
+        self.assertEqual(mapped.fields[0].name, 'email')
+
+    def test_get_mapping_with_invalid_role_name_raies_role_not_found(self):
+
+        public = whitelist('public', 'email')
+
+        name = Field(String())
+        email = Field(String())
+
+        class MySerializer(Serializer):
+
+            a = name
+            b = email
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer()
+        with self.assertRaises(RoleNotFound):
+            serializer.get_mapping(role='not_a_role')
+
+    def test_get_mapping_with_role_instance(self):
+
+        public = whitelist('public', 'email')
+
+        name = Field(String())
+        email = Field(String())
+
+        class MySerializer(Serializer):
+
+            a = name
+            b = email
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer()
+        name_role = whitelist('name_role', 'name')
+
+        mapped = serializer.get_mapping(role=name_role)
+        field1 = mapped.fields[0]
+        self.assertEqual(name.name, field1.name)

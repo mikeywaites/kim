@@ -2,8 +2,10 @@ from inspect import isclass
 from collections import OrderedDict
 import json
 
+from .exceptions import RoleNotFound
 from .mapping import Mapping, serialize, marshal
 from .types import TypeMapper
+from .utils import is_role
 
 
 class Field(object):
@@ -35,10 +37,7 @@ class Field(object):
 class SerializerMetaclass(type):
 
     def __new__(mcs, name, bases, attrs):
-        # Adapted from Django forms -
-        # https://github.com/django/django/blob/master/django/forms/forms.py#L73
 
-        # Collect fields from current class.
         current_fields = []
         for key, value in list(attrs.items()):
             if isinstance(value, Field):
@@ -130,12 +129,36 @@ class Serializer(BaseSerializer):
     def __init__(self, data=None, input=None):
         self.source_data = data
         self.input = input
+        self.opts = SerializerOpts(self.Meta)
 
-    def serialize(self):
-        return serialize(self.__mapping__, self.source_data)
+    def get_role(self, role):
+        """Find and return a serializer role.  `role` may be provided to
+        :meth:`serialize` or :meth:`marshal` as a role instance or as
+        a string representing a role name defined in `self.opts.roles`
+
+        :raises: RoleNotFound
+        :returns: an instance of a role
+        """
+        if is_role(role):
+            return role
+
+        try:
+            return self.opts.roles[role]
+        except KeyError:
+            raise RoleNotFound('Missing role %s' % role)
+
+    def get_mapping(self, role=None):
+        if role:
+            role = self.get_role(role)
+            return role.get_mapping(self.__mapping__)
+
+        return self.__mapping__
+
+    def serialize(self, role=None):
+        return serialize(self.get_mapping(role=role), self.source_data)
 
     def json(self):
         return json.dumps(self.serialize())
 
-    def marshal(self):
-        return marshal(self.__mapping__, self.input)
+    def marshal(self, role=None):
+        return marshal(self.get_mapping(role=role), self.input)
