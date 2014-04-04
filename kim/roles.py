@@ -126,7 +126,7 @@ def _create_role(name, fields, role_base=None, whitelist=True, **kwargs):
     )
 
 
-def whitelist(name, fields, role_base=None, **kwargs):
+def whitelist(name, *fields, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to True
 
@@ -142,13 +142,14 @@ def whitelist(name, fields, role_base=None, **kwargs):
 
     :returns: New :class:`Role` type
     """
+    role_base = kwargs.pop('role_base', None)
     return _create_role(name, fields,
                         role_base=role_base,
                         whitelist=True,
                         **kwargs)
 
 
-def blacklist(name, fields, role_base=None, **kwargs):
+def blacklist(name, *fields, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to False
 
@@ -164,6 +165,7 @@ def blacklist(name, fields, role_base=None, **kwargs):
 
     :returns: New :class:`Role` type
     """
+    role_base = kwargs.pop('role_base', None)
     return _create_role(name, fields,
                         role_base=role_base,
                         whitelist=False,

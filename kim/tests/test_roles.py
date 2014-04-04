@@ -58,7 +58,7 @@ class RoleTests(unittest.TestCase):
         self.assertIsInstance(mapped, MyCustomMapping)
 
     def test_create_mapping_from_role(self):
-        name =  types.TypeMapper('name', types.String())
+        name = types.TypeMapper('name', types.String())
         email = types.TypeMapper('email', types.String())
 
         mapping = MyCustomMapping('users',
@@ -72,19 +72,19 @@ class RoleTests(unittest.TestCase):
 
     def test_whitelist_utility_function(self):
 
-        role = whitelist('name', ['name'])
+        role = whitelist('name', 'name')
         self.assertEqual(role.name, 'name')
         self.assertEqual(role.field_names, ('name',))
         self.assertTrue(role.whitelist)
 
     def test_blacklist_utility_funcation(self):
 
-        role = blacklist('name', ['name'])
+        role = blacklist('name', 'name')
         self.assertEqual(role.name, 'name')
         self.assertEqual(role.field_names, ('name',))
         self.assertFalse(role.whitelist)
 
     def test_create_role_with_custom_base(self):
 
-        role = whitelist('foo', ['bar'], role_base=CustomRole)
+        role = whitelist('foo', 'bar', role_base=CustomRole)
         self.assertIsInstance(role, CustomRole)
