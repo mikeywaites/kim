@@ -4,6 +4,8 @@
 from collections import defaultdict
 from .exceptions import ValidationError
 
+from kim.utils import is_valid_type
+
 
 class BaseType(object):
 
@@ -168,7 +170,6 @@ class Nested(BaseType):
 
         :raises: TypeError
         """
-
         #TODO sort out the cicular imports
         from .mapping import BaseMapping
 
@@ -384,12 +385,3 @@ class Collection(TypedType):
         return [self.inner_type.validate(mem) for mem in source_value]
 
 
-def is_valid_type(type_):
-    """Validate that `type_` is an instance or subclass of
-    :class:`kim.types.BaseType`.
-
-    :rtype: boolean
-    :returns: True or False
-    """
-
-    return isinstance(type_, BaseType) or issubclass(type_, BaseType)
