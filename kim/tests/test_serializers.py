@@ -206,3 +206,39 @@ class SerializerTests(unittest.TestCase):
         mapped = serializer.get_mapping(role=name_role)
         self.assertEqual(len(mapped.fields), 1)
         self.assertEqual(mapped.fields[0].name, 'name')
+
+    def test_serialize_with_role(self):
+
+        public = whitelist('public', 'email')
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer(data={'email': 'foo', 'name': 'bar'})
+
+        result = serializer.serialize(role='public')
+        self.assertDictEqual(result, {'email': 'foo'})
+
+    def test_marshal_with_role(self):
+
+        public = whitelist('public', 'email')
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer(input={'email': 'foo', 'name': 'bar'})
+
+        result = serializer.marshal(role='public')
+        self.assertDictEqual(result, {'email': 'foo'})
