@@ -128,11 +128,11 @@ def marshal(mapping, data):
         else:
             output[field.source] = field.marshal_value(value)
 
-
     if errors:
         raise ValidationError(errors)
 
     return output
+
 
 def serialize(mapping, data):
     """Serialize data to an expected input for a `mapping`

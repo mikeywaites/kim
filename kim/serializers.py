@@ -170,3 +170,32 @@ class Serializer(BaseSerializer):
 
     def marshal(self, role=None):
         return marshal(self.get_mapping(role=role), self.input)
+
+
+def marshal_sqa_model(mapping, data, instance):
+    pass
+
+
+class SQAModelSerializer(Serializer):
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super(SQAModelSerializer, self).__init__(*args, **kwargs)
+        self.instance = instance
+
+        model = getattr(self.opts.model, None)
+        if model is None:
+            raise TypeError("SQAModelSerializer() requiers a model")
+
+    def get_model(self):
+
+        return self.opts.model
+
+    def get_model_or_instance(self):
+
+        return self.instance or self.get_model()()
+
+    def marshall(self, role=None):
+
+        return marshal_sqa_model(self.get_mapping(role=role),
+                                 self.input,
+                                 self.get_model_or_instance())
