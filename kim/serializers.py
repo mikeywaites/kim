@@ -148,6 +148,14 @@ class Serializer(BaseSerializer):
             raise RoleNotFound('Missing role %s' % role)
 
     def get_mapping(self, role=None):
+        """return the serializers mapping.  If `role` is supplied
+        then the mapping will be returned via :meth:`get_mapping` method
+        on the `role` instance.
+
+        :param role: name of role or role instance.
+
+        :returns: mapping or mapping for a role
+        """
         if role:
             role = self.get_role(role)
             return role.get_mapping(self.__mapping__)
