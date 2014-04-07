@@ -3,6 +3,7 @@
 
 from collections import defaultdict
 from .exceptions import ValidationError
+from .mapping import get_attribute, serialize, BaseMapping, marshal
 
 from kim.utils import is_valid_type
 
@@ -170,9 +171,6 @@ class Nested(BaseType):
 
         :raises: TypeError
         """
-        #TODO sort out the cicular imports
-        from .mapping import BaseMapping
-
         try:
             self._mapping = mapped.__mapping__
         except AttributeError:
@@ -205,9 +203,6 @@ class Nested(BaseType):
 
         :returns: marshalled mapping
         """
-
-        #TODO sort out cicular dep's issue
-        from .mapping import marshal
         return marshal(self.get_mapping(), source_value)
 
     def serialize_value(self, source_value):
@@ -217,9 +212,6 @@ class Nested(BaseType):
 
         :returns: serialized mapping
         """
-
-        #TODO sort out cicular dep's issue
-        from .mapping import serialize
         return serialize(self.get_mapping(), source_value)
 
     def validate_for_marshal(self, source_value):
@@ -230,9 +222,6 @@ class Nested(BaseType):
         :raises: ValidationError
         :returns: True
         """
-
-        from .mapping import get_attribute
-
         errors = defaultdict(list)
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
@@ -254,9 +243,6 @@ class Nested(BaseType):
         :raises: ValidationError
         :returns: True
         """
-
-        from .mapping import get_attribute
-
         errors = defaultdict(list)
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.source)
