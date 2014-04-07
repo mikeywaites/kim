@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import re
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
 
@@ -10,7 +11,7 @@ from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String,
                        Collection, Integer,
-                       BaseType, TypedType, Date, DateTime)
+                       BaseType, TypedType, Date, DateTime, Regexp)
 from kim.type_mapper import TypeMapper
 
 
@@ -389,3 +390,16 @@ class DateTimeTypeTests(unittest.TestCase):
         result = my_type.marshal_value(value)
 
         self.assertEqual(result, datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc()))
+
+
+class RegexpTypeTests(unittest.TestCase):
+    def test_validate_no_match(self):
+
+        my_type = Regexp(pattern=re.compile('[0-9]+'))
+        with self.assertRaises(ValidationError):
+            my_type.validate('hello')
+
+    def test_validate_valid(self):
+
+        my_type = Regexp(pattern=re.compile('[0-9]+'))
+        self.assertTrue(my_type.validate('1234'))

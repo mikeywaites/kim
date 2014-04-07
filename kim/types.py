@@ -4,6 +4,7 @@
 from collections import defaultdict
 from datetime import date, datetime
 import iso8601
+import re
 
 from .exceptions import ValidationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
@@ -321,3 +322,16 @@ class Date(DateTime):
 
     def marshal_value(self, source_value):
         return super(Date, self).marshal_value(source_value).date()
+
+
+class Regexp(String):
+
+    def __init__(self, *args, **kwargs):
+        self.pattern = kwargs.pop('pattern', re.compile('.*'))
+        super(Regexp, self).__init__(*args, **kwargs)
+
+    def validate(self, source_value):
+        super(Regexp, self).validate(source_value)
+        if not self.pattern.match(source_value):
+            raise ValidationError('Does not match regexp')
+        return True
