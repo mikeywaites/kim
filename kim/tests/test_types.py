@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from datetime import date
+from datetime import date, datetime
+from iso8601.iso8601 import Utc
 
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String,
                        Collection, Integer,
-                       BaseType, TypedType, Date)
+                       BaseType, TypedType, Date, DateTime)
 from kim.type_mapper import TypeMapper
 
 
@@ -342,3 +343,49 @@ class DateTypeTests(unittest.TestCase):
         result = my_type.marshal_value(value)
 
         self.assertEqual(result, date(2014, 4, 7))
+
+
+class DateTypeTests(unittest.TestCase):
+
+    def test_validate_for_marshal_wrong_type(self):
+
+        my_type = DateTime()
+        with self.assertRaises(ValidationError):
+            my_type.validate(0)
+
+    def test_validate_for_serialize_wrong_type(self):
+
+        my_type = DateTime()
+        with self.assertRaises(ValidationError):
+            my_type.validate(0)
+
+    def test_validate_for_marhsal_wrong_format(self):
+
+        my_type = DateTime()
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal('2014-04-ASDFSD')
+
+    def test_validate_for_serialize_valid(self):
+
+        my_type = DateTime()
+        self.assertTrue(my_type.validate_for_serialize(datetime(2014, 4, 7, 5, 6, 5)))
+
+    def test_validate_for_marshal_valid(self):
+
+        my_type = DateTime()
+        self.assertTrue(my_type.validate_for_marshal('2014-04-07T05:06:05+00:00'))
+
+    def test_serialize(self):
+        value = datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc())
+        my_type = DateTime()
+        result = my_type.serialize_value(value)
+
+        self.assertEqual(result, '2014-04-07T05:06:05+00:00')
+
+    def test_marshal(self):
+        value = '2014-04-07T05:06:05+00:00'
+
+        my_type = DateTime()
+        result = my_type.marshal_value(value)
+
+        self.assertEqual(result, datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc()))

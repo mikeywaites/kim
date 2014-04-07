@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 import iso8601
 
 from .exceptions import ValidationError
@@ -292,15 +292,15 @@ class Collection(TypedType):
         return [self.inner_type.validate(mem) for mem in source_value]
 
 
-class Date(TypedType):
+class DateTime(TypedType):
 
-    type_ = date
+    type_ = datetime
 
     def serialize_value(self, source_value):
         return source_value.isoformat()
 
     def marshal_value(self, source_value):
-        return iso8601.parse_date(source_value).date()
+        return iso8601.parse_date(source_value)
 
     def validate_for_marshal(self, source_value):
         try:
@@ -314,3 +314,10 @@ class Date(TypedType):
         # super
         return super(TypedType, self).validate_for_serialize(source_value)
 
+
+class Date(DateTime):
+
+    type_ = date
+
+    def marshal_value(self, source_value):
+        return super(Date, self).marshal_value(source_value).date()
