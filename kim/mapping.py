@@ -82,7 +82,7 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
-def get_attribute(data, attr):
+def get_attribute(data, attr, default=None):
     """Attempt to find the value for a `field` from `data`.
 
     :param data: dict like object containing input data
@@ -93,9 +93,9 @@ def get_attribute(data, attr):
     if attr == '__self__':
         return data
     elif isinstance(data, dict):
-        return data.get(attr)
+        return data.get(attr, default)
     else:
-        return getattr(data, attr, None)
+        return getattr(data, attr, default)
 
 
 def marshal(mapping, data):
