@@ -115,7 +115,8 @@ class TypeMapperTests(unittest.TestCase):
     def test_validate_not_allow_none(self):
         mapped_type = TypeMapper('email', String(),
                                  source='email_address',
-                                 allow_none=False)
+                                 allow_none=False,
+                                 required=False)
 
         with self.assertRaises(ValidationError):
             mapped_type.validate(None)
