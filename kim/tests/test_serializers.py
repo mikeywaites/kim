@@ -112,6 +112,16 @@ class SerializerTests(unittest.TestCase):
         result = s.marshal()
         self.assertEqual(result, {'a': 'hello', 'c': 123})
 
+    def test_serialize_to_json(self):
+        class ASerializer(Serializer):
+            a = Field(String())
+            b = Field(Integer, source='c')
+
+        s = ASerializer({'a': 'hello', 'c': 123})
+
+        result = s.json()
+        self.assertEqual(result, '{"a": "hello", "b": 123}')
+
     def test_serializer_opts_with_role(self):
 
         public = whitelist('public', 'a')
