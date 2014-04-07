@@ -18,7 +18,8 @@ class TheData(object):
     nested_list = [InnerData(), InnerData()]
 
 
-from ..types import String, Integer, Nested, TypeMapper, Collection
+from ..types import String, Integer, Nested, Collection
+from ..type_mapper import TypeMapper
 
 data = TheData()
 

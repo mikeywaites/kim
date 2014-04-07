@@ -6,6 +6,7 @@ import unittest
 from kim import types
 from kim.exceptions import ValidationError
 from kim.mapping import Mapping, marshal, serialize
+from kim.type_mapper import TypeMapper
 
 
 class NotAType(object):
@@ -18,7 +19,7 @@ class MappingTest(unittest.TestCase):
 
     def test_setting_mapping_fields(self):
 
-        name = types.TypeMapper('name', types.String())
+        name = TypeMapper('name', types.String())
         not_a = NotAType('foo')
         mapping = Mapping(name, not_a)
         self.assertIn(name, mapping.fields)
@@ -32,15 +33,15 @@ class MappingTest(unittest.TestCase):
     def test_mapping_add_field(self):
 
         mapping = Mapping()
-        name = types.TypeMapper('name', types.String())
+        name = TypeMapper('name', types.String())
 
         mapping.add_field(name)
         self.assertIn(name, mapping.fields)
 
     def test_iterate_over_mapping(self):
 
-        name = types.TypeMapper('name', types.String())
-        email = types.TypeMapper('email', types.String())
+        name = TypeMapper('name', types.String())
+        email = TypeMapper('email', types.String())
         mapping = Mapping(name, email)
 
         fields = [field for field in mapping]
@@ -52,8 +53,8 @@ class MarshalTests(unittest.TestCase):
 
     def setUp(self):
 
-        name = types.TypeMapper('name', types.String())
-        id = types.TypeMapper('id', types.Integer())
+        name = TypeMapper('name', types.String())
+        id = TypeMapper('id', types.Integer())
         self.name = name
         self.id = id
         self.mapping = Mapping(name, id)
@@ -99,7 +100,7 @@ class MarshalTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = types.TypeMapper('name', types.String(),
+        name = TypeMapper('name', types.String(),
                                 required=False, default='baz')
         mapping = Mapping(name)
         result = marshal(mapping, {})
@@ -108,8 +109,8 @@ class MarshalTests(unittest.TestCase):
         self.assertEqual(result, exp)
 
     def test_field_value_returned_when_different_source(self):
-        name = types.TypeMapper('name', types.String(), source='different_name')
-        id = types.TypeMapper('id', types.Integer())
+        name = TypeMapper('name', types.String(), source='different_name')
+        id = TypeMapper('id', types.Integer())
         mapping = Mapping(name, id)
 
         data = {'name': 'bar', 'id': 1}
@@ -124,8 +125,8 @@ class SerializeTests(unittest.TestCase):
 
     def setUp(self):
 
-        name = types.TypeMapper('name', types.String())
-        id = types.TypeMapper('id', types.Integer())
+        name = TypeMapper('name', types.String())
+        id = TypeMapper('id', types.Integer())
         self.name = name
         self.id = id
         self.mapping = Mapping(name, id)
@@ -171,7 +172,7 @@ class SerializeTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = types.TypeMapper('name', types.String(),
+        name = TypeMapper('name', types.String(),
                                 required=False, default='baz')
         mapping = Mapping(name)
         result = serialize(mapping, {})
@@ -180,8 +181,8 @@ class SerializeTests(unittest.TestCase):
         self.assertEqual(result, exp)
 
     def test_field_value_returned_when_different_source(self):
-        name = types.TypeMapper('name', types.String(), source='different_name')
-        id = types.TypeMapper('id', types.Integer())
+        name = TypeMapper('name', types.String(), source='different_name')
+        id = TypeMapper('id', types.Integer())
         mapping = Mapping(name, id)
 
         data = {'different_name': 'bar', 'id': 1}

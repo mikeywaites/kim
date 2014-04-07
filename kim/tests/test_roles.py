@@ -6,6 +6,7 @@ import unittest
 from kim.roles import Role, create_mapping_from_role, whitelist, blacklist
 from kim.mapping import Mapping
 from kim import types
+from kim.type_mapper import TypeMapper
 
 
 class MyCustomMapping(Mapping):
@@ -52,14 +53,14 @@ class RoleTests(unittest.TestCase):
 
     def test_create_role_mapping_uses_mapping_type(self):
 
-        mapping = MyCustomMapping('users', types.TypeMapper('name', types.String()))
+        mapping = MyCustomMapping('users', TypeMapper('name', types.String()))
         role = Role('public', 'name')
         mapped = create_mapping_from_role(role, mapping)
         self.assertIsInstance(mapped, MyCustomMapping)
 
     def test_create_mapping_from_role(self):
-        name = types.TypeMapper('name', types.String())
-        email = types.TypeMapper('email', types.String())
+        name = TypeMapper('name', types.String())
+        email = TypeMapper('email', types.String())
 
         mapping = MyCustomMapping('users',
                                   name,

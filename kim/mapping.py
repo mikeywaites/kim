@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from .types import BaseTypeMapper
+from .type_mapper import BaseTypeMapper
 from .exceptions import ValidationError
 
 

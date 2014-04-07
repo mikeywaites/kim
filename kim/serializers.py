@@ -4,7 +4,7 @@ import json
 
 from .exceptions import RoleNotFound
 from .mapping import Mapping, serialize, marshal
-from .types import TypeMapper
+from .type_mapper import TypeMapper
 from .utils import is_role
 
 

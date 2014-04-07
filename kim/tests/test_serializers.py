@@ -5,7 +5,8 @@ import unittest
 
 from kim.exceptions import RoleNotFound
 from kim.serializers import Field, Serializer
-from kim.types import String, Integer, TypeMapper
+from kim.types import String, Integer
+from kim.type_mapper import TypeMapper
 from kim.roles import whitelist
 
 
