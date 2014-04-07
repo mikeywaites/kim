@@ -161,47 +161,68 @@ def serialize(mapping, data):
 
 def marshall_field(field, value):
 
+    # This sucks, not sure what to do here. does marshal handle read only
+    # diff to serialize
     if field.read_only:
         return None
 
     try:
         field.validate_for_marshal(value)
-    except ValidationError as e:
-        raise e
+    except FieldError:
+        raise
 
     return field.marshall_value(value or field.default)
 
 
 class mapping_iterator(object):
 
+    def __init__(self, output=None, errors=None):
+        self.output = output or dict()
+        self.errors = errors or defaultdict(list)
+
     def __call__(self, f):
         def wrapped_f(*args, **kwargs):
+
             try:
                 mapping, data = args[0], args[1]
             except IndexError as e:
-                # re-reraise a kim error ehere
+                # re-reraise a kim error here.
                 raise e
 
-            errors = defaultdict(list)
+            output = self.output
+            errors = self.errors
             for field in mapping.fields:
                 try:
-                    output = f(field, data, **kwargs)
-                except ValidationError as e:
-                    errors[field.source].append(e.message)
+                    key, value = f(field, data, **kwargs)
+                except FieldError as e:
+                    errors[e.key].append(e.message)
 
             return output
 
         return wrapped_f
 
 
-@mapping_iterator(errors=defaultdict(list))
-def marshal_sqa_model(field, data, instance=None):
+@mapping_iterator()
+def marshal_v2(field, data):
+    """`marshal` data to an expected output for a
+    `mapping`
 
-    value = get_attribute(
-        data,
-        field.name,
-        default=getattr(instance, field.name, None)
-    )
+    :param mapping: :class:`kim.mapping.Mapping`
+    :param data: `dict` or collection of dicts to marshal to a `mapping`
 
-    setattr(instance, field.source, marshall_field(field, value))
+    :raises: TypeError, ValidationError
+    :rtype: dict
+    :returns: serializable object mapped from `mapping`
+    """
+
+    value = get_attribute(data, field.source)
+    return field.source, marshall_field(field, value)
+
+
+def marshal_sqa_model(mapping, data, instance):
+
+    output = marshal_v2(mapping, data)
+    for key, value in output.iteritems():
+        setattr(instance, key, value)
+
     return instance
