@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
+from datetime import date
+import iso8601
+
 from .exceptions import ValidationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
 
@@ -288,4 +291,26 @@ class Collection(TypedType):
         super(Collection, self).validate(source_value)
         return [self.inner_type.validate(mem) for mem in source_value]
 
+
+class Date(TypedType):
+
+    type_ = date
+
+    def serialize_value(self, source_value):
+        return source_value.isoformat()
+
+    def marshal_value(self, source_value):
+        return iso8601.parse_date(source_value).date()
+
+    def validate_for_marshal(self, source_value):
+        try:
+            iso8601.parse_date(source_value)
+        except iso8601.ParseError:
+            raise ValidationError('Date must be in iso8601 format')
+        return True
+
+    def validate_for_serialize(self, source_value):
+        # We just need to ensure it's a date type here, so we can delegate to
+        # super
+        return super(TypedType, self).validate_for_serialize(source_value)
 

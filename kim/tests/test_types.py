@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from datetime import date
 
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String,
                        Collection, Integer,
-                       BaseType, TypedType)
+                       BaseType, TypedType, Date)
 from kim.type_mapper import TypeMapper
 
 
@@ -295,3 +296,49 @@ class NestedTypeTests(unittest.TestCase):
             'email': 'foo@bar.com'
         })
         self.assertTrue(output)
+
+
+class DateTypeTests(unittest.TestCase):
+
+    def test_validate_for_marshal_wrong_type(self):
+
+        my_type = Date()
+        with self.assertRaises(ValidationError):
+            my_type.validate(0)
+
+    def test_validate_for_serialize_wrong_type(self):
+
+        my_type = Date()
+        with self.assertRaises(ValidationError):
+            my_type.validate(0)
+
+    def test_validate_for_marhsal_wrong_format(self):
+
+        my_type = Date()
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal('2014-04-ASDFSD')
+
+    def test_validate_for_serialize_valid(self):
+
+        my_type = Date()
+        self.assertTrue(my_type.validate_for_serialize(date(2014, 4, 7)))
+
+    def test_validate_for_marshal_valid(self):
+
+        my_type = Date()
+        self.assertTrue(my_type.validate_for_marshal('2014-04-07'))
+
+    def test_serialize(self):
+        value = date(2014, 4, 7)
+        my_type = Date()
+        result = my_type.serialize_value(value)
+
+        self.assertEqual(result, '2014-04-07')
+
+    def test_marshal(self):
+        value = '2014-04-07'
+
+        my_type = Date()
+        result = my_type.marshal_value(value)
+
+        self.assertEqual(result, date(2014, 4, 7))

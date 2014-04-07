@@ -1,4 +1,5 @@
 from ..mapping import Mapping, serialize, marshal
+from datetime import date
 
 
 class OtherInner(object):
@@ -16,9 +17,10 @@ class TheData(object):
     c = InnerData()
     l = [1, 2, 3]
     nested_list = [InnerData(), InnerData()]
+    when = date(2014, 4, 7)
 
 
-from ..types import String, Integer, Nested, Collection
+from ..types import String, Integer, Nested, Collection, Date
 from ..type_mapper import TypeMapper
 
 data = TheData()
@@ -48,6 +50,7 @@ class ProperSerializer(Serializer):
     c = Field(Nested(mapped=NestedSerializer))
     l = Field(Collection(Integer()))
     nested_list = Field(Collection(Nested(mapped=NestedSerializer)))
+    when = Field(Date)
 
 from pprint import pprint
 result = serialize(ProperSerializer.__mapping__, data)

@@ -1,4 +1,5 @@
 import unittest
+import mock
 
 from kim.types import String
 from kim.exceptions import ValidationError
@@ -38,7 +39,7 @@ class TypeMapperTests(unittest.TestCase):
                                  source='email_address',
                                  required=True)
         with self.assertRaises(ValidationError):
-            mapped_type.validate('')
+            mapped_type.validate_for_serialize('')
 
     def test_validate_not_allow_none(self):
         mapped_type = TypeMapper('email', String(),
@@ -47,7 +48,7 @@ class TypeMapperTests(unittest.TestCase):
                                  required=False)
 
         with self.assertRaises(ValidationError):
-            mapped_type.validate(None)
+            mapped_type.validate_for_serialize(None)
 
     def test_validate_allow_none(self):
 
@@ -56,7 +57,7 @@ class TypeMapperTests(unittest.TestCase):
                                  required=False,
                                  allow_none=True)
 
-        self.assertTrue(mapped_type.validate(None))
+        self.assertTrue(mapped_type.validate_for_serialize(None))
 
     def test_validate_mapped_type(self):
         mapped_type = TypeMapper('email', String(),
@@ -64,7 +65,7 @@ class TypeMapperTests(unittest.TestCase):
                                  required=True,
                                  allow_none=False)
 
-        self.assertTrue(mapped_type.validate('foo'))
+        self.assertTrue(mapped_type.validate_for_serialize('foo'))
 
     def test_type_mapper_default_overrides_type_default(self):
 
@@ -78,3 +79,23 @@ class TypeMapperTests(unittest.TestCase):
                                  allow_none=False)
 
         self.assertEqual(mapped_type.allow_none, False)
+
+    def test_validate_for_marshal(self):
+        mockedtype = mock.MagicMock()
+        mapped_type = TypeMapper('email', mockedtype,
+                                 source='email_address',
+                                 required=True,
+                                 allow_none=False)
+
+        self.assertTrue(mapped_type.validate_for_marshal('foo'))
+        self.assertTrue(mockedtype.validate_for_marshal.called)
+
+    def test_validate_for_serialize(self):
+        mockedtype = mock.MagicMock()
+        mapped_type = TypeMapper('email', mockedtype,
+                                 source='email_address',
+                                 required=True,
+                                 allow_none=False)
+
+        self.assertTrue(mapped_type.validate_for_serialize('foo'))
+        self.assertTrue(mockedtype.validate_for_serialize.called)
