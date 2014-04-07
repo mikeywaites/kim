@@ -345,7 +345,7 @@ class DateTypeTests(unittest.TestCase):
         self.assertEqual(result, date(2014, 4, 7))
 
 
-class DateTypeTests(unittest.TestCase):
+class DateTimeTypeTests(unittest.TestCase):
 
     def test_validate_for_marshal_wrong_type(self):
 
