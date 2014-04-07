@@ -333,7 +333,8 @@ class BaseTypeMapper(object):
 
         elif not self.allow_none and source_value is None:
             raise ValidationError("This field cannot be None")
-
+        elif self.allow_none and source_value is None:
+            return True
         else:
             return self.validate_type(source_value)
 

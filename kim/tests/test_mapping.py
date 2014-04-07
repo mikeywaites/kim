@@ -5,7 +5,7 @@ import unittest
 
 from kim import types
 from kim.exceptions import ValidationError
-from kim.mapping import Mapping
+from kim.mapping import Mapping, marshal, serialize
 
 
 class NotAType(object):
@@ -48,74 +48,145 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(fields[1], email)
 
 
-# class MappingIteratorTests(unittest.TestCase):
+class MarshalTests(unittest.TestCase):
 
-#     def setUp(self):
+    def setUp(self):
 
-#         name = types.TypeMapper('name', types.String())
-#         id = types.TypeMapper('id', types.Integer())
-#         self.name = name
-#         self.id = id
-#         self.mapping = Mapping(name, id)
+        name = types.TypeMapper('name', types.String())
+        id = types.TypeMapper('id', types.Integer())
+        self.name = name
+        self.id = id
+        self.mapping = Mapping(name, id)
 
-#     def test_iterator_with_invalid_data(self):
+    def test_marshal_with_invalid_data(self):
 
-#         class Data(object):
-#             name = 'foo'
-#             id = 'bar'
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
 
-#         with self.assertRaises(ValidationError):
-#             [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
+        with self.assertRaises(ValidationError):
+            marshal(self.mapping, Data())
 
-#     def test_field_appears_in_errors_when_invalid(self):
+    def test_field_appears_in_errors_when_invalid(self):
 
-#         class Data(object):
-#             name = 'foo'
-#             id = 'bar'
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
 
-#         try:
-#             [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
-#         except ValidationError as e:
-#             self.assertIn('id', e.message)
+        try:
+            marshal(self.mapping, Data())
+        except ValidationError as e:
+            self.assertIn('id', e.message)
 
-#     def test_field_value_yielded_when_valid(self):
+    def test_field_values_returned_when_valid(self):
 
-#         class Data(object):
-#             name = 'foo'
-#             id = 1
+        class Data(object):
+            name = 'foo'
+            id = 1
 
-#         exp = [(self.name, 'foo'), (self.id, 1)]
-#         result = [(f, v) for f, v in mapping_iterator(self.mapping, Data(), 'name')]
+        exp = {'name': 'foo', 'id': 1}
+        result = marshal(self.mapping, Data())
 
-#         self.assertEqual(exp, result)
+        self.assertEqual(exp, result)
 
-#     def test_field_value_yielded_from_dict_when_valid(self):
+    def test_field_values_returned_from_dict_when_valid(self):
 
-#         data = {'name': 'foo', 'id': 1}
+        data = {'name': 'foo', 'id': 1}
 
-#         exp = [(self.name, 'foo'), (self.id, 1)]
-#         result = [(f, v) for f, v in mapping_iterator(self.mapping, data, 'name')]
+        result = marshal(self.mapping, data)
 
-#         self.assertEqual(exp, result)
+        self.assertEqual(data, result)
 
-#     def test_non_required_mapped_type_uses_default_value(self):
+    def test_non_required_mapped_type_uses_default_value(self):
 
-#         name = types.TypeMapper('name', types.String(),
-#                                 required=False, default='baz')
-#         mapping = Mapping(name)
-#         result = [(f, v) for f, v in mapping_iterator(mapping, {}, 'name')]
-#         exp = [(name, 'baz')]
+        name = types.TypeMapper('name', types.String(),
+                                required=False, default='baz')
+        mapping = Mapping(name)
+        result = marshal(mapping, {})
+        exp = {'name': 'baz'}
 
-#         self.assertEqual(result, exp)
+        self.assertEqual(result, exp)
 
-#     def test_field_value_yielded_when_valid_different_field_attr(self):
-#         name = types.TypeMapper('name', types.String(), source='different_name')
-#         id = types.TypeMapper('id', types.Integer())
-#         mapping = Mapping(name, id)
+    def test_field_value_returned_when_different_source(self):
+        name = types.TypeMapper('name', types.String(), source='different_name')
+        id = types.TypeMapper('id', types.Integer())
+        mapping = Mapping(name, id)
 
-#         data = {'different_name': 'bar', 'id': 1}
+        data = {'name': 'bar', 'id': 1}
 
-#         exp = [(name, 'bar'), (id, 1)]
-#         result = [(f, v) for f, v in mapping_iterator(mapping, data, 'source')]
+        exp = {'different_name': 'bar', 'id': 1}
+        result = marshal(mapping, data)
 
-#         self.assertEqual(exp, result)
+        self.assertEqual(exp, result)
+
+
+class SerializeTests(unittest.TestCase):
+
+    def setUp(self):
+
+        name = types.TypeMapper('name', types.String())
+        id = types.TypeMapper('id', types.Integer())
+        self.name = name
+        self.id = id
+        self.mapping = Mapping(name, id)
+
+    def test_serialize_with_invalid_data(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
+
+        with self.assertRaises(ValidationError):
+            serialize(self.mapping, Data())
+
+    def test_field_appears_in_errors_when_invalid(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 'bar'
+
+        try:
+            serialize(self.mapping, Data())
+        except ValidationError as e:
+            self.assertIn('id', e.message)
+
+    def test_field_values_returned_when_valid(self):
+
+        class Data(object):
+            name = 'foo'
+            id = 1
+
+        exp = {'name': 'foo', 'id': 1}
+        result = serialize(self.mapping, Data())
+
+        self.assertEqual(exp, result)
+
+    def test_field_values_returned_from_dict_when_valid(self):
+
+        data = {'name': 'foo', 'id': 1}
+
+        result = serialize(self.mapping, data)
+
+        self.assertEqual(data, result)
+
+    def test_non_required_mapped_type_uses_default_value(self):
+
+        name = types.TypeMapper('name', types.String(),
+                                required=False, default='baz')
+        mapping = Mapping(name)
+        result = serialize(mapping, {})
+        exp = {'name': 'baz'}
+
+        self.assertEqual(result, exp)
+
+    def test_field_value_returned_when_different_source(self):
+        name = types.TypeMapper('name', types.String(), source='different_name')
+        id = types.TypeMapper('id', types.Integer())
+        mapping = Mapping(name, id)
+
+        data = {'different_name': 'bar', 'id': 1}
+
+        exp = {'name': 'bar', 'id': 1}
+        result = serialize(mapping, data)
+
+        self.assertEqual(exp, result)
