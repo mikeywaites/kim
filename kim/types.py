@@ -300,6 +300,7 @@ class BaseTypeMapper(object):
                  source=None,
                  required=True,
                  allow_none=True,
+                 read_only=False,
                  **options):
 
         self.base_type = base_type
@@ -307,6 +308,7 @@ class BaseTypeMapper(object):
         self.source = source or name
         self.required = required
         self.allow_none = allow_none
+        self.read_only = read_only
         self.default = options.pop('default', base_type.default)
 
     def marshal_value(self, source_value):
@@ -331,7 +333,7 @@ class BaseTypeMapper(object):
         if self.required and not source_value:
             raise ValidationError("This is a required field")
 
-        elif not self.allow_none and source_value is None:
+        elif self.allow_none and source_value is None:
             raise ValidationError("This field cannot be None")
 
         else:

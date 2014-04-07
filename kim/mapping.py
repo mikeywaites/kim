@@ -157,3 +157,51 @@ def serialize(mapping, data):
         raise ValidationError(errors)
 
     return output
+
+
+def marshall_field(field, value):
+
+    if field.read_only:
+        return None
+
+    try:
+        field.validate_for_marshal(value)
+    except ValidationError as e:
+        raise e
+
+    return field.marshall_value(value or field.default)
+
+
+class mapping_iterator(object):
+
+    def __call__(self, f):
+        def wrapped_f(*args, **kwargs):
+            try:
+                mapping, data = args[0], args[1]
+            except IndexError as e:
+                # re-reraise a kim error ehere
+                raise e
+
+            errors = defaultdict(list)
+            for field in mapping.fields:
+                try:
+                    output = f(field, data, **kwargs)
+                except ValidationError as e:
+                    errors[field.source].append(e.message)
+
+            return output
+
+        return wrapped_f
+
+
+@mapping_iterator(errors=defaultdict(list))
+def marshal_sqa_model(field, data, instance=None):
+
+    value = get_attribute(
+        data,
+        field.name,
+        default=getattr(instance, field.name, None)
+    )
+
+    setattr(instance, field.source, marshall_field(field, value))
+    return instance

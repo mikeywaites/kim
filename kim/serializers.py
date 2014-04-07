@@ -1,9 +1,10 @@
-from inspect import isclass
-from collections import OrderedDict
 import json
 
+from inspect import isclass
+from collections import OrderedDict
+
 from .exceptions import RoleNotFound
-from .mapping import Mapping, serialize, marshal
+from .mapping import Mapping, serialize, marshal, marshal_sqa_model
 from .types import TypeMapper
 from .utils import is_role
 
@@ -21,17 +22,22 @@ class Field(object):
         :class:`kim.serializers.Serializer`
     """
 
-    def __init__(self, field_type, name=None, source=None):
+    def __init__(self, field_type, required=True, name=None, source=None,
+                 read_only=False):
         if isclass(field_type):
             field_type = field_type()
         self.field_type = field_type
         self.name = name
         self.source = source
+        self.read_only = read_only
+        self.required = required
 
     def get_mapped_type(self, name):
         name = self.name or name
         source = self.source or name
-        return TypeMapper(name, self.field_type, source=source)
+        return TypeMapper(name, self.field_type, source=source,
+                          read_only=self.read_only,
+                          required=self.required)
 
 
 class SerializerMetaclass(type):
@@ -78,6 +84,7 @@ class SerializerOpts(object):
     def __init__(self, meta):
 
         self.roles = getattr(meta, 'roles', {})
+        self.model = getattr(meta, 'model', None)
 
 
 class BaseSerializer(object):
@@ -172,18 +179,13 @@ class Serializer(BaseSerializer):
         return marshal(self.get_mapping(role=role), self.input)
 
 
-def marshal_sqa_model(mapping, data, instance):
-    pass
-
-
 class SQAModelSerializer(Serializer):
 
     def __init__(self, instance=None, *args, **kwargs):
         super(SQAModelSerializer, self).__init__(*args, **kwargs)
         self.instance = instance
 
-        model = getattr(self.opts.model, None)
-        if model is None:
+        if not getattr(self.opts, 'model', None):
             raise TypeError("SQAModelSerializer() requiers a model")
 
     def get_model(self):

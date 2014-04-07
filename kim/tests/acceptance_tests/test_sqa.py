@@ -3,7 +3,7 @@
 
 import unittest
 
-from kim.serializers import Serializer, Field
+from kim.serializers import Serializer, Field, SQAModelSerializer
 from kim.roles import Role
 from kim import types
 
@@ -74,12 +74,13 @@ class UserSerializer(Serializer):
     id = Field(types.Integer)
     full_name = Field(types.String, source='name')
     contacts = Field(
-                    types.Collection(types.Nested(mapped=ContactSerializer,
-                                       role=Role('public',
-                                                 'phone',
-                                                 'address'))),
-                    source='contact_details'
-                )
+        types.Collection(types.Nested(mapped=ContactSerializer,
+                         role=Role('public',
+                                   'phone',
+                                   'address'))),
+        source='contact_details'
+    )
+
 
 class SQAAcceptanceTests(unittest.TestCase):
 
@@ -129,3 +130,22 @@ class SQAAcceptanceTests(unittest.TestCase):
             }]
         }
         self.assertDictEqual(result, exp)
+
+    def test_create_new_model(self):
+
+        class SQAUserSerializer(SQAModelSerializer):
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+
+            class Meta:
+
+                model = User
+
+        data = {'full_name': 'Mike Waites'}
+        serializer = SQAUserSerializer(input=data)
+
+        import ipdb; ipdb.set_trace()
+        instance = serializer.marshall()
+        self.session.add(instance)
+        self.session.commit()
