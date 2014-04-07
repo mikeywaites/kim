@@ -174,36 +174,44 @@ def marshall_field(field, value):
     return field.marshall_value(value or field.default)
 
 
-class mapping_iterator(object):
+class MappingIterator(object):
 
     def __init__(self, output=None, errors=None):
         self.output = output or dict()
         self.errors = errors or defaultdict(list)
 
-    def __call__(self, f):
-        def wrapped_f(*args, **kwargs):
+    def get_attribute(self, data, field_name):
+        return get_attribute(data, field_name)
 
+    def run(self, mapping, data, **kwargs):
+
+        for field in mapping.fields:
             try:
-                mapping, data = args[0], args[1]
-            except IndexError as e:
-                # re-reraise a kim error here.
-                raise e
+                key, value = self.process_field(field, data)
+                self.update_output(key, value)
+            except FieldError as e:
+                self.errors[e.key].append(e.message)
 
-            output = self.output
-            errors = self.errors
-            for field in mapping.fields:
-                try:
-                    key, value = f(field, data, **kwargs)
-                except FieldError as e:
-                    errors[e.key].append(e.message)
+        if self.errors:
+            raise ValidationErrors(self.errors)
 
-            return output
-
-        return wrapped_f
+        return self.output
 
 
-@mapping_iterator()
-def marshal_v2(field, data):
+class MarshalIterator(MappingIterator):
+
+    def process_field(self, field, data):
+
+        value = self.get_attribute(data, field.source)
+        try:
+            field.validate_for_marshal(value)
+        except FieldError:
+            raise
+
+        return field.name, field.marshall_value(value or field.default)
+
+
+class marshall(mapping, data):
     """`marshal` data to an expected output for a
     `mapping`
 
@@ -215,13 +223,12 @@ def marshal_v2(field, data):
     :returns: serializable object mapped from `mapping`
     """
 
-    value = get_attribute(data, field.source)
-    return field.source, marshall_field(field, value)
+    return MarshalIterator().run(mapping, data)
 
 
 def marshal_sqa_model(mapping, data, instance):
 
-    output = marshal_v2(mapping, data)
+    output = marshall(mapping, data)
     for key, value in output.iteritems():
         setattr(instance, key, value)
 
