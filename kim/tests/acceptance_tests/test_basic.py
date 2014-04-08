@@ -1,11 +1,12 @@
 import unittest
 from datetime import date, datetime
+import decimal
 
 from iso8601.iso8601 import Utc
 
 from kim.serializers import Serializer, Field
 from kim.types import (String, Collection, Nested, Integer, Email, Date,
-    DateTime)
+    DateTime, Decimal)
 
 
 class BasicAcceptanceTests(unittest.TestCase):
@@ -70,6 +71,7 @@ class BasicAcceptanceTests(unittest.TestCase):
             user = Field(Nested(Inner))
             status = Field(Integer())
             updated_at = Field(DateTime())
+            cost = Field(Decimal(precision=2))
 
         data = {'user': {
                         'name': 'Bob',
@@ -82,6 +84,7 @@ class BasicAcceptanceTests(unittest.TestCase):
                     },
                 'status': 200,
                 'updated_at': datetime(2014, 4, 8, 6, 12, 43, tzinfo=Utc()),
+                'cost': decimal.Decimal("3.50"),
         }
 
         result = Outer(data).serialize()
@@ -98,7 +101,8 @@ class BasicAcceptanceTests(unittest.TestCase):
                     },
                 'status': 200,
                 'updated_at': '2014-04-08T06:12:43+00:00',
-        }
+                'cost': "3.50",
+            }
         )
 
         marshal_result = Outer(input=result).marshal()

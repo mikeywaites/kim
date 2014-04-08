@@ -496,3 +496,8 @@ class DecimalTypeTests(unittest.TestCase):
 
         self.assertEqual(result, decimal.Decimal("1.343"))
 
+    def test_precision(self):
+        my_type = Decimal(precision=2)
+        result = my_type.serialize_value(decimal.Decimal("1.347"))
+
+        self.assertEqual(result, "1.35")
