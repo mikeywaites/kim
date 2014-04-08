@@ -14,3 +14,7 @@ class ValidationError(KimError):
 
 class RoleNotFound(KimError):
     pass
+
+
+class ConfigurationError(KimError):
+    pass

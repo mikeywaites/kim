@@ -2,10 +2,11 @@ from inspect import isclass
 from collections import OrderedDict
 import json
 
-from .exceptions import RoleNotFound
+from .exceptions import RoleNotFound, ConfigurationError
 from .mapping import Mapping, serialize, marshal
 from .type_mapper import TypeMapper
 from .utils import is_role
+from .types import BaseType
 
 
 class Field(object):
@@ -43,6 +44,21 @@ class SerializerMetaclass(type):
             if isinstance(value, Field):
                 current_fields.append((key, value))
                 attrs.pop(key)
+            elif isinstance(value, BaseType):
+                # Handle common mistake of failing to wrap types in Field()
+                # where passed as instance
+                type_name = value.__class__.__name__
+                raise ConfigurationError('Serializer attributes must be wrapped ' \
+                    'in Field. Raw type %s found on %s. Did you mean Field(%s())?' %
+                    (type_name, name, type_name))
+            elif isclass(value) and issubclass(value, BaseType):
+                # Handle common mistake of failing to wrap types in Field()
+                # where passed as class
+                type_name = value.__name__
+                raise ConfigurationError('Serializer attributes must be wrapped ' \
+                    'in Field. Raw type %s found on %s. Did you mean Field(%s)?' %
+                    (type_name, name, type_name))
+
 
         attrs['declared_fields'] = OrderedDict(current_fields)
 
@@ -66,7 +82,6 @@ class SerializerMetaclass(type):
     @staticmethod
     def build_mapping(name, new_class):
         mapping = Mapping()
-
         for name, field_wrapper in new_class.declared_fields.items():
             mapping.add_field(field_wrapper.get_mapped_type(name))
 
