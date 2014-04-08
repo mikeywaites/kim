@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from .type_mapper import BaseTypeMapper
-from .exceptions import ValidationErrors, FieldError
+from .exceptions import ValidationError, MappingErrors, FieldError
 
 
 class BaseMapping(object):
@@ -118,7 +118,7 @@ class MappingIterator(object):
         :param mapping: :class:`kim.mapping.Mapping`
         :param many: map several instances of `data` to `mapping`
 
-        :raises: ValidationErrors
+        :raises: MappingErrors
         :returns: serializable output
         """
 
@@ -134,7 +134,7 @@ class MappingIterator(object):
                     continue
 
         if self.errors:
-            raise ValidationErrors(self.errors)
+            raise MappingErrors(self.errors)
 
         return self.output
 
@@ -173,8 +173,8 @@ class MarshalIterator(MappingIterator):
         value = self.get_attribute(data, field.name)
         try:
             field.validate_for_marshal(value)
-        except FieldError as e:
-            raise e
+        except ValidationError as e:
+            raise FieldError(field.name, e.message)
 
         return field.marshal_value(value or field.default)
 
@@ -190,8 +190,8 @@ class SerializeIterator(MappingIterator):
         value = self.get_attribute(data, field.source)
         try:
             field.validate_for_serialize(value)
-        except FieldError as e:
-            raise e
+        except ValidationError as e:
+            raise FieldError(field.source, e.message)
 
         return field.serialize_value(value or field.default)
 
