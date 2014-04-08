@@ -4,7 +4,7 @@
 import unittest
 
 from kim import types
-from kim.exceptions import ValidationError, MappingErrors
+from kim.exceptions import MappingErrors
 from kim.mapping import Mapping, marshal, serialize
 from kim.type_mapper import TypeMapper
 
@@ -173,7 +173,7 @@ class SerializeTests(unittest.TestCase):
     def test_non_required_mapped_type_uses_default_value(self):
 
         name = TypeMapper('name', types.String(),
-                                required=False, default='baz')
+                          required=False, default='baz')
         mapping = Mapping(name)
         result = serialize(mapping, {})
         exp = {'name': 'baz'}
