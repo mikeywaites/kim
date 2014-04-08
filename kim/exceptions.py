@@ -8,7 +8,12 @@ class MappingError(KimError):
     pass
 
 
+#TODO REMOVE THIS
 class ValidationError(KimError):
+    pass
+
+
+class ValidationErrors(KimError):
     pass
 
 
@@ -17,4 +22,8 @@ class RoleNotFound(KimError):
 
 
 class ConfigurationError(KimError):
+    pass
+
+
+class FieldError(KimError):
     pass
