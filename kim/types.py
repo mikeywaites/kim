@@ -6,6 +6,8 @@ from datetime import date, datetime
 import iso8601
 import re
 import decimal
+import inspect
+import importlib
 
 from .exceptions import ValidationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
@@ -165,25 +167,51 @@ class Nested(BaseType):
 
         :returns: self._mapping
         """
-        return self._mapping
+        # Allow mappings to be passed as a string if they don't exist yet
+        # The setter has already done most of the work in getting the module,
+        # but we need to actually resolve it here.
+        if isinstance(self._mapping, str):
+            self._mapping = getattr(self._mapping_module, self._mapping)
+
+        try:
+            mapping = self._mapping.__mapping__
+        except AttributeError:
+            mapping = self._mapping
+
+        if not isinstance(mapping, BaseMapping):
+            raise TypeError('Nested() must be called with a '
+                            'mapping or a mapped serializer instance')
+        return mapping
 
     @mapping.setter
     def mapping(self, mapped):
         """Setter for mapping property
 
         the :param:`mapped` arg must be a valid
-        :class:`kim.mapping.BaseMapping` or Mapped Serializer instance.
+        :class:`kim.mapping.BaseMapping` instance or any object exposing a
+        __mapping__ attribute.
 
         :raises: TypeError
         """
-        try:
-            self._mapping = mapped.__mapping__
-        except AttributeError:
-            self._mapping = mapped
+        # Allow mappings to be passed as a string if they don't exist yet
+        # see http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python
+        # We store the module it came from here, but we don't actually resolve
+        # the path until we need to access the mapping, because it won't be
+        # in scope until then.
+        if isinstance(mapped, str):
+            if '.' in mapped:
+                # A full python path has been passed
+                module = '.'.join(mapped.split('.')[:-1])
+                mapped = mapped.split('.')[-1]
+                self._mapping_module = importlib.import_module(module)
+            else:
+                # Only a relative name has been passed, assume it's in
+                # the same module who called us
+                constructor_called_from = inspect.stack()[2]
+                called_from_module = inspect.getmodule(constructor_called_from[0])
+                self._mapping_module = called_from_module
 
-        if not isinstance(self._mapping, BaseMapping):
-            raise TypeError('Nested() must be called with a '
-                            'mapping or a mapped serializer instance')
+        self._mapping = mapped
 
     def get_mapping(self):
         """Return the mapping defined for this `Nested` type.

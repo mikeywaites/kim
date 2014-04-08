@@ -40,17 +40,19 @@ print serialize(the_mapping, data)
 from ..serializers import Serializer, Field
 
 
-class NestedSerializer(Serializer):
-    d = Field(String)
-
 
 class ProperSerializer(Serializer):
     a = Field(Integer)
     b = Field(String, name='hey', source='b')
-    c = Field(Nested(mapped=NestedSerializer))
+    c = Field(Nested(mapped='NestedSerializer'))
     l = Field(Collection(Integer()))
-    nested_list = Field(Collection(Nested(mapped=NestedSerializer)))
+    nested_list = Field(Collection(Nested(mapped='NestedSerializer')))
     when = Field(Date)
+
+
+class NestedSerializer(Serializer):
+    d = Field(String)
+    nested_two = Field(Nested(mapped='kim.tests.m2.InnerNestedSerializer'))
 
 from pprint import pprint
 result = serialize(ProperSerializer.__mapping__, data)
@@ -68,5 +70,5 @@ result = ProperSerializer(input=result).marshal()
 pprint(result)
 
 
-class BrokenSerializer(Serializer):
-    d = String()
+# class BrokenSerializer(Serializer):
+#     d = String()
