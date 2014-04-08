@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from .types import BaseTypeMapper
-from .exceptions import ValidationError
+from .exceptions import ValidationErrors, FieldError
 
 
 class BaseMapping(object):
@@ -216,7 +216,6 @@ class MappingIterator(object):
         raise NotImplementedError("Concrete classes must inplement "
                                   "process_field method")
 
-
     def update_output(self, field, value):
 
         raise NotImplementedError("Concrete classes must inplement "
@@ -228,7 +227,7 @@ class MarshalIterator(MappingIterator):
     def update_output(self, field, value):
 
         if field.source == '__self__':
-            self.output.update(field.marshal_value(value))
+            self.output.update(value)
         else:
             self.output[field.source] = value
 
@@ -251,7 +250,7 @@ class SerializeIterator(MappingIterator):
 
     def process_field(self, field, data):
 
-        value = self.get_attribute(data, field.source)
+        value = self.get_attribute(data, field.name)
         try:
             field.validate_for_serialize(value)
         except FieldError as e:
@@ -262,7 +261,7 @@ class SerializeIterator(MappingIterator):
 
 
 
-class marshall(mapping, data):
+def marshall(mapping, data):
     """`marshal` data to an expected output for a
     `mapping`
 
@@ -275,6 +274,13 @@ class marshall(mapping, data):
     """
 
     return MarshalIterator().run(mapping, data)
+
+
+def serialize(mapping, data):
+
+    return SerializeIterator().run(mapping, data)
+
+
 
 
 def marshal_sqa_model(mapping, data, instance):
