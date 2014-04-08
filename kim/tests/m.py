@@ -66,3 +66,7 @@ print "===================="
 
 result = ProperSerializer(input=result).marshal()
 pprint(result)
+
+
+class BrokenSerializer(Serializer):
+    d = String()

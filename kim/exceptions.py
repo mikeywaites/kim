@@ -23,3 +23,6 @@ class RoleNotFound(KimError):
 
 class FieldError(KimError):
     pass
+
+class ConfigurationError(KimError):
+    pass
