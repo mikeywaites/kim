@@ -10,7 +10,7 @@ from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, Collection, Integer, BaseType,
-    TypedType, Date, DateTime, Regexp, Email)
+    TypedType, Date, DateTime, Regexp, Email, Float)
 from kim.type_mapper import TypeMapper
 
 
@@ -415,3 +415,57 @@ class EmailTypeTests(unittest.TestCase):
 
         my_type = Email()
         self.assertTrue(my_type.validate('jack@gmail.com'))
+
+
+class FloatTypeTests(unittest.TestCase):
+
+    def test_validate_requires_valid_float_type(self):
+
+        my_type = Float()
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal('')
+
+    def test_validate_float_type(self):
+
+        my_type = Float()
+        self.assertTrue(my_type.validate_for_marshal(1.343))
+
+    def test_serialize(self):
+        my_type = Float()
+        result = my_type.serialize_value(1.343)
+
+        self.assertEqual(result, 1.343)
+
+    def test_marshal(self):
+        my_type = Float()
+        result = my_type.marshal_value(1.343)
+
+        self.assertEqual(result, 1.343)
+
+    def test_validate_requires_valid_float_type_as_string(self):
+
+        my_type = Float(as_string=True)
+        with self.assertRaises(ValidationError):
+            my_type.validate('abc')
+
+    def test_validate_for_marhsal_float_type_as_string(self):
+
+        my_type = Float(as_string=True)
+        self.assertTrue(my_type.validate_for_marshal("1.343"))
+
+    def test_validate_for_serialize_float_type_as_string(self):
+
+        my_type = Float(as_string=True)
+        self.assertTrue(my_type.validate_for_serialize(1.343))
+
+    def test_serialize_as_string(self):
+        my_type = Float(as_string=True)
+        result = my_type.serialize_value(1.343)
+
+        self.assertEqual(result, "1.343")
+
+    def test_marshal_as_string(self):
+        my_type = Float(as_string=True)
+        result = my_type.marshal_value("1.343")
+
+        self.assertEqual(result, 1.343)

@@ -345,3 +345,38 @@ class Email(Regexp):
     def __init__(self, *args, **kwargs):
         kwargs['pattern'] = self.PATTERN
         super(Email, self).__init__(*args, **kwargs)
+
+
+class Float(TypedType):
+    type_ = float
+
+    default = float
+
+    def __init__(self, *args, **kwargs):
+        self.as_string = kwargs.pop('as_string', False)
+        super(Float, self).__init__(*args)
+
+    def validate_for_marshal(self, source_value):
+        if self.as_string:
+            if not isinstance(source_value, str):
+
+                raise ValidationError(self.get_error_message(source_value))
+
+            # Now just check we can cast it to a float
+            try:
+                float(source_value)
+            except ValueError:
+                raise ValidationError('Not a valid float')
+
+            return True
+        else:
+            return super(Float, self).validate_for_marshal(source_value)
+
+    def serialize_value(self, source_value):
+        if self.as_string:
+            return str(source_value)
+        else:
+            return source_value
+
+    def marshal_value(self, source_value):
+        return float(source_value)
