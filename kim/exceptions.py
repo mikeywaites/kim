@@ -4,20 +4,30 @@ class KimError(Exception):
     pass
 
 
-class MappingError(KimError):
-    pass
-
-
-#TODO REMOVE THIS
 class ValidationError(KimError):
+    """Exception used by Types to raise an error when their validate
+    method fails
+
+    ..seealso::
+        :meth:`kim.types.BaseType.validate`
+
+    """
     pass
 
 
-class ValidationErrors(KimError):
-    pass
+class FieldError(ValidationError):
+    """A type of :class:`.ValidationError` that also accepts the field
+    name specified as `key`
+
+    """
+
+    def __init__(self, key, *args, **kwargs):
+        super(FieldError, self).__init__(*args, **kwargs)
+
+        self.key = key
 
 
-class RoleNotFound(KimError):
+class MappingErrors(KimError):
     pass
 
 
@@ -25,5 +35,5 @@ class ConfigurationError(KimError):
     pass
 
 
-class FieldError(KimError):
+class RoleNotFound(KimError):
     pass
