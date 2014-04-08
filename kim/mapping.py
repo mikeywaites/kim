@@ -159,21 +159,6 @@ def serialize(mapping, data):
     return output
 
 
-def marshall_field(field, value):
-
-    # This sucks, not sure what to do here. does marshal handle read only
-    # diff to serialize
-    if field.read_only:
-        return None
-
-    try:
-        field.validate_for_marshal(value)
-    except FieldError:
-        raise
-
-    return field.marshall_value(value or field.default)
-
-
 class MappingIterator(object):
 
     def __init__(self, output=None, errors=None):
@@ -181,24 +166,65 @@ class MappingIterator(object):
         self.errors = errors or defaultdict(list)
 
     def get_attribute(self, data, field_name):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
         return get_attribute(data, field_name)
 
-    def run(self, mapping, data, **kwargs):
+    def run(self, mapping, data, many=False, **kwargs):
+        """`run` the mapping iteration loop.
 
-        for field in mapping.fields:
-            try:
-                key, value = self.process_field(field, data)
-                self.update_output(key, value)
-            except FieldError as e:
-                self.errors[e.key].append(e.message)
+        :param data: dict like data being mapped
+        :param mapping: :class:`kim.mapping.Mapping`
+        :param many: map several instances of `data` to `mapping`
+
+        :raises: ValidationErrors
+        :returns: serializable output
+        """
+
+        if many:
+            return [self.run(mapping, d, many=False) for d in data]
+        else:
+            for field in mapping.fields:
+                try:
+                    key, value = self.process_field(field, data)
+                    self.update_output(field, value)
+                except FieldError as e:
+                    self.errors[e.key].append(e.message)
+                    continue
 
         if self.errors:
             raise ValidationErrors(self.errors)
 
         return self.output
 
+    def process_field(self, field, data):
+        """Process a field mapping using `data`.  This method should
+        return both the field.name or field.source value plus the value to
+        map to the field.
+
+        e.g::
+            value = self.get_attribute(data, field.source)
+            field.validate_for_marshal(value)
+
+            return field.name, field.marshal_value(value or field.default)
+        """
+
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "process_field method")
+
 
 class MarshalIterator(MappingIterator):
+
+    def update_output(self, field, value):
+
+        if field.source == '__self__':
+            self.output.update(field.marshal_value(value))
+        else:
+            self.output[field.source] = value
 
     def process_field(self, field, data):
 
