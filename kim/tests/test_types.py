@@ -9,9 +9,8 @@ from iso8601.iso8601 import Utc
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
-from kim.types import (Nested, String,
-                       Collection, Integer,
-                       BaseType, TypedType, Date, DateTime, Regexp)
+from kim.types import (Nested, String, Collection, Integer, BaseType,
+    TypedType, Date, DateTime, Regexp, Email)
 from kim.type_mapper import TypeMapper
 
 
@@ -403,3 +402,16 @@ class RegexpTypeTests(unittest.TestCase):
 
         my_type = Regexp(pattern=re.compile('[0-9]+'))
         self.assertTrue(my_type.validate('1234'))
+
+
+class EmailTypeTests(unittest.TestCase):
+    def test_validate_no_match(self):
+
+        my_type = Email()
+        with self.assertRaises(ValidationError):
+            my_type.validate('hello')
+
+    def test_validate_valid(self):
+
+        my_type = Email()
+        self.assertTrue(my_type.validate('jack@gmail.com'))

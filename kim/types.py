@@ -335,3 +335,13 @@ class Regexp(String):
         if not self.pattern.match(source_value):
             raise ValidationError('Does not match regexp')
         return True
+
+
+class Email(Regexp):
+    PATTERN = re.compile(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/" \
+        "=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]" \
+        "(?:[a-z0-9-]*[a-z0-9])?")
+
+    def __init__(self, *args, **kwargs):
+        kwargs['pattern'] = self.PATTERN
+        super(Email, self).__init__(*args, **kwargs)
