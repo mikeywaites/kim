@@ -4,7 +4,7 @@
 import unittest
 
 from kim import types
-from kim.exceptions import ValidationError
+from kim.exceptions import ValidationError, MappingErrors
 from kim.mapping import Mapping, marshal, serialize
 from kim.type_mapper import TypeMapper
 
@@ -65,7 +65,7 @@ class MarshalTests(unittest.TestCase):
             name = 'foo'
             id = 'bar'
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(MappingErrors):
             marshal(self.mapping, Data())
 
     def test_field_appears_in_errors_when_invalid(self):
@@ -76,7 +76,7 @@ class MarshalTests(unittest.TestCase):
 
         try:
             marshal(self.mapping, Data())
-        except ValidationError as e:
+        except MappingErrors as e:
             self.assertIn('id', e.message)
 
     def test_field_values_returned_when_valid(self):
@@ -137,7 +137,7 @@ class SerializeTests(unittest.TestCase):
             name = 'foo'
             id = 'bar'
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(MappingErrors):
             serialize(self.mapping, Data())
 
     def test_field_appears_in_errors_when_invalid(self):
@@ -148,7 +148,7 @@ class SerializeTests(unittest.TestCase):
 
         try:
             serialize(self.mapping, Data())
-        except ValidationError as e:
+        except MappingErrors as e:
             self.assertIn('id', e.message)
 
     def test_field_values_returned_when_valid(self):
