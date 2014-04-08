@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import date, datetime
 import iso8601
 import re
+import decimal
 
 from .exceptions import ValidationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
@@ -380,3 +381,33 @@ class Float(TypedType):
 
     def marshal_value(self, source_value):
         return float(source_value)
+
+
+class Decimal(TypedType):
+    type_ = decimal.Decimal
+
+    def __init__(self, *args, **kwargs):
+        decimals = kwargs.pop('precision', 5)
+        self.precision = decimal.Decimal('0.' + '0' * (decimals - 1) + '1')
+
+    def _cast(self, value):
+        return decimal.Decimal(value).quantize(self.precision)
+
+    def validate_for_marshal(self, source_value):
+        if not isinstance(source_value, str):
+
+            raise ValidationError(self.get_error_message(source_value))
+
+        # Now just check we can cast it to a Decimal
+        try:
+            self._cast(source_value)
+        except decimal.InvalidOperation:
+            raise ValidationError('Not a valid decimal')
+
+        return True
+
+    def serialize_value(self, source_value):
+        return str(self._cast(source_value))
+
+    def marshal_value(self, source_value):
+        return self._cast(source_value)

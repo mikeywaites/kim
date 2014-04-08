@@ -3,6 +3,7 @@
 
 import unittest
 import re
+import decimal
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
 
@@ -10,7 +11,7 @@ from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, Collection, Integer, BaseType,
-    TypedType, Date, DateTime, Regexp, Email, Float)
+    TypedType, Date, DateTime, Regexp, Email, Float, Decimal)
 from kim.type_mapper import TypeMapper
 
 
@@ -469,3 +470,29 @@ class FloatTypeTests(unittest.TestCase):
         result = my_type.marshal_value("1.343")
 
         self.assertEqual(result, 1.343)
+
+class DecimalTypeTests(unittest.TestCase):
+
+    def test_validate_requires_valid_decimal_type(self):
+
+        my_type = Decimal()
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal('')
+
+    def test_validate_decimal_type(self):
+
+        my_type = Decimal()
+        self.assertTrue(my_type.validate_for_marshal("1.343"))
+
+    def test_serialize(self):
+        my_type = Decimal()
+        result = my_type.serialize_value(decimal.Decimal("1.343"))
+
+        self.assertEqual(result, "1.34300")
+
+    def test_marshal(self):
+        my_type = Decimal()
+        result = my_type.marshal_value("1.343")
+
+        self.assertEqual(result, decimal.Decimal("1.343"))
+
