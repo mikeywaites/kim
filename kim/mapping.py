@@ -170,13 +170,13 @@ class MarshalIterator(MappingIterator):
 
     def process_field(self, field, data):
 
-        value = self.get_attribute(data, field.source)
+        value = self.get_attribute(data, field.name)
         try:
             field.validate_for_marshal(value)
         except FieldError as e:
             raise e
 
-        return field.marshall_value(value or field.default)
+        return field.marshal_value(value or field.default)
 
 
 class SerializeIterator(MappingIterator):
@@ -187,7 +187,7 @@ class SerializeIterator(MappingIterator):
 
     def process_field(self, field, data):
 
-        value = self.get_attribute(data, field.name)
+        value = self.get_attribute(data, field.source)
         try:
             field.validate_for_serialize(value)
         except FieldError as e:
