@@ -190,7 +190,7 @@ class MappingIterator(object):
         else:
             for field in mapping.fields:
                 try:
-                    key, value = self.process_field(field, data)
+                    value = self.process_field(field, data)
                     self.update_output(field, value)
                 except FieldError as e:
                     self.errors[e.key].append(e.message)
@@ -210,11 +210,17 @@ class MappingIterator(object):
             value = self.get_attribute(data, field.source)
             field.validate_for_marshal(value)
 
-            return field.name, field.marshal_value(value or field.default)
+            return field.marshal_value(value or field.default)
         """
 
         raise NotImplementedError("Concrete classes must inplement "
                                   "process_field method")
+
+
+    def update_output(self, field, value):
+
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
 
 
 class MarshalIterator(MappingIterator):
@@ -231,10 +237,29 @@ class MarshalIterator(MappingIterator):
         value = self.get_attribute(data, field.source)
         try:
             field.validate_for_marshal(value)
-        except FieldError:
-            raise
+        except FieldError as e:
+            raise e
 
-        return field.name, field.marshall_value(value or field.default)
+        return field.marshall_value(value or field.default)
+
+
+class SerializeIterator(MappingIterator):
+
+    def update_output(self, field, value):
+
+        self.output[field.name] = value
+
+    def process_field(self, field, data):
+
+        value = self.get_attribute(data, field.source)
+        try:
+            field.validate_for_serialize(value)
+        except FieldError as e:
+            raise e
+
+        return field.serialize_value(value or field.default)
+
+
 
 
 class marshall(mapping, data):
