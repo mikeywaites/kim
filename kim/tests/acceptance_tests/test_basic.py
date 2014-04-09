@@ -108,3 +108,18 @@ class BasicAcceptanceTests(unittest.TestCase):
         marshal_result = Outer(input=result).marshal()
 
         self.assertEquals(marshal_result, data)
+
+    def test_many(self):
+        class Inner(Serializer):
+            name = Field(String(), source='user_name')
+
+        class Outer(Serializer):
+            user = Field(Nested(Inner), source='__self__')
+
+        data = [{'user_name': 'jack'}, {'user_name': 'mike'}]
+
+        result = Outer(data).serialize(many=True)
+
+        self.assertEquals(result, [{'user': {'name': 'jack'}},
+                                   {'user': {'name': 'mike'}}])
+
