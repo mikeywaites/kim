@@ -207,3 +207,19 @@ class SerializeTests(unittest.TestCase):
         result = serialize(self.mapping, data, many=True)
 
         self.assertEqual(data, result)
+
+    def test_many_with_errors(self):
+
+        data = [{'name': 'foo', 'id': 'abc'}, {'name': 'baz', 'id': 5}, {'name': 'bar', 'id': 'abc'}]
+
+        self.assertRaises(MappingErrors, lambda: serialize(self.mapping, data, many=True))
+
+        try:
+            serialize(self.mapping, data, many=True)
+        except MappingErrors as e:
+            exp = [
+                {'id': [u'This field was of an incorrect type']},
+                {},
+                {'id': [u'This field was of an incorrect type']}
+            ]
+            self.assertEqual(exp, e.message)

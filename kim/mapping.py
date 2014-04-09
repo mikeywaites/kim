@@ -1,7 +1,8 @@
-from collections import defaultdict
+from collections import defaultdict, Iterable
 
 from .type_mapper import BaseTypeMapper
-from .exceptions import ValidationError, MappingErrors, FieldError
+from .exceptions import (ValidationError, MappingErrors, FieldError,
+    NotIterableError)
 
 
 class BaseMapping(object):
@@ -112,11 +113,34 @@ class MappingIterator(object):
         return get_attribute(data, field_name)
 
     @classmethod
+    def run_many(cls, mapping, data, **kwargs):
+        output = []
+        errors = []
+        has_errors = False
+        for d in data:
+            try:
+                output.append(cls.run(mapping, d, many=False))
+            except MappingErrors as e:
+                has_errors = True
+                errors.append(e.message)
+            else:
+                errors.append({})
+
+        if has_errors:
+            raise MappingErrors(errors)
+
+        return output
+
+    @classmethod
+    def run_one(cls, mapping, data, **kwargs):
+        return cls()._run(mapping, data, **kwargs)
+
+    @classmethod
     def run(cls, mapping, data, many=False, **kwargs):
         if many:
-            return [cls.run(mapping, d, many=False) for d in data]
+            return cls.run_many(mapping, data, **kwargs)
         else:
-            return cls()._run(mapping, data, **kwargs)
+            return cls.run_one(mapping, data, **kwargs)
 
     def _run(self, mapping, data, **kwargs):
         """`run` the mapping iteration loop.
@@ -138,7 +162,7 @@ class MappingIterator(object):
                 continue
 
         if self.errors:
-            raise MappingErrors(self.errors)
+            raise MappingErrors(dict(self.errors))
 
         return self.output
 
