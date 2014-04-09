@@ -1,8 +1,7 @@
-from collections import defaultdict, Iterable
+from collections import defaultdict
 
 from .type_mapper import BaseTypeMapper
-from .exceptions import (ValidationError, MappingErrors, FieldError,
-    NotIterableError)
+from .exceptions import ValidationError, MappingErrors, FieldError
 
 
 class BaseMapping(object):
