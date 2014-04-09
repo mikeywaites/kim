@@ -191,3 +191,11 @@ class SerializeTests(unittest.TestCase):
         result = serialize(mapping, data)
 
         self.assertEqual(exp, result)
+
+    def test_many(self):
+
+        data = [{'name': 'foo', 'id': 1}, {'name': 'bar', 'id': 2}]
+
+        result = serialize(self.mapping, data, many=True)
+
+        self.assertEqual(data, result)

@@ -72,3 +72,9 @@ pprint(result)
 
 # class BrokenSerializer(Serializer):
 #     d = String()
+
+result = ProperSerializer(data=[data, data, data]).serialize(many=True)
+pprint(result)
+
+result = ProperSerializer(input=result).marshal(many=True)
+pprint(result)
