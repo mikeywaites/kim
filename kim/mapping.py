@@ -111,7 +111,14 @@ class MappingIterator(object):
         """
         return get_attribute(data, field_name)
 
-    def run(self, mapping, data, many=False, **kwargs):
+    @classmethod
+    def run(cls, mapping, data, many=False, **kwargs):
+        if many:
+            return [cls.run(mapping, d, many=False) for d in data]
+        else:
+            return cls()._run(mapping, data, **kwargs)
+
+    def _run(self, mapping, data, **kwargs):
         """`run` the mapping iteration loop.
 
         :param data: dict like data being mapped
@@ -122,16 +129,13 @@ class MappingIterator(object):
         :returns: serializable output
         """
 
-        if many:
-            return [self.run(mapping, d, many=False) for d in data]
-        else:
-            for field in mapping.fields:
-                try:
-                    value = self.process_field(field, data)
-                    self.update_output(field, value)
-                except FieldError as e:
-                    self.errors[e.key].append(e.message)
-                    continue
+        for field in mapping.fields:
+            try:
+                value = self.process_field(field, data)
+                self.update_output(field, value)
+            except FieldError as e:
+                self.errors[e.key].append(e.message)
+                continue
 
         if self.errors:
             raise MappingErrors(self.errors)
@@ -203,7 +207,7 @@ class ValidateOnlyIterator(MappingIterator):
         pass
 
 
-def marshal(mapping, data):
+def marshal(mapping, data, **kwargs):
     """`marshal` data to an expected output for a
     `mapping`
 
@@ -214,11 +218,11 @@ def marshal(mapping, data):
     :rtype: dict
     :returns: serializable object mapped from `mapping`
     """
-    return MarshalIterator().run(mapping, data)
+    return MarshalIterator.run(mapping, data, **kwargs)
 
 
-def serialize(mapping, data):
+def serialize(mapping, data, **kwargs):
     """Serialize data to an expected input for a `mapping`
 
     """
-    return SerializeIterator().run(mapping, data)
+    return SerializeIterator.run(mapping, data, **kwargs)

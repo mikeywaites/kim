@@ -177,11 +177,11 @@ class Serializer(BaseSerializer):
 
         return self.__mapping__
 
-    def serialize(self, role=None):
-        return serialize(self.get_mapping(role=role), self.source_data)
+    def serialize(self, role=None, **kwargs):
+        return serialize(self.get_mapping(role=role), self.source_data, **kwargs)
 
     def json(self):
         return json.dumps(self.serialize())
 
-    def marshal(self, role=None):
-        return marshal(self.get_mapping(role=role), self.input)
+    def marshal(self, role=None, **kwargs):
+        return marshal(self.get_mapping(role=role), self.input, **kwargs)
