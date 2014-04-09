@@ -96,7 +96,7 @@ def get_attribute(data, attr):
         return getattr(data, attr, None)
 
 
-class MappingIterator(object):
+class BaseIterator(object):
 
     def __init__(self, output=None, errors=None):
         self.output = output or dict()
@@ -143,10 +143,7 @@ class MappingIterator(object):
 
             return field.marshal_value(value or field.default)
         """
-        value = self.get_field_attribute(data, field)
-        value = self.validate(field, value)
-        value = self.process_field(field, value)
-        self.update_output(field, value)
+        raise NotImplementedError("Not implemeneted")
 
     def validate(self, field, value):
         try:
@@ -239,6 +236,16 @@ class SerializeFieldMixin(FieldMixin):
         return field.serialize_value(value or field.default)
 
 
+class MappingIterator(BaseIterator):
+
+    def process(self, field, data):
+
+        value = self.get_field_attribute(data, field)
+        value = self.validate(field, value)
+        value = self.process_field(field, value)
+        self.update_output(field, value)
+
+
 class SerializeMapping(MappingIterator, SerializeFieldMixin):
     pass
 
@@ -247,7 +254,7 @@ class MarshalMapping(MappingIterator, MarshalFieldMixin):
     pass
 
 
-class ValidateOnlyIterator(MappingIterator):
+class ValidateOnlyIterator(BaseIterator):
 
     def process(self, field, data):
         value = self.get_field_attribute(data, field)
