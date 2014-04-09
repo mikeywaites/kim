@@ -122,8 +122,7 @@ class MappingIterator(object):
 
         for field in mapping.fields:
             try:
-                value = self.process(field, data)
-                self.update_output(field, value)
+                self.process(field, data)
             except FieldError as e:
                 self.errors[e.key].append(e.message)
                 continue
@@ -131,6 +130,9 @@ class MappingIterator(object):
         if self.errors:
             raise MappingErrors(self.errors)
 
+        return self.get_output()
+
+    def get_output(self):
         return self.output
 
 
@@ -149,7 +151,8 @@ class BaseDataMixin(object):
         """
         value = self.get_attribute(data, field)
         value = self.validate(field, value)
-        return self.process_field(field, value)
+        value = self.process_field(field, value)
+        self.update_output(field, value)
 
     def validate(self, field, value):
         try:
@@ -236,25 +239,12 @@ class MarshalMapping(MappingIterator, MarshalDataMixin):
 
 class ValidateOnlyIterator(MappingIterator):
 
-    def _run(self, mapping, data, **kwargs):
-        """`run` the mapping iteration loop.
+    def process(self, field, data):
+        value = self.get_attribute(data, field)
+        self.validate(field, value)
 
-        :param data: dict like data being mapped
-        :param mapping: :class:`kim.mapping.Mapping`
-        :param many: map several instances of `data` to `mapping`
-
-        :raises: MappingErrors
-        :returns: serializable output
-        """
-
-        for field in mapping.fields:
-            try:
-                self.process(field, data)
-            except FieldError as e:
-                self.errors[e.key].append(e.message)
-
-        if self.errors:
-            raise MappingErrors(self.errors)
+    def get_output(self):
+        return None
 
 
 class ValidateOnlySerializer(ValidateOnlyIterator, SerializeDataMixin):
