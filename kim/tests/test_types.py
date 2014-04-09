@@ -461,7 +461,7 @@ class FloatTypeTests(unittest.TestCase):
 
         my_type = Float(as_string=True)
         with self.assertRaises(ValidationError):
-            my_type.validate('abc')
+            my_type.validate_for_marshal('abc')
 
     def test_validate_for_marhsal_float_type_as_string(self):
 
@@ -492,6 +492,12 @@ class DecimalTypeTests(unittest.TestCase):
         my_type = Decimal()
         with self.assertRaises(ValidationError):
             my_type.validate_for_marshal('')
+
+    def test_validate_requires_valid_decimal_type(self):
+
+        my_type = Decimal()
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal(1)
 
     def test_validate_decimal_type(self):
 
