@@ -132,12 +132,6 @@ class MappingIterator(object):
 
         return self.get_output()
 
-    def get_output(self):
-        return self.output
-
-
-class BaseDataMixin(object):
-
     def process(self, field, data):
         """Process a field mapping using `data`.  This method should
         return both the field.name or field.source value plus the value to
@@ -149,7 +143,7 @@ class BaseDataMixin(object):
 
             return field.marshal_value(value or field.default)
         """
-        value = self.get_attribute(data, field)
+        value = self.get_field_attribute(data, field)
         value = self.validate(field, value)
         value = self.process_field(field, value)
         self.update_output(field, value)
@@ -162,12 +156,28 @@ class BaseDataMixin(object):
 
         return value
 
-    def update_output(self, field, value):
+    def get_output(self):
+        return self.output
+
+
+class FieldMixin(object):
+
+    def update_field_output(self, field, value):
 
         raise NotImplementedError("Concrete classes must inplement "
                                   "update_output method")
 
-    def get_attribute(self, data, field):
+    def get_field_attribute(self, data, field):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
+
+    def validate_field(self, field, value):
         """return the value of field_name from data.
 
         .. seealso::
@@ -188,9 +198,9 @@ class BaseDataMixin(object):
                                   "update_output method")
 
 
-class MarshalDataMixin(BaseDataMixin):
+class MarshalFieldMixin(FieldMixin):
 
-    def get_attribute(self, data, field):
+    def get_field_attribute(self, data, field):
 
         return get_attribute(data, field.name)
 
@@ -210,9 +220,9 @@ class MarshalDataMixin(BaseDataMixin):
         return field.marshal_value(value or field.default)
 
 
-class SerializeDataMixin(BaseDataMixin):
+class SerializeFieldMixin(FieldMixin):
 
-    def get_attribute(self, data, field):
+    def get_field_attribute(self, data, field):
 
         return get_attribute(data, field.source)
 
@@ -229,29 +239,29 @@ class SerializeDataMixin(BaseDataMixin):
         return field.serialize_value(value or field.default)
 
 
-class SerializeMapping(MappingIterator, SerializeDataMixin):
+class SerializeMapping(MappingIterator, SerializeFieldMixin):
     pass
 
 
-class MarshalMapping(MappingIterator, MarshalDataMixin):
+class MarshalMapping(MappingIterator, MarshalFieldMixin):
     pass
 
 
 class ValidateOnlyIterator(MappingIterator):
 
     def process(self, field, data):
-        value = self.get_attribute(data, field)
+        value = self.get_field_attribute(data, field)
         self.validate(field, value)
 
     def get_output(self):
         return None
 
 
-class ValidateOnlySerializer(ValidateOnlyIterator, SerializeDataMixin):
+class ValidateOnlySerializer(ValidateOnlyIterator, SerializeFieldMixin):
     pass
 
 
-class ValidateOnlyMarshaler(ValidateOnlyIterator, MarshalDataMixin):
+class ValidateOnlyMarshaler(ValidateOnlyIterator, MarshalFieldMixin):
     pass
 
 
