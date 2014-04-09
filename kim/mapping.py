@@ -102,15 +102,6 @@ class MappingIterator(object):
         self.output = output or dict()
         self.errors = errors or defaultdict(list)
 
-    def get_attribute(self, data, field_name):
-        """return the value of field_name from data.
-
-        .. seealso::
-            :func:`kim.mapping.get_attribute`
-
-        """
-        return get_attribute(data, field_name)
-
     @classmethod
     def run(cls, mapping, data, many=False, **kwargs):
         if many:
@@ -142,6 +133,18 @@ class MappingIterator(object):
 
         return self.output
 
+
+class BaseDataMapping(object):
+
+    def get_attribute(self, data, field_name):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
+        return get_attribute(data, field_name)
+
     def process_field(self, field, data):
         """Process a field mapping using `data`.  This method should
         return both the field.name or field.source value plus the value to
@@ -153,17 +156,28 @@ class MappingIterator(object):
 
             return field.marshal_value(value or field.default)
         """
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "process_field method")
+        value = self.get_attribute(data, field)
+        return self.validate(field, value)
 
     def update_output(self, field, value):
 
         raise NotImplementedError("Concrete classes must inplement "
                                   "update_output method")
 
+    def validate(self, field, value):
+        try:
+            self.validate_field(field, value)
+        except ValidationError as e:
+            raise FieldError(field.source, e.message)
 
-class MarshalIterator(MappingIterator):
+        return value
+
+
+class MarshalMixin(BaseDataMapping):
+
+    def get_attribute(self, data, field):
+
+        return get_attribute(data, field.name)
 
     def update_output(self, field, value):
 
@@ -172,39 +186,73 @@ class MarshalIterator(MappingIterator):
         else:
             self.output[field.source] = value
 
+    def validate_field(self, field, value):
+
+        field.validate_for_marshal(value)
+
     def process_field(self, field, data):
 
-        value = self.get_attribute(data, field.name)
-        try:
-            field.validate_for_marshal(value)
-        except ValidationError as e:
-            raise FieldError(field.name, e.message)
-
+        value = super(MarshalMixin, self).process_field(field, data)
         return field.marshal_value(value or field.default)
 
 
-class SerializeIterator(MappingIterator):
+class SerializeMixin(BaseDataMapping):
+
+    def get_attribute(self, data, field):
+
+        return get_attribute(data, field.source)
 
     def update_output(self, field, value):
 
         self.output[field.name] = value
 
+    def validate_field(self, field, value):
+
+        field.validate_for_serialize(value)
+
     def process_field(self, field, data):
 
-        value = self.get_attribute(data, field.source)
-        try:
-            field.validate_for_serialize(value)
-        except ValidationError as e:
-            raise FieldError(field.source, e.message)
-
+        value = super(SerializeMixin, self).process_field(field, data)
         return field.serialize_value(value or field.default)
+
+
+class SerializeMapping(MappingIterator, SerializeMixin):
+    pass
+
+
+class MarshalMapping(MappingIterator, MarshalMixin):
+    pass
 
 
 class ValidateOnlyIterator(MappingIterator):
 
-    @classmethod
-    def run(self, mapping, data, many=False, **kwargs):
-        pass
+    def _run(self, mapping, data, **kwargs):
+        """`run` the mapping iteration loop.
+
+        :param data: dict like data being mapped
+        :param mapping: :class:`kim.mapping.Mapping`
+        :param many: map several instances of `data` to `mapping`
+
+        :raises: MappingErrors
+        :returns: serializable output
+        """
+
+        for field in mapping.fields:
+            try:
+                self.process_field(field, data)
+            except FieldError as e:
+                self.errors[e.key].append(e.message)
+
+        if self.errors:
+            raise MappingErrors(self.errors)
+
+
+class ValidateOnlySerializer(ValidateOnlyIterator, SerializeMixin):
+    pass
+
+
+class ValidateOnlyMarshaler(ValidateOnlyIterator, MarshalMixin):
+    pass
 
 
 def marshal(mapping, data, **kwargs):
@@ -218,11 +266,11 @@ def marshal(mapping, data, **kwargs):
     :rtype: dict
     :returns: serializable object mapped from `mapping`
     """
-    return MarshalIterator.run(mapping, data, **kwargs)
+    return MarshalMapping.run(mapping, data, **kwargs)
 
 
 def serialize(mapping, data, **kwargs):
     """Serialize data to an expected input for a `mapping`
 
     """
-    return SerializeIterator.run(mapping, data, **kwargs)
+    return SerializeMapping.run(mapping, data, **kwargs)

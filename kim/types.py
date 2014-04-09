@@ -255,18 +255,14 @@ class Nested(BaseType):
         :raises: ValidationError
         :returns: True
         """
-        errors = defaultdict(list)
-        for field in self.get_mapping().fields:
-            value = get_attribute(source_value, field.name)
-            try:
-                field.validate_for_marshal(value)
-            except ValidationError as e:
-                errors[field.name].append(e.message)
+        from .mapping import ValidateOnlyMarshaler, MappingErrors
 
-        if errors:
-            raise ValidationError(errors)
-        else:
-            return super(Nested, self).validate_for_marshal(source_value)
+        try:
+            ValidateOnlyMarshaler.run(self.get_mapping(), source_value)
+        except MappingErrors as e:
+            raise ValidationError(e.message)
+
+        return super(Nested, self).validate_for_marshal(source_value)
 
     def validate_for_serialize(self, source_value):
         """iterates Nested mapping calling validate for each
@@ -277,13 +273,10 @@ class Nested(BaseType):
         :returns: True
         """
 
-        for field in self.get_mapping().fields:
-            try:
-                field.validate_for_serialize(source_value)
-            except ValidationError as e:
-                errors
+        from .mapping import ValidateOnlySerializer, MappingErrors
+
         try:
-            serialize(self.get_mapping(), source_value)
+            ValidateOnlySerializer.run(self.get_mapping(), source_value)
         except MappingErrors as e:
             raise ValidationError(e.message)
 
