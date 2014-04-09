@@ -105,7 +105,7 @@ class MappingIterator(object):
     @classmethod
     def run(cls, mapping, data, many=False, **kwargs):
         if many:
-            return [cls.run(mapping, d, many=False) for d in data]
+            return [cls.run(mapping, d, many=False, **kwargs) for d in data]
         else:
             return cls()._run(mapping, data, **kwargs)
 
