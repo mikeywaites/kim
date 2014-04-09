@@ -15,6 +15,9 @@ from kim.types import (Nested, String, Collection, Integer, BaseType,
 from kim.type_mapper import TypeMapper
 
 
+ImportByStringMapping = Mapping()
+
+
 class BaseTypeTests(unittest.TestCase):
 
     def test_marshal_value(self):
@@ -298,6 +301,16 @@ class NestedTypeTests(unittest.TestCase):
             'email': 'foo@bar.com'
         })
         self.assertTrue(output)
+
+    def test_import_by_string_relative(self):
+        nested = Nested(mapped='ImportByStringMapping')
+
+        self.assertEqual(nested.mapping, ImportByStringMapping)
+
+    def test_import_by_string_absolute(self):
+        nested = Nested(mapped='kim.tests.test_types.ImportByStringMapping')
+
+        self.assertEqual(nested.mapping, ImportByStringMapping)
 
 
 class DateTypeTests(unittest.TestCase):
