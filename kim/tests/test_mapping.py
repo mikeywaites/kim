@@ -120,6 +120,14 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
+    def test_many(self):
+
+        data = [{'name': 'foo', 'id': 1}, {'name': 'bar', 'id': 2}]
+
+        result = marshal(self.mapping, data, many=True)
+
+        self.assertEqual(data, result)
+
 
 class SerializeTests(unittest.TestCase):
 
