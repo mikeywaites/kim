@@ -276,18 +276,18 @@ class Nested(BaseType):
         :raises: ValidationError
         :returns: True
         """
-        errors = defaultdict(list)
-        for field in self.get_mapping().fields:
-            value = get_attribute(source_value, field.source)
-            try:
-                field.validate_for_serialize(value)
-            except ValidationError as e:
-                errors[field.source].append(e.message)
 
-        if errors:
-            raise ValidationError(errors)
-        else:
-            return super(Nested, self).validate_for_serialize(source_value)
+        for field in self.get_mapping().fields:
+            try:
+                field.validate_for_serialize(source_value)
+            except ValidationError as e:
+                errors
+        try:
+            serialize(self.get_mapping(), source_value)
+        except MappingErrors as e:
+            raise ValidationError(e.message)
+
+        return super(Nested, self).validate_for_serialize(source_value)
 
 
 class Collection(TypedType):

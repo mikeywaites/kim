@@ -196,6 +196,13 @@ class SerializeIterator(MappingIterator):
         return field.serialize_value(value or field.default)
 
 
+class ValidateOnlyIterator(MappingIterator):
+
+    @classmethod
+    def run(self, mapping, data, many=False, **kwargs):
+        pass
+
+
 def marshal(mapping, data):
     """`marshal` data to an expected output for a
     `mapping`
