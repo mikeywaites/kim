@@ -1,9 +1,7 @@
-#from .exceptions import MappingError
-
 from collections import defaultdict
 
 from .type_mapper import BaseTypeMapper
-from .exceptions import ValidationError
+from .exceptions import ValidationError, MappingErrors, FieldError
 
 
 class BaseMapping(object):
@@ -98,6 +96,106 @@ def get_attribute(data, attr):
         return getattr(data, attr, None)
 
 
+class MappingIterator(object):
+
+    def __init__(self, output=None, errors=None):
+        self.output = output or dict()
+        self.errors = errors or defaultdict(list)
+
+    def get_attribute(self, data, field_name):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
+        return get_attribute(data, field_name)
+
+    def run(self, mapping, data, many=False, **kwargs):
+        """`run` the mapping iteration loop.
+
+        :param data: dict like data being mapped
+        :param mapping: :class:`kim.mapping.Mapping`
+        :param many: map several instances of `data` to `mapping`
+
+        :raises: MappingErrors
+        :returns: serializable output
+        """
+
+        if many:
+            return [self.run(mapping, d, many=False) for d in data]
+        else:
+            for field in mapping.fields:
+                try:
+                    value = self.process_field(field, data)
+                    self.update_output(field, value)
+                except FieldError as e:
+                    self.errors[e.key].append(e.message)
+                    continue
+
+        if self.errors:
+            raise MappingErrors(self.errors)
+
+        return self.output
+
+    def process_field(self, field, data):
+        """Process a field mapping using `data`.  This method should
+        return both the field.name or field.source value plus the value to
+        map to the field.
+
+        e.g::
+            value = self.get_attribute(data, field.source)
+            field.validate_for_marshal(value)
+
+            return field.marshal_value(value or field.default)
+        """
+
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "process_field method")
+
+    def update_output(self, field, value):
+
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
+
+
+class MarshalIterator(MappingIterator):
+
+    def update_output(self, field, value):
+
+        if field.source == '__self__':
+            self.output.update(value)
+        else:
+            self.output[field.source] = value
+
+    def process_field(self, field, data):
+
+        value = self.get_attribute(data, field.name)
+        try:
+            field.validate_for_marshal(value)
+        except ValidationError as e:
+            raise FieldError(field.name, e.message)
+
+        return field.marshal_value(value or field.default)
+
+
+class SerializeIterator(MappingIterator):
+
+    def update_output(self, field, value):
+
+        self.output[field.name] = value
+
+    def process_field(self, field, data):
+
+        value = self.get_attribute(data, field.source)
+        try:
+            field.validate_for_serialize(value)
+        except ValidationError as e:
+            raise FieldError(field.source, e.message)
+
+        return field.serialize_value(value or field.default)
+
+
 def marshal(mapping, data):
     """`marshal` data to an expected output for a
     `mapping`
@@ -109,51 +207,11 @@ def marshal(mapping, data):
     :rtype: dict
     :returns: serializable object mapped from `mapping`
     """
+    return MarshalIterator().run(mapping, data)
 
-    output = {}
-    errors = defaultdict(list)
-
-    for field in mapping.fields:
-        value = get_attribute(data, field.name)
-        try:
-            field.validate_for_marshal(value)
-        except ValidationError as e:
-            errors[field.name].append(e.message)
-
-        if field.name not in errors and not value:
-            value = field.default
-
-        if field.source == '__self__':
-            output.update(field.marshal_value(value))
-        else:
-            output[field.source] = field.marshal_value(value)
-
-
-    if errors:
-        raise ValidationError(errors)
-
-    return output
 
 def serialize(mapping, data):
     """Serialize data to an expected input for a `mapping`
 
     """
-    output = {}
-    errors = defaultdict(list)
-
-    for field in mapping.fields:
-        value = get_attribute(data, field.source)
-        try:
-            field.validate_for_serialize(value)
-        except ValidationError as e:
-            errors[field.source].append(e.message)
-
-        if field.source not in errors and not value:
-            value = field.default
-
-        output[field.name] = field.serialize_value(value)
-
-    if errors:
-        raise ValidationError(errors)
-
-    return output
+    return SerializeIterator().run(mapping, data)
