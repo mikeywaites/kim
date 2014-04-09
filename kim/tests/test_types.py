@@ -119,7 +119,8 @@ class NestedTypeTests(unittest.TestCase):
     def test_nested_requires_valid_mapping_type(self):
 
         with self.assertRaises(TypeError):
-            Nested(mapped=list())
+            nested = Nested(mapped=list())
+            nested.mapping
 
     def test_nested_type_sets_role(self):
 
