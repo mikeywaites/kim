@@ -122,7 +122,7 @@ class MappingIterator(object):
 
         for field in mapping.fields:
             try:
-                value = self.process_field(field, data)
+                value = self.process(field, data)
                 self.update_output(field, value)
             except FieldError as e:
                 self.errors[e.key].append(e.message)
@@ -134,18 +134,9 @@ class MappingIterator(object):
         return self.output
 
 
-class BaseDataMapping(object):
+class BaseDataMixin(object):
 
-    def get_attribute(self, data, field_name):
-        """return the value of field_name from data.
-
-        .. seealso::
-            :func:`kim.mapping.get_attribute`
-
-        """
-        return get_attribute(data, field_name)
-
-    def process_field(self, field, data):
+    def process(self, field, data):
         """Process a field mapping using `data`.  This method should
         return both the field.name or field.source value plus the value to
         map to the field.
@@ -157,12 +148,8 @@ class BaseDataMapping(object):
             return field.marshal_value(value or field.default)
         """
         value = self.get_attribute(data, field)
-        return self.validate(field, value)
-
-    def update_output(self, field, value):
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "update_output method")
+        value = self.validate(field, value)
+        return self.process_field(field, value)
 
     def validate(self, field, value):
         try:
@@ -172,8 +159,33 @@ class BaseDataMapping(object):
 
         return value
 
+    def update_output(self, field, value):
 
-class MarshalMixin(BaseDataMapping):
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
+
+    def get_attribute(self, data, field):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
+
+    def process_field(self, field, value):
+        """return the value of field_name from data.
+
+        .. seealso::
+            :func:`kim.mapping.get_attribute`
+
+        """
+        raise NotImplementedError("Concrete classes must inplement "
+                                  "update_output method")
+
+
+class MarshalDataMixin(BaseDataMixin):
 
     def get_attribute(self, data, field):
 
@@ -190,13 +202,12 @@ class MarshalMixin(BaseDataMapping):
 
         field.validate_for_marshal(value)
 
-    def process_field(self, field, data):
+    def process_field(self, field, value):
 
-        value = super(MarshalMixin, self).process_field(field, data)
         return field.marshal_value(value or field.default)
 
 
-class SerializeMixin(BaseDataMapping):
+class SerializeDataMixin(BaseDataMixin):
 
     def get_attribute(self, data, field):
 
@@ -210,17 +221,16 @@ class SerializeMixin(BaseDataMapping):
 
         field.validate_for_serialize(value)
 
-    def process_field(self, field, data):
+    def process_field(self, field, value):
 
-        value = super(SerializeMixin, self).process_field(field, data)
         return field.serialize_value(value or field.default)
 
 
-class SerializeMapping(MappingIterator, SerializeMixin):
+class SerializeMapping(MappingIterator, SerializeDataMixin):
     pass
 
 
-class MarshalMapping(MappingIterator, MarshalMixin):
+class MarshalMapping(MappingIterator, MarshalDataMixin):
     pass
 
 
@@ -239,7 +249,7 @@ class ValidateOnlyIterator(MappingIterator):
 
         for field in mapping.fields:
             try:
-                self.process_field(field, data)
+                self.process(field, data)
             except FieldError as e:
                 self.errors[e.key].append(e.message)
 
@@ -247,11 +257,11 @@ class ValidateOnlyIterator(MappingIterator):
             raise MappingErrors(self.errors)
 
 
-class ValidateOnlySerializer(ValidateOnlyIterator, SerializeMixin):
+class ValidateOnlySerializer(ValidateOnlyIterator, SerializeDataMixin):
     pass
 
 
-class ValidateOnlyMarshaler(ValidateOnlyIterator, MarshalMixin):
+class ValidateOnlyMarshaler(ValidateOnlyIterator, MarshalDataMixin):
     pass
 
 
