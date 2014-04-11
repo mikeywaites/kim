@@ -4,8 +4,9 @@
 import unittest
 
 from kim import types
-from kim.exceptions import MappingErrors
-from kim.mapping import Mapping, marshal, serialize
+from kim.exceptions import MappingErrors, ValidationError, FieldError
+from kim.mapping import (Mapping, marshal, serialize,
+                         BaseIterator, FieldMixin)
 from kim.type_mapper import TypeMapper
 
 
@@ -47,6 +48,15 @@ class MappingTest(unittest.TestCase):
         fields = [field for field in mapping]
         self.assertEqual(fields[0], name)
         self.assertEqual(fields[1], email)
+
+
+class BaseIteratorTests(unittest.TestCase):
+
+    def test_process_method_raises_not_implemented(self):
+
+        base = BaseIterator()
+        with self.assertRaises(NotImplementedError):
+            base.process_field('foo', 'bar')
 
 
 class MarshalTests(unittest.TestCase):
