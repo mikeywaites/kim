@@ -28,15 +28,11 @@ class BaseTypeMapper(object):
 
     def __init__(self, name, base_type,
                  source=None,
-                 required=True,
-                 allow_none=True,
                  **options):
 
         self.base_type = base_type
         self.name = name
         self.source = source or name
-        self.required = required
-        self.allow_none = allow_none
         self.default = options.pop('default', base_type.default)
 
     def marshal_value(self, source_value):
@@ -54,37 +50,12 @@ class BaseTypeMapper(object):
 
         return self.base_type.serialize_value(source_value)
 
-    def validate_helper(self, source_value):
-        if self.required and not source_value:
-            raise ValidationError("This is a required field")
-        elif not self.allow_none and source_value is None:
-            raise ValidationError("This field cannot be None")
-        elif self.allow_none and source_value is None:
-            return True
-        # If we get here and None is returned, then we'll delegate to the
-        # judgement of the validate_type_for_marshal/serialize
-
     def validate_for_marshal(self, source_value):
-        # First see if validate_helper can give us a definite answer, if not
-        # (ie it returns None) then delegate to the base type
-        return self.validate_helper(source_value) or self.validate_type_for_marshal(source_value)
+        return self.base_type.validate_for_marshal(source_value)
 
     def validate_for_serialize(self, source_value):
-        # First see if validate_helper can give us a definite answer, if not
-        # (ie it returns None) then delegate to the base type
-        return self.validate_helper(source_value) or self.validate_type_for_serialize(source_value)
+        return self.base_type.validate_for_serialize(source_value)
 
 
 class TypeMapper(BaseTypeMapper):
-
-    def validate_type_for_marshal(self, source_value):
-        """Call :meth:`validate` on `base_type`.
-
-        """
-        return self.base_type.validate_for_marshal(source_value)
-
-    def validate_type_for_serialize(self, source_value):
-        """Call :meth:`validate` on `base_type`.
-
-        """
-        return self.base_type.validate_for_serialize(source_value)
+    pass

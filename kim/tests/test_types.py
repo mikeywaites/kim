@@ -6,6 +6,7 @@ import re
 import decimal
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
+import mock
 
 from kim.roles import Role
 from kim.mapping import Mapping
@@ -36,6 +37,35 @@ class BaseTypeTests(unittest.TestCase):
         self.assertTrue(my_type.validate('foo'), True)
 
 
+    def test_validate_raises_error_when_required_and_value_null(self):
+
+        my_type = String(required=True)
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_serialize('')
+
+    def test_validate_not_allow_none(self):
+        my_type = String(allow_none=False, required=False)
+
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_serialize(None)
+
+    def test_validate_allow_none(self):
+
+        my_type = String(required=False, allow_none=True)
+
+        self.assertTrue(my_type.validate_for_serialize(None))
+
+    def test_validate_mapped_type(self):
+        my_type = String(required=True, allow_none=False)
+
+        self.assertTrue(my_type.validate_for_serialize('foo'))
+
+    def test_set_allow_none(self):
+        my_type = String(allow_none=False)
+        self.assertEqual(my_type.allow_none, False)
+
+
+
 class TypedTypeTests(unittest.TestCase):
 
     def test_validate_requires_valid(self):
@@ -53,7 +83,7 @@ class TypedTypeTests(unittest.TestCase):
 
             type_ = list
 
-        self.assertTrue(MyType().validate([]))
+        self.assertTrue(MyType().validate([1]))
 
 
 class StringTypeTests(unittest.TestCase):

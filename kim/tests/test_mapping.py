@@ -100,8 +100,8 @@ class MarshalTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = TypeMapper('name', types.String(),
-                                required=False, default='baz')
+        name = TypeMapper('name', types.String(required=False),
+                                default='baz')
         mapping = Mapping(name)
         result = marshal(mapping, {})
         exp = {'name': 'baz'}
@@ -180,8 +180,8 @@ class SerializeTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = TypeMapper('name', types.String(),
-                          required=False, default='baz')
+        name = TypeMapper('name', types.String(required=False),
+                          default='baz')
         mapping = Mapping(name)
         result = serialize(mapping, {})
         exp = {'name': 'baz'}

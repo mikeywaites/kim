@@ -21,6 +21,10 @@ class BaseType(object):
 
     error_message = 'An error ocurred validating this field'
 
+    def __init__(self, required=True, allow_none=True, **options):
+        self.required = required
+        self.allow_none = allow_none
+
     def get_error_message(self, source_value):
         """Return a valiation error message for this Type
 
@@ -50,20 +54,29 @@ class BaseType(object):
         return source_value
 
     def validate(self, source_value):
-        """Validate the `source_value` is of a valid type. If `source_value`
-        is invalid a :class:`kim.exceptions.ValidationError` should be raised
+        return self._validate_helper(source_value)
+    #     """Validate the `source_value` is of a valid type. If `source_value`
+    #     is invalid a :class:`kim.exceptions.ValidationError` should be raised
 
-        :param source_value: the value being validated.
+    #     :param source_value: the value being validated.
 
-        e.g::
-            def validate(self, source_value):
-                if not isinstance(source_value, str):
-                    raise ValidationError("Invalid type")
+    #     e.g::
+    #         def validate(self, source_value):
+    #             if not isinstance(source_value, str):
+    #                 raise ValidationError("Invalid type")
 
-        :raises: :class:`kim.exceptions.ValidationError`
-        :returns: True
-        """
-        return True
+    #     :raises: :class:`kim.exceptions.ValidationError`
+    #     :returns: True
+    #     """
+    #     return True
+
+    def _validate_helper(self, source_value):
+        if self.required and not source_value:
+            raise ValidationError("This is a required field")
+        elif not self.allow_none and source_value is None:
+            raise ValidationError("This field cannot be None")
+        else:
+            return True
 
     def validate_for_marshal(self, source_value):
         return self.validate(source_value)
@@ -88,7 +101,7 @@ class TypedType(BaseType):
         :returns: None
         """
 
-        if not isinstance(source_value, self.type_):
+        if source_value and not isinstance(source_value, self.type_):
 
             raise ValidationError(self.get_error_message(source_value))
 
@@ -383,7 +396,7 @@ class Float(TypedType):
 
     def __init__(self, *args, **kwargs):
         self.as_string = kwargs.pop('as_string', False)
-        super(Float, self).__init__(*args)
+        super(Float, self).__init__(*args, **kwargs)
 
     def validate_for_marshal(self, source_value):
         if self.as_string:
@@ -417,6 +430,7 @@ class Decimal(TypedType):
     def __init__(self, *args, **kwargs):
         decimals = kwargs.pop('precision', 5)
         self.precision = decimal.Decimal('0.' + '0' * (decimals - 1) + '1')
+        super(Decimal, self).__init__(*args, **kwargs)
 
     def _cast(self, value):
         return decimal.Decimal(value).quantize(self.precision)
