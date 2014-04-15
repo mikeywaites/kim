@@ -54,21 +54,20 @@ class BaseType(object):
         return source_value
 
     def validate(self, source_value):
+        """Validate the `source_value` is valid. If `source_value`
+        is invalid a :class:`kim.exceptions.ValidationError` should be raised
+
+        :param source_value: the value being validated.
+
+        e.g::
+            def validate(self, source_value):
+                if not isinstance(source_value, str):
+                    raise ValidationError("Invalid type")
+
+        :raises: :class:`kim.exceptions.ValidationError`
+        :returns: True
+        """
         return self._validate_helper(source_value)
-    #     """Validate the `source_value` is of a valid type. If `source_value`
-    #     is invalid a :class:`kim.exceptions.ValidationError` should be raised
-
-    #     :param source_value: the value being validated.
-
-    #     e.g::
-    #         def validate(self, source_value):
-    #             if not isinstance(source_value, str):
-    #                 raise ValidationError("Invalid type")
-
-    #     :raises: :class:`kim.exceptions.ValidationError`
-    #     :returns: True
-    #     """
-    #     return True
 
     def _validate_helper(self, source_value):
         if self.required and not source_value:
