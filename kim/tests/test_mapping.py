@@ -128,6 +128,25 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(data, result)
 
+    def test_include_in_marshal(self):
+        class NotIncludedType(types.Integer):
+            def include_in_marshal(self):
+                return False
+
+        name = TypeMapper('name', types.String())
+        id = TypeMapper('id', NotIncludedType())
+        mapping = Mapping(name, id)
+
+        data = {'name': 'bar', 'id': 1}
+
+        result = marshal(mapping, data)
+
+        exp = {'name': 'bar'}
+
+        self.assertEqual(exp, result)
+
+
+
 
 class SerializeTests(unittest.TestCase):
 
@@ -223,3 +242,22 @@ class SerializeTests(unittest.TestCase):
                 {'id': [u'This field was of an incorrect type']}
             ]
             self.assertEqual(exp, e.message)
+
+    def test_include_in_serialize(self):
+        class NotIncludedType(types.Integer):
+            def include_in_serialize(self):
+                return False
+
+        name = TypeMapper('name', types.String())
+        id = TypeMapper('id', NotIncludedType())
+        mapping = Mapping(name, id)
+
+        data = {'name': 'bar', 'id': 1}
+
+        result = serialize(mapping, data)
+
+        exp = {'name': 'bar'}
+
+        self.assertEqual(exp, result)
+
+

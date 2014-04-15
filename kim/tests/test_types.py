@@ -64,6 +64,30 @@ class BaseTypeTests(unittest.TestCase):
         my_type = String(allow_none=False)
         self.assertEqual(my_type.allow_none, False)
 
+    def test_include_in_serialize(self):
+        my_type = String()
+        self.assertTrue(my_type.include_in_serialize())
+
+    def test_include_in_marshal_not_read_only(self):
+        my_type = String(read_only=False)
+        self.assertTrue(my_type.include_in_marshal())
+
+    def test_include_in_marshal_read_only(self):
+        my_type = String(read_only=True)
+        self.assertFalse(my_type.include_in_marshal())
+
+    def test_validate_for_marshal_read_only_not_none(self):
+        my_type = String(read_only=True)
+        with self.assertRaises(ValidationError):
+            self.assertFalse(my_type.validate_for_marshal('bla'))
+
+    def test_validate_for_marshal_read_only_none(self):
+        my_type = String(read_only=True)
+        self.assertTrue(my_type.validate_for_marshal(None))
+
+    def test_validate_for_marshal_not_read_only(self):
+        my_type = String(read_only=False)
+        self.assertTrue(my_type.validate_for_marshal('bla'))
 
 
 class TypedTypeTests(unittest.TestCase):

@@ -189,11 +189,11 @@ class MappingIterator(object):
 class MarshalIterator(MappingIterator):
 
     def update_output(self, field, value):
-
-        if field.source == '__self__':
-            self.output.update(value)
-        else:
-            self.output[field.source] = value
+        if field.include_in_marshal():
+            if field.source == '__self__':
+                self.output.update(value)
+            else:
+                self.output[field.source] = value
 
     def process_field(self, field, data):
 
@@ -209,8 +209,8 @@ class MarshalIterator(MappingIterator):
 class SerializeIterator(MappingIterator):
 
     def update_output(self, field, value):
-
-        self.output[field.name] = value
+        if field.include_in_serialize():
+            self.output[field.name] = value
 
     def process_field(self, field, data):
 
