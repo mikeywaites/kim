@@ -78,13 +78,7 @@ class UserSerializer(SQASerializer):
     id = Field(types.Integer(read_only=True))
     full_name = Field(types.String, source='name')
     contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
-    # contacts = Field(
-    #                 types.Collection(types.Nested(mapped=ContactSerializer,
-    #                                    role=Role('public',
-    #                                              'phone',
-    #                                              'address'))),
-    #                 source='contact_details'
-    #             )
+
 
 class SQAAcceptanceTests(unittest.TestCase):
 
@@ -119,25 +113,26 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         Base.metadata.drop_all(self.engine)
 
-    # def test_nested_nested_role_base_serialize(self):
+    def test_nested_serialize(self):
 
-    #     serializer = UserSerializer(instance=self.user)
-    #     result = serializer.serialize()
+        serializer = UserSerializer(instance=self.user)
+        result = serializer.serialize()
 
-    #     exp = {
-    #         'id': self.user.id,
-    #         'full_name': self.user.name,
-    #         'contacts': [{
-    #             'phone': self.deets.phone,
-    #             'address': {
-    #                 'country': self.address.country,
-    #                 'postcode': self.address.postcode,
-    #             }
-    #         }]
-    #     }
-    #     self.assertDictEqual(result, exp)
+        exp = {
+            'id': self.user.id,
+            'full_name': self.user.name,
+            'contact': {
+                'id': self.deets.id,
+                'phone': self.deets.phone,
+                'address': {
+                    'country': self.address.country,
+                    'postcode': self.address.postcode,
+                }
+            }
+        }
+        self.assertDictEqual(result, exp)
 
-    def test_nested_nested_role_base_marshal(self):
+    def test_nested_marshal_new_object(self):
 
         data = {
             'full_name': 'bob',
@@ -171,3 +166,36 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.commit()
 
         self.assertIsNotNone(result.id)
+
+    def test_nested_marshal_existing_object(self):
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'phone': '082345234',
+                'address': {
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
+                }
+            }
+        }
+
+        serializer = UserSerializer(input=data, instance=self.user)
+        result = serializer.marshal()
+
+        self.assertTrue(isinstance(result, User))
+        self.assertEqual(result.name, 'bob')
+
+        contact_details = result.contact_details
+        self.assertTrue(isinstance(contact_details, ContactDetail))
+        self.assertEqual(contact_details.phone, '082345234')
+        self.assertEqual(contact_details.email, 'mike@mike.com')
+
+        address = result.contact_details.address
+        self.assertTrue(isinstance(address, Address))
+        self.assertEqual(address.country, 'uk')
+        self.assertEqual(address.postcode, 'sg1 3ab')
+        self.assertEqual(address.city, 'london')
+
+        self.session.add(result)
+        self.session.commit()
