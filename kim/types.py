@@ -358,10 +358,11 @@ class DateTime(BaseType):
 
     def validate_for_marshal(self, source_value):
         super(DateTime, self).validate_for_marshal(source_value)
-        try:
-            iso8601.parse_date(source_value)
-        except iso8601.ParseError:
-            raise ValidationError('Date must be in iso8601 format')
+        if source_value:
+            try:
+                iso8601.parse_date(source_value)
+            except iso8601.ParseError:
+                raise ValidationError('Date must be in iso8601 format')
         return True
 
     def validate_for_serialize(self, source_value):
@@ -386,7 +387,7 @@ class Regexp(String):
 
     def validate(self, source_value):
         super(Regexp, self).validate(source_value)
-        if not self.pattern.match(source_value):
+        if source_value and not self.pattern.match(source_value):
             raise ValidationError('Does not match regexp')
         return True
 
@@ -410,17 +411,20 @@ class Float(BaseType):
 
     def validate_for_marshal(self, source_value):
         super(Float, self).validate_for_marshal(source_value)
-        if self.as_string:
-            if not isinstance(source_value, str):
+        if source_value:
+            if self.as_string:
+                if not isinstance(source_value, str):
 
-                raise ValidationError(self.get_error_message(source_value))
+                    raise ValidationError(self.get_error_message(source_value))
 
-            # Now just check we can cast it to a float
-            try:
-                float(source_value)
-            except ValueError:
-                raise ValidationError('Not a valid float')
-
+                # Now just check we can cast it to a float
+                try:
+                    float(source_value)
+                except ValueError:
+                    raise ValidationError('Not a valid float')
+            else:
+                if not isinstance(source_value, float):
+                    raise ValidationError(self.get_error_message(source_value))
         return True
 
     def serialize_value(self, source_value):

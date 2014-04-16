@@ -203,7 +203,9 @@ class MarshalIterator(MappingIterator):
         except ValidationError as e:
             raise FieldError(field.name, e.message)
 
-        return field.marshal_value(value or field.default)
+        to_marshal = value or field.default
+        if to_marshal:
+            return field.marshal_value(to_marshal)
 
 
 class SerializeIterator(MappingIterator):
@@ -220,7 +222,9 @@ class SerializeIterator(MappingIterator):
         except ValidationError as e:
             raise FieldError(field.source, e.message)
 
-        return field.serialize_value(value or field.default)
+        to_serialize = value or field.default
+        if to_serialize:
+            return field.serialize_value(to_serialize)
 
 
 def marshal(mapping, data, **kwargs):

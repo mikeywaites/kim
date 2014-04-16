@@ -444,6 +444,16 @@ class DateTimeTypeTests(unittest.TestCase):
         my_type = DateTime()
         self.assertTrue(my_type.validate_for_marshal('2014-04-07T05:06:05+00:00'))
 
+    def test_validate_for_serialize_when_none(self):
+
+        my_type = DateTime(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
+    def test_validate_for_marshal_when_none(self):
+
+        my_type = DateTime(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
     def test_serialize(self):
         value = datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc())
         my_type = DateTime()
@@ -471,6 +481,16 @@ class RegexpTypeTests(unittest.TestCase):
 
         my_type = Regexp(pattern=re.compile('[0-9]+'))
         self.assertTrue(my_type.validate('1234'))
+
+    def test_validate_for_serialize_when_none(self):
+
+        my_type = Regexp(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
+    def test_validate_for_marshal_when_none(self):
+
+        my_type = Regexp(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
 
 
 class EmailTypeTests(unittest.TestCase):
@@ -527,6 +547,16 @@ class FloatTypeTests(unittest.TestCase):
         my_type = Float(as_string=True)
         self.assertTrue(my_type.validate_for_serialize(1.343))
 
+    def test_validate_for_serialize_when_none(self):
+
+        my_type = Float(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
+    def test_validate_for_marshal_when_none(self):
+
+        my_type = Float(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
     def test_serialize_as_string(self):
         my_type = Float(as_string=True)
         result = my_type.serialize_value(1.343)
@@ -541,7 +571,7 @@ class FloatTypeTests(unittest.TestCase):
 
 class DecimalTypeTests(unittest.TestCase):
 
-    def test_validate_requires_valid_decimal_type(self):
+    def test_validate_requires_valid_decimal_type_as_string(self):
 
         my_type = Decimal()
         with self.assertRaises(ValidationError):
@@ -575,3 +605,13 @@ class DecimalTypeTests(unittest.TestCase):
         result = my_type.serialize_value(decimal.Decimal("1.347"))
 
         self.assertEqual(result, "1.35")
+
+    def test_validate_for_serialize_when_none(self):
+
+        my_type = Decimal(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
+
+    def test_validate_for_marshal_when_none(self):
+
+        my_type = Decimal(required=False)
+        self.assertTrue(my_type.validate_for_serialize(None))
