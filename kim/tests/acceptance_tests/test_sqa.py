@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from iso8601.iso8601 import Utc
 
-from kim.serializers import Serializer, Field
+from kim.serializers import Field
 from kim.roles import Role
 from kim import types
 from kim.contrib.sqa import SQASerializer
@@ -14,8 +15,11 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    ForeignKey
+    ForeignKey,
+    DateTime
 )
+
+from datetime import datetime
 
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -28,6 +32,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Integer, nullable=False)
+    signup_date = Column(DateTime, nullable=True)
+
     contact = Column(Integer, ForeignKey('contact_detail.id'), nullable=False)
     contact_details = relationship("ContactDetail", backref="users")
 
@@ -78,6 +84,7 @@ class UserSerializer(SQASerializer):
     id = Field(types.Integer(read_only=True))
     full_name = Field(types.String, source='name')
     contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+    signup_date = Field(types.DateTime(required=False))
 
 
 class SQAAcceptanceTests(unittest.TestCase):
@@ -104,7 +111,8 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(self.deets)
         self.session.flush()
 
-        self.user = User(name='foo', contact_details=self.deets)
+        self.user = User(name='foo', contact_details=self.deets,
+                         signup_date=datetime(2014, 4, 11, 4, 6, 2))
         self.session.add(self.user)
         self.session.commit()
 
@@ -128,7 +136,8 @@ class SQAAcceptanceTests(unittest.TestCase):
                     'country': self.address.country,
                     'postcode': self.address.postcode,
                 }
-            }
+            },
+            'signup_date': '2014-04-11T04:06:02'
         }
         self.assertDictEqual(result, exp)
 
@@ -142,7 +151,8 @@ class SQAAcceptanceTests(unittest.TestCase):
                     'country': 'uk',
                     'postcode': 'sg1 3ab',
                 }
-            }
+            },
+            'signup_date': '2014-06-12T19:06:02'
         }
 
         serializer = UserSerializer(input=data)
@@ -150,6 +160,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
+        self.assertEqual(result.signup_date, datetime(2014, 6, 12, 19, 6, 2, tzinfo=Utc()))
 
         contact_details = result.contact_details
         self.assertTrue(isinstance(contact_details, ContactDetail))
