@@ -183,6 +183,7 @@ class Nested(BaseType):
 
         self._mapping = None
         self.mapping = mapped
+        self.original_mapping = mapped
         self.role = role
 
         super(Nested, self).__init__(*args, **kwargs)

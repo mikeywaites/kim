@@ -6,6 +6,7 @@ import unittest
 from kim.serializers import Serializer, Field
 from kim.roles import Role
 from kim import types
+from kim.contrib.sqa import SQASerializer
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
@@ -27,6 +28,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Integer, nullable=False)
+    contact = Column(Integer, ForeignKey('contact_detail.id'), nullable=False)
+    contact_details = relationship("ContactDetail", backref="users")
 
 
 class ContactDetail(Base):
@@ -34,13 +37,11 @@ class ContactDetail(Base):
     __tablename__ = "contact_detail"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     phone = Column(String, nullable=False)
     email = Column(String, nullable=False)
     address_id = Column(Integer, ForeignKey('address.id'), nullable=False)
 
     address = relationship("Address", backref="contact")
-    user = relationship("User", backref="contact_details")
 
 
 class Address(Base):
@@ -55,31 +56,35 @@ class Address(Base):
     country = Column(String, nullable=False)
 
 
-class AddressSerializer(Serializer):
+class AddressSerializer(SQASerializer):
+    __model__ = Address
 
     country = Field(types.String)
     postcode = Field(types.String)
 
 
-class ContactSerializer(Serializer):
+class ContactSerializer(SQASerializer):
+    __model__ = ContactDetail
 
-    id = Field(types.Integer)
+    id = Field(types.Integer(read_only=True))
     phone = Field(types.String)
     address = Field(types.Nested(mapped=AddressSerializer,
                                  role=Role('foo', 'country', 'postcode')))
 
 
-class UserSerializer(Serializer):
+class UserSerializer(SQASerializer):
+    __model__ = User
 
-    id = Field(types.Integer)
+    id = Field(types.Integer(read_only=True))
     full_name = Field(types.String, source='name')
-    contacts = Field(
-                    types.Collection(types.Nested(mapped=ContactSerializer,
-                                       role=Role('public',
-                                                 'phone',
-                                                 'address'))),
-                    source='contact_details'
-                )
+    contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+    # contacts = Field(
+    #                 types.Collection(types.Nested(mapped=ContactSerializer,
+    #                                    role=Role('public',
+    #                                              'phone',
+    #                                              'address'))),
+    #                 source='contact_details'
+    #             )
 
 class SQAAcceptanceTests(unittest.TestCase):
 
@@ -88,44 +93,64 @@ class SQAAcceptanceTests(unittest.TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         Base.metadata.create_all(self.engine)
-        self.user = User(name='foo')
-        self.session.add(self.user)
-        self.session.flush()
 
         self.address = Address(address_1='2 easy street',
                                address_2='other',
                                postcode='sm00ln',
                                city='london',
                                country='UK')
-        self.session.add(self.user)
+        self.deets = ContactDetail(address=self.address,
+                           phone='07967168590',
+                           email='mike@mike.com')
+
+
+        self.session.add(self.address)
         self.session.flush()
 
-        self.deets = ContactDetail(user=self.user,
-                                   address=self.address,
-                                   phone='07967168590',
-                                   email='mike@mike.com')
-
         self.session.add(self.deets)
+        self.session.flush()
+
+        self.user = User(name='foo', contact_details=self.deets)
+        self.session.add(self.user)
         self.session.commit()
+
 
     def tearDown(self):
 
         Base.metadata.drop_all(self.engine)
 
-    def test_nested_nested_role_base_serialize(self):
+    # def test_nested_nested_role_base_serialize(self):
 
-        serializer = UserSerializer(data=self.user)
-        result = serializer.serialize()
+    #     serializer = UserSerializer(instance=self.user)
+    #     result = serializer.serialize()
 
-        exp = {
-            'id': self.user.id,
-            'full_name': self.user.name,
-            'contacts': [{
-                'phone': self.deets.phone,
+    #     exp = {
+    #         'id': self.user.id,
+    #         'full_name': self.user.name,
+    #         'contacts': [{
+    #             'phone': self.deets.phone,
+    #             'address': {
+    #                 'country': self.address.country,
+    #                 'postcode': self.address.postcode,
+    #             }
+    #         }]
+    #     }
+    #     self.assertDictEqual(result, exp)
+
+    def test_nested_nested_role_base_marshal(self):
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'phone': '082345234',
                 'address': {
-                    'country': self.address.country,
-                    'postcode': self.address.postcode,
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
                 }
-            }]
+            }
         }
-        self.assertDictEqual(result, exp)
+
+        serializer = UserSerializer(input=data)
+        result = serializer.marshal()
+
+        import ipdb; ipdb.set_trace()
