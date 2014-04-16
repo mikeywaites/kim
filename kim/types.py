@@ -115,7 +115,6 @@ class TypedType(BaseType):
         """
 
         if source_value and not isinstance(source_value, self.type_):
-
             raise ValidationError(self.get_error_message(source_value))
 
         return super(TypedType, self).validate(source_value)
@@ -414,7 +413,6 @@ class Float(BaseType):
         if source_value:
             if self.as_string:
                 if not isinstance(source_value, str):
-
                     raise ValidationError(self.get_error_message(source_value))
 
                 # Now just check we can cast it to a float
@@ -451,7 +449,6 @@ class Decimal(BaseType):
     def validate_for_marshal(self, source_value):
         super(Decimal, self).validate_for_marshal(source_value)
         if not isinstance(source_value, str):
-
             raise ValidationError(self.get_error_message(source_value))
 
         # Now just check we can cast it to a Decimal
