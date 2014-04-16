@@ -10,9 +10,16 @@ from kim.exceptions import ConfigurationError
 
 
 class ErrorHandlingAcceptanceTests(unittest.TestCase):
-    def test_field_wrapper_not_used(self):
+    def test_field_wrapper_not_used_instance(self):
         def make_serializer():
             class TestSerializer(Serializer):
                 status = Integer()
+
+        self.assertRaises(ConfigurationError, make_serializer)
+
+    def test_field_wrapper_not_used_class(self):
+        def make_serializer():
+            class TestSerializer(Serializer):
+                status = Integer
 
         self.assertRaises(ConfigurationError, make_serializer)
