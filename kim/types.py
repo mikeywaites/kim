@@ -348,9 +348,7 @@ class Collection(TypedType):
         return [self.inner_type.validate(mem) for mem in source_value]
 
 
-class DateTime(TypedType):
-
-    type_ = datetime
+class DateTime(BaseType):
 
     def serialize_value(self, source_value):
         return source_value.isoformat()
@@ -359,6 +357,7 @@ class DateTime(TypedType):
         return iso8601.parse_date(source_value)
 
     def validate_for_marshal(self, source_value):
+        super(DateTime, self).validate_for_marshal(source_value)
         try:
             iso8601.parse_date(source_value)
         except iso8601.ParseError:
@@ -368,7 +367,7 @@ class DateTime(TypedType):
     def validate_for_serialize(self, source_value):
         # We just need to ensure it's a date type here, so we can delegate to
         # super
-        return super(TypedType, self).validate_for_serialize(source_value)
+        return super(DateTime, self).validate_for_serialize(source_value)
 
 
 class Date(DateTime):
@@ -402,9 +401,7 @@ class Email(Regexp):
         super(Email, self).__init__(*args, **kwargs)
 
 
-class Float(TypedType):
-    type_ = float
-
+class Float(BaseType):
     default = float
 
     def __init__(self, *args, **kwargs):
@@ -412,6 +409,7 @@ class Float(TypedType):
         super(Float, self).__init__(*args, **kwargs)
 
     def validate_for_marshal(self, source_value):
+        super(Float, self).validate_for_marshal(source_value)
         if self.as_string:
             if not isinstance(source_value, str):
 
@@ -423,9 +421,7 @@ class Float(TypedType):
             except ValueError:
                 raise ValidationError('Not a valid float')
 
-            return True
-        else:
-            return super(Float, self).validate_for_marshal(source_value)
+        return True
 
     def serialize_value(self, source_value):
         if self.as_string:
@@ -437,7 +433,7 @@ class Float(TypedType):
         return float(source_value)
 
 
-class Decimal(TypedType):
+class Decimal(BaseType):
     type_ = decimal.Decimal
 
     def __init__(self, *args, **kwargs):
@@ -449,6 +445,7 @@ class Decimal(TypedType):
         return decimal.Decimal(value).quantize(self.precision)
 
     def validate_for_marshal(self, source_value):
+        super(Decimal, self).validate_for_marshal(source_value)
         if not isinstance(source_value, str):
 
             raise ValidationError(self.get_error_message(source_value))
