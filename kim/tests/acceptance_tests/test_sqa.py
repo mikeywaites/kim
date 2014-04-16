@@ -38,7 +38,7 @@ class ContactDetail(Base):
 
     id = Column(Integer, primary_key=True)
     phone = Column(String, nullable=False)
-    email = Column(String, nullable=False)
+    email = Column(String, nullable=True)
     address_id = Column(Integer, ForeignKey('address.id'), nullable=False)
 
     address = relationship("Address", backref="contact")
@@ -49,10 +49,10 @@ class Address(Base):
     __tablename__ = 'address'
 
     id = Column(Integer, primary_key=True)
-    address_1 = Column(String, nullable=False)
-    address_2 = Column(String, nullable=False)
+    address_1 = Column(String, nullable=True)
+    address_2 = Column(String, nullable=True)
     postcode = Column(String, nullable=False)
-    city = Column(String, nullable=False)
+    city = Column(String, nullable=True)
     country = Column(String, nullable=False)
 
 
@@ -153,4 +153,21 @@ class SQAAcceptanceTests(unittest.TestCase):
         serializer = UserSerializer(input=data)
         result = serializer.marshal()
 
-        import ipdb; ipdb.set_trace()
+        self.assertTrue(isinstance(result, User))
+        self.assertEqual(result.name, 'bob')
+
+        contact_details = result.contact_details
+        self.assertTrue(isinstance(contact_details, ContactDetail))
+        self.assertEqual(contact_details.phone, '082345234')
+
+        address = result.contact_details.address
+        self.assertTrue(isinstance(address, Address))
+        self.assertEqual(address.country, 'uk')
+        self.assertEqual(address.postcode, 'sg1 3ab')
+
+        self.assertIsNone(result.id)
+
+        self.session.add(result)
+        self.session.commit()
+
+        self.assertIsNotNone(result.id)

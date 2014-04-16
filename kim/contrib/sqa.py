@@ -1,26 +1,35 @@
+from sqlalchemy.inspection import inspect
+
 from ..serializers import Serializer
 
 
-def mapping_get(m, n):
-    for tm in m:
-        if tm.source == n:
-            return tm
-
-def marshal_sqa(serializer, instance, result):
+def marshal_sqa(instance, result):
     for k, v in result.iteritems():
         if type(v) == dict:
-            # nested alert
-            nested_typemapper = mapping_get(serializer.__mapping__, k)
-            nested_serializer = nested_typemapper.base_type.original_mapping()
-            exiting = getattr(instance, k)
-            if exiting:
-                marshal_sqa(nested_serializer, existing, v)
+            # This is a nested serializer
+
+            # First check if the relationship already exists
+            existing = getattr(instance, k)
+            if existing:
+                # Exists, just update it
+                marshal_sqa(existing, v)
             else:
-                new = nested_serializer.get_model()()
-                marshal_sqa(nested_serializer, new, v)
-                import ipdb; ipdb.set_trace()
+                # If it doesn't exist, we need to create it
+
+                # Find what sort of model we require by introspection of
+                # the relationship
+                inspection = inspect(instance)
+                relationship = inspection.mapper.relationships[k]
+                RemoteClass = relationship.mapper.class_
+
+                # Now create a new instance of that model and set the relationship
+                remote_instance = RemoteClass()
+                setattr(instance, k, remote_instance)
+                marshal_sqa(remote_instance, v)
         else:
+            # This is a normal field, just update it on the model instance
             setattr(instance, k, v)
+
 
 class SQASerializer(Serializer):
     def __init__(self, instance=None, input=None, **kwargs):
@@ -38,5 +47,5 @@ class SQASerializer(Serializer):
     def marshal(self, **kwargs):
         result_dict = super(SQASerializer, self).marshal(**kwargs)
         instance = self.get_model_or_instance()
-        marshal_sqa(self, instance, result_dict)
+        marshal_sqa(instance, result_dict)
         return instance
