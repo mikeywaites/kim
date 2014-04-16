@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import mock
 
 from kim import types
 from kim.exceptions import MappingErrors
@@ -107,6 +108,24 @@ class MarshalTests(unittest.TestCase):
         exp = {'name': 'baz'}
 
         self.assertEqual(result, exp)
+
+    def test_type_not_called_when_none(self):
+        mockedtype = mock.MagicMock(default=None)
+
+        name = TypeMapper('name', mockedtype)
+        mapping = Mapping(name)
+        marshal(mapping, {})
+
+        self.assertFalse(mockedtype.marshal_value.called)
+
+    def test_type_not_called_when_not_none(self):
+        mockedtype = mock.MagicMock(default=None)
+
+        name = TypeMapper('name', mockedtype)
+        mapping = Mapping(name)
+        marshal(mapping, {'name': 'bob'})
+
+        self.assertTrue(mockedtype.marshal_value.called)
 
     def test_field_value_returned_when_different_source(self):
         name = TypeMapper('name', types.String(), source='different_name')
@@ -260,4 +279,21 @@ class SerializeTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
+    def test_type_not_called_when_none(self):
+        mockedtype = mock.MagicMock(default=None)
+
+        name = TypeMapper('name', mockedtype)
+        mapping = Mapping(name)
+        serialize(mapping, {})
+
+        self.assertFalse(mockedtype.serialize_value.called)
+
+    def test_type_not_called_when_not_none(self):
+        mockedtype = mock.MagicMock(default=None)
+
+        name = TypeMapper('name', mockedtype)
+        mapping = Mapping(name)
+        serialize(mapping, {'name': 'bob'})
+
+        self.assertTrue(mockedtype.serialize_value.called)
 
