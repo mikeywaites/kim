@@ -79,7 +79,7 @@ class BaseType(object):
         return self._validate_helper(source_value)
 
     def _validate_helper(self, source_value):
-        if self.required and not source_value:
+        if self.required and source_value is None:
             raise ValidationError("This is a required field")
         elif not self.allow_none and source_value is None:
             raise ValidationError("This field cannot be None")
@@ -115,7 +115,7 @@ class TypedType(BaseType):
         """
         super(TypedType, self).validate(source_value)
 
-        if source_value and not isinstance(source_value, self.type_):
+        if source_value is not None and not isinstance(source_value, self.type_):
             raise ValidationError(self.get_error_message(source_value))
 
         return True
@@ -349,6 +349,7 @@ class Collection(TypedType):
 
 
 class DateTime(BaseType):
+    type_ = datetime
 
     def serialize_value(self, source_value):
         return source_value.isoformat()
@@ -358,7 +359,7 @@ class DateTime(BaseType):
 
     def validate_for_marshal(self, source_value):
         super(DateTime, self).validate_for_marshal(source_value)
-        if source_value:
+        if source_value is not None:
             try:
                 iso8601.parse_date(source_value)
             except iso8601.ParseError:
@@ -366,8 +367,9 @@ class DateTime(BaseType):
         return True
 
     def validate_for_serialize(self, source_value):
-        # We just need to ensure it's a date type here, so we can delegate to
-        # super
+        if source_value is not None:
+            if not isinstance(source_value, self.type_):
+                raise ValidationError('incorrect type')
         return super(DateTime, self).validate_for_serialize(source_value)
 
 
@@ -387,7 +389,7 @@ class Regexp(String):
 
     def validate(self, source_value):
         super(Regexp, self).validate(source_value)
-        if source_value and not self.pattern.match(source_value):
+        if source_value is not None and not self.pattern.match(source_value):
             raise ValidationError('Does not match regexp')
         return True
 
@@ -411,7 +413,7 @@ class Float(BaseType):
 
     def validate_for_marshal(self, source_value):
         super(Float, self).validate_for_marshal(source_value)
-        if source_value:
+        if source_value is not None:
             if self.as_string:
                 if not isinstance(source_value, str):
                     raise ValidationError(self.get_error_message(source_value))
