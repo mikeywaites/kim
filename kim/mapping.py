@@ -203,8 +203,8 @@ class MarshalIterator(MappingIterator):
         except ValidationError as e:
             raise FieldError(field.name, e.message)
 
-        to_marshal = value or field.default
-        if to_marshal:
+        to_marshal = value if value is not None else field.default
+        if to_marshal is not None:
             return field.marshal_value(to_marshal)
 
 
@@ -222,8 +222,8 @@ class SerializeIterator(MappingIterator):
         except ValidationError as e:
             raise FieldError(field.source, e.message)
 
-        to_serialize = value or field.default
-        if to_serialize:
+        to_serialize = value if value is not None else field.default
+        if to_serialize is not None:
             return field.serialize_value(to_serialize)
 
 

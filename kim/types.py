@@ -125,14 +125,10 @@ class String(TypedType):
 
     type_ = basestring
 
-    default = ''
-
 
 class Integer(TypedType):
 
     type_ = int
-
-    default = int
 
 
 class Nested(BaseType):
@@ -320,8 +316,6 @@ class Collection(TypedType):
 
     type_ = list
 
-    default = list()
-
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
         if not is_valid_type(self.inner_type):
@@ -405,7 +399,6 @@ class Email(Regexp):
 
 
 class Float(BaseType):
-    default = float
 
     def __init__(self, *args, **kwargs):
         self.as_string = kwargs.pop('as_string', False)

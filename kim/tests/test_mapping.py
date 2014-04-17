@@ -120,6 +120,16 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(result, exp)
 
+    def test_default_not_used_when_falsey(self):
+
+        name = TypeMapper('order', types.Integer(required=False),
+                                default=123)
+        mapping = Mapping(name)
+        result = marshal(mapping, {'order': 0})
+        exp = {'order': 0}
+
+        self.assertEqual(result, exp)
+
     def test_type_not_called_when_none(self):
         mockedtype = mock.MagicMock(default=None)
 
