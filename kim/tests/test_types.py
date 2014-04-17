@@ -41,13 +41,18 @@ class BaseTypeTests(unittest.TestCase):
 
         my_type = String(required=True)
         with self.assertRaises(ValidationError):
-            my_type.validate_for_serialize('')
+            my_type.validate_for_serialize(None)
 
     def test_validate_not_allow_none(self):
         my_type = String(allow_none=False, required=False)
 
         with self.assertRaises(ValidationError):
             my_type.validate_for_serialize(None)
+
+    def test_validate_required_value_falsey(self):
+
+        my_type = Integer(required=True)
+        self.assertTrue(my_type.validate_for_serialize(0))
 
     def test_validate_allow_none(self):
 
@@ -374,13 +379,13 @@ class DateTypeTests(unittest.TestCase):
 
         my_type = Date()
         with self.assertRaises(ValidationError):
-            my_type.validate(0)
+            my_type.validate_for_marshal(0)
 
     def test_validate_for_serialize_wrong_type(self):
 
         my_type = Date()
         with self.assertRaises(ValidationError):
-            my_type.validate(0)
+            my_type.validate_for_serialize(0)
 
     def test_validate_for_marhsal_wrong_format(self):
 
@@ -420,13 +425,13 @@ class DateTimeTypeTests(unittest.TestCase):
 
         my_type = DateTime()
         with self.assertRaises(ValidationError):
-            my_type.validate(0)
+            my_type.validate_for_marshal(0)
 
     def test_validate_for_serialize_wrong_type(self):
 
         my_type = DateTime()
         with self.assertRaises(ValidationError):
-            my_type.validate(0)
+            my_type.validate_for_marshal(0)
 
     def test_validate_for_marhsal_wrong_format(self):
 
