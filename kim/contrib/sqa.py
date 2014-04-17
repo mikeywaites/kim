@@ -7,8 +7,13 @@ from ..exceptions import ValidationError
 
 
 class NestedForeignKey(Nested):
+    """Field which can function as a normal Nested field, but can also take an
+    integer foreign key when marshalled. In which case, it will look up the
+    required object via self.getter."""
+
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.get('getter', None)
+        self.marshal_by_key_only = kwargs.get('marshal_by_key_only', True)
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def get_object(self, source_value):
@@ -17,6 +22,8 @@ class NestedForeignKey(Nested):
             if not obj:
                 raise ValidationError('invalid id')
         else:
+            if self.marshal_by_key_only:
+                raise ValidationError('invalid type')
             obj = source_value
         return obj
 

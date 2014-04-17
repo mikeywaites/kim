@@ -63,31 +63,6 @@ class Address(Base):
     country = Column(String, nullable=False)
 
 
-class AddressSerializer(SQASerializer):
-    __model__ = Address
-
-    country = Field(types.String)
-    postcode = Field(types.String)
-
-
-class ContactSerializer(SQASerializer):
-    __model__ = ContactDetail
-
-    id = Field(types.Integer(read_only=True))
-    phone = Field(types.String)
-    address = Field(types.Nested(mapped=AddressSerializer,
-                                 role=Role('foo', 'country', 'postcode')))
-
-
-class UserSerializer(SQASerializer):
-    __model__ = User
-
-    id = Field(types.Integer(read_only=True))
-    full_name = Field(types.String, source='name')
-    signup_date = Field(types.DateTime(required=False))
-    contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
-
-
 class SQAAcceptanceTests(unittest.TestCase):
 
     def setUp(self):
@@ -123,6 +98,27 @@ class SQAAcceptanceTests(unittest.TestCase):
         Base.metadata.drop_all(self.engine)
 
     def test_nested_serialize(self):
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
 
         serializer = UserSerializer(instance=self.user)
         result = serializer.serialize()
@@ -143,6 +139,28 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertDictEqual(result, exp)
 
     def test_nested_marshal_new_object(self):
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=False), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -180,6 +198,28 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertIsNotNone(result.id)
 
     def test_nested_marshal_existing_object(self):
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=False), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -213,15 +253,35 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.commit()
 
     def test_foreignkey_field(self):
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=False, getter=contact_getter), source='contact_details')
+
         data = {
             'full_name': 'bob',
             'contact': self.deets.id,
         }
-
-        def contact_getter(id):
-            return self.session.query(ContactDetail).get(id)
-
-        UserSerializer.base_fields['contact'].field_type.getter = contact_getter
 
         serializer = UserSerializer(input=data)
         result = serializer.marshal()
@@ -259,18 +319,79 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertDictEqual(serialized, exp)
 
     def test_foreignkey_field_invalid(self):
+        def contact_getter(id):
+            return False
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=False, getter=contact_getter), source='contact_details')
+
         data = {
             'full_name': 'bob',
             'contact': self.deets.id,
         }
 
-        def contact_getter(id):
-            return False
-
-        UserSerializer.base_fields['contact'].field_type.getter = contact_getter
-
         serializer = UserSerializer(input=data)
 
+        with self.assertRaises(MappingErrors):
+            serializer.marshal()
+
+    def test_marshal_by_key_only(self):
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=True, getter=contact_getter), source='contact_details')
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'phone': '082345234',
+                'address': {
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
+                }
+            }
+        }
+
+        serializer = UserSerializer(input=data)
         with self.assertRaises(MappingErrors):
             serializer.marshal()
 
