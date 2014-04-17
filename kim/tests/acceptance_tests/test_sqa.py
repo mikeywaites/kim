@@ -7,7 +7,8 @@ from iso8601.iso8601 import Utc
 from kim.serializers import Field
 from kim.roles import Role
 from kim import types
-from kim.contrib.sqa import SQASerializer
+from kim.contrib.sqa import SQASerializer, NestedForeignKey
+from kim.roles import whitelist, blacklist
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
@@ -85,6 +86,11 @@ class UserSerializer(SQASerializer):
     full_name = Field(types.String, source='name')
     contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
     signup_date = Field(types.DateTime(required=False))
+    contact_id = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
+
+    class Meta:
+        roles = {'full': blacklist('full', *['contact_id']),
+                 'simple': whitelist('simple', *['id', 'full_name', 'contact_id'])}
 
 
 class SQAAcceptanceTests(unittest.TestCase):
@@ -124,7 +130,7 @@ class SQAAcceptanceTests(unittest.TestCase):
     def test_nested_serialize(self):
 
         serializer = UserSerializer(instance=self.user)
-        result = serializer.serialize()
+        result = serializer.serialize(role='full')
 
         exp = {
             'id': self.user.id,
@@ -156,7 +162,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
 
         serializer = UserSerializer(input=data)
-        result = serializer.marshal()
+        result = serializer.marshal(role='full')
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -192,7 +198,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
 
         serializer = UserSerializer(input=data, instance=self.user)
-        result = serializer.marshal()
+        result = serializer.marshal(role='full')
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -210,3 +216,21 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.session.add(result)
         self.session.commit()
+
+    def test_foreignkey_field(self):
+        data = {
+            'full_name': 'bob',
+            'contact_id': self.deets.id,
+        }
+
+        def contact_validator(id):
+            return self.session.query(ContactDetail).get(id)
+            # return True if self.session.query(ContactDetail).get(id) else False
+
+        UserSerializer.base_fields['contact_id'].field_type.id_validator = contact_validator
+
+        serializer = UserSerializer(input=data)
+        result = serializer.marshal(role='simple')
+
+
+        import ipdb; ipdb.set_trace()

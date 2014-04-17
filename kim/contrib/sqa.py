@@ -2,6 +2,24 @@ from sqlalchemy.inspection import inspect
 
 from ..serializers import Serializer
 
+from ..types import Integer, Nested
+from ..exceptions import ValidationError
+
+
+class NestedForeignKey(Nested):
+    def __init__(self, *args, **kwargs):
+        self.getter = kwargs.get('getter', None)
+        super(NestedForeignKey, self).__init__(*args, **kwargs)
+
+    def get_object(self, source_value):
+        return self.getter(source_value)
+
+    def validate_for_marshal(self, source_value):
+        return super(NestedForeignKey, self).validate(self.get_object(source_value))
+
+    def marshal_value(self, source_value):
+        return self.get_object(source_value)
+
 
 def marshal_sqa(instance, result):
     for k, v in result.iteritems():

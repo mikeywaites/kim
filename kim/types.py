@@ -113,11 +113,12 @@ class TypedType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
+        super(TypedType, self).validate(source_value)
 
         if source_value and not isinstance(source_value, self.type_):
             raise ValidationError(self.get_error_message(source_value))
 
-        return super(TypedType, self).validate(source_value)
+        return True
 
 
 class String(TypedType):
