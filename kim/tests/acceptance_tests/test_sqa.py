@@ -8,7 +8,7 @@ from kim.serializers import Field
 from kim.roles import Role
 from kim import types
 from kim.contrib.sqa import SQASerializer, NestedForeignKey
-from kim.roles import whitelist, blacklist
+from kim.exceptions import MappingErrors
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
@@ -84,13 +84,8 @@ class UserSerializer(SQASerializer):
 
     id = Field(types.Integer(read_only=True))
     full_name = Field(types.String, source='name')
-    contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
     signup_date = Field(types.DateTime(required=False))
-    contact_id = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
-
-    class Meta:
-        roles = {'full': blacklist('full', *['contact_id']),
-                 'simple': whitelist('simple', *['id', 'full_name', 'contact_id'])}
+    contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
 
 
 class SQAAcceptanceTests(unittest.TestCase):
@@ -130,7 +125,7 @@ class SQAAcceptanceTests(unittest.TestCase):
     def test_nested_serialize(self):
 
         serializer = UserSerializer(instance=self.user)
-        result = serializer.serialize(role='full')
+        result = serializer.serialize()
 
         exp = {
             'id': self.user.id,
@@ -162,7 +157,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
 
         serializer = UserSerializer(input=data)
-        result = serializer.marshal(role='full')
+        result = serializer.marshal()
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -198,7 +193,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
 
         serializer = UserSerializer(input=data, instance=self.user)
-        result = serializer.marshal(role='full')
+        result = serializer.marshal()
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -220,17 +215,62 @@ class SQAAcceptanceTests(unittest.TestCase):
     def test_foreignkey_field(self):
         data = {
             'full_name': 'bob',
-            'contact_id': self.deets.id,
+            'contact': self.deets.id,
         }
 
-        def contact_validator(id):
+        def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
-            # return True if self.session.query(ContactDetail).get(id) else False
 
-        UserSerializer.base_fields['contact_id'].field_type.id_validator = contact_validator
+        UserSerializer.base_fields['contact'].field_type.getter = contact_getter
 
         serializer = UserSerializer(input=data)
-        result = serializer.marshal(role='simple')
+        result = serializer.marshal()
 
+        self.assertTrue(isinstance(result, User))
+        self.assertEqual(result.name, 'bob')
 
-        import ipdb; ipdb.set_trace()
+        contact_details = result.contact_details
+        self.assertTrue(isinstance(contact_details, ContactDetail))
+        self.assertEqual(contact_details.id, self.deets.id)
+
+        address = result.contact_details.address
+        self.assertTrue(isinstance(address, Address))
+        self.assertEqual(address.id, self.address.id)
+
+        self.session.add(result)
+        self.session.commit()
+
+        serializer = UserSerializer(result)
+        serialized = serializer.serialize()
+
+        exp = {
+            'id': result.id,
+            'full_name': 'bob',
+            'contact': {
+                'id': self.deets.id,
+                'phone': self.deets.phone,
+                'address': {
+                    'country': self.address.country,
+                    'postcode': self.address.postcode,
+                }
+            },
+            'signup_date': None,
+        }
+        self.assertDictEqual(serialized, exp)
+
+    def test_foreignkey_field_invalid(self):
+        data = {
+            'full_name': 'bob',
+            'contact': self.deets.id,
+        }
+
+        def contact_getter(id):
+            return False
+
+        UserSerializer.base_fields['contact'].field_type.getter = contact_getter
+
+        serializer = UserSerializer(input=data)
+
+        with self.assertRaises(MappingErrors):
+            serializer.marshal()
+

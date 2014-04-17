@@ -2,7 +2,7 @@ from sqlalchemy.inspection import inspect
 
 from ..serializers import Serializer
 
-from ..types import Integer, Nested
+from ..types import Nested
 from ..exceptions import ValidationError
 
 
@@ -12,7 +12,13 @@ class NestedForeignKey(Nested):
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def get_object(self, source_value):
-        return self.getter(source_value)
+        if type(source_value) == int:
+            obj = self.getter(source_value)
+            if not obj:
+                raise ValidationError('invalid id')
+        else:
+            obj = source_value
+        return obj
 
     def validate_for_marshal(self, source_value):
         return super(NestedForeignKey, self).validate(self.get_object(source_value))
