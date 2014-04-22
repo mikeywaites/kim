@@ -80,6 +80,15 @@ class Mapping(BaseMapping):
         self.fields.append(field)
 
 
+def _get_attribute(data, attr):
+    if attr == '__self__':
+        return data
+    elif isinstance(data, dict):
+        return data.get(attr)
+    else:
+        return getattr(data, attr, None)
+
+
 def get_attribute(data, attr):
     """Attempt to find the value for a `field` from `data`.
 
@@ -88,12 +97,10 @@ def get_attribute(data, attr):
 
     :returns: the value for `field` from `data`
     """
-    if attr == '__self__':
-        return data
-    elif isinstance(data, dict):
-        return data.get(attr)
-    else:
-        return getattr(data, attr, None)
+    components = attr.split('.')
+    for component in components:
+        data = _get_attribute(data, component)
+    return data
 
 
 class MappingIterator(object):

@@ -318,3 +318,14 @@ class SerializeTests(unittest.TestCase):
 
         self.assertTrue(mockedtype.serialize_value.called)
 
+    def test_source_span_relationships(self):
+        name = TypeMapper('company_name', types.String(), source='user.company.name')
+        id = TypeMapper('id', types.Integer())
+        mapping = Mapping(name, id)
+
+        data = {'user': {'company': {'id': 1, 'name': 'old street labs'}}, 'id': 1}
+
+        exp = {'company_name': 'old street labs', 'id': 1}
+        result = serialize(mapping, data)
+
+        self.assertEqual(exp, result)
