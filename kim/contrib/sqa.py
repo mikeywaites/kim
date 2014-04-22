@@ -63,20 +63,18 @@ def marshal_sqa(instance, result):
 
 
 class SQASerializer(Serializer):
-    def __init__(self, instance=None, input=None, **kwargs):
-        super(SQASerializer, self).__init__(data=instance, input=input, **kwargs)
 
-    def serialize(self, **kwargs):
-        return super(SQASerializer, self).serialize(**kwargs)
+    def serialize(self, data, **kwargs):
+        return super(SQASerializer, self).serialize(data, **kwargs)
 
     def get_model(self):
-        return self.__model__
+        return self.__model__()
 
-    def get_model_or_instance(self):
-        return self.source_data or self.get_model()()
+    def get_new_model(self):
+        return self.get_model()
 
-    def marshal(self, **kwargs):
-        result_dict = super(SQASerializer, self).marshal(**kwargs)
-        instance = self.get_model_or_instance()
-        marshal_sqa(instance, result_dict)
-        return instance
+    def marshal(self, data, instance=None, **kwargs):
+        result_dict = super(SQASerializer, self).marshal(data, **kwargs)
+        model_instance = instance or self.get_model()
+        marshal_sqa(model_instance, result_dict)
+        return model_instance
