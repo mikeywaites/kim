@@ -98,9 +98,9 @@ class SerializerTests(unittest.TestCase):
             a = Field(String())
             b = Field(Integer, source='c')
 
-        s = ASerializer({'a': 'hello', 'c': 123})
+        s = ASerializer()
 
-        result = s.serialize()
+        result = s.serialize({'a': 'hello', 'c': 123})
         self.assertEqual(result, {'a': 'hello', 'b': 123})
 
     def test_marshal(self):
@@ -108,9 +108,9 @@ class SerializerTests(unittest.TestCase):
             a = Field(String())
             b = Field(Integer, source='c')
 
-        s = ASerializer(input={'a': 'hello', 'b': 123})
+        s = ASerializer()
 
-        result = s.marshal()
+        result = s.marshal({'a': 'hello', 'b': 123})
         self.assertEqual(result, {'a': 'hello', 'c': 123})
 
     def test_serialize_to_json(self):
@@ -118,9 +118,9 @@ class SerializerTests(unittest.TestCase):
             a = Field(String())
             b = Field(Integer, source='c')
 
-        s = ASerializer({'a': 'hello', 'c': 123})
+        s = ASerializer()
 
-        result = s.json()
+        result = s.json({'a': 'hello', 'c': 123})
         self.assertEqual(result, '{"a": "hello", "b": 123}')
 
     def test_serializer_opts_with_role(self):
@@ -231,9 +231,11 @@ class SerializerTests(unittest.TestCase):
 
                 roles = {'public': public}
 
-        serializer = MySerializer(data={'email': 'foo', 'name': 'bar'})
+        serializer = MySerializer()
 
-        result = serializer.serialize(role='public')
+        result = serializer.serialize({'email': 'foo', 'name': 'bar'},
+                                      role='public')
+
         self.assertDictEqual(result, {'email': 'foo'})
 
     def test_marshal_with_role(self):
@@ -249,7 +251,8 @@ class SerializerTests(unittest.TestCase):
 
                 roles = {'public': public}
 
-        serializer = MySerializer(input={'email': 'foo', 'name': 'bar'})
+        serializer = MySerializer()
 
-        result = serializer.marshal(role='public')
+        result = serializer.marshal({'email': 'foo', 'name': 'bar'},
+                                    role='public')
         self.assertDictEqual(result, {'email': 'foo'})

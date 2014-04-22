@@ -142,8 +142,6 @@ class Serializer(BaseSerializer):
     __metaclass__ = SerializerMetaclass
 
     def __init__(self, data=None, input=None):
-        self.source_data = data
-        self.input = input
         self.opts = SerializerOpts(self.Meta)
 
     def get_role(self, role):
@@ -177,11 +175,11 @@ class Serializer(BaseSerializer):
 
         return self.__mapping__
 
-    def serialize(self, role=None, **kwargs):
-        return serialize(self.get_mapping(role=role), self.source_data, **kwargs)
+    def serialize(self, data, role=None, **kwargs):
+        return serialize(self.get_mapping(role=role), data, **kwargs)
 
-    def json(self):
-        return json.dumps(self.serialize())
+    def json(self, *args, **kwargs):
+        return json.dumps(self.serialize(*args, **kwargs))
 
-    def marshal(self, role=None, **kwargs):
-        return marshal(self.get_mapping(role=role), self.input, **kwargs)
+    def marshal(self, data, role=None, **kwargs):
+        return marshal(self.get_mapping(role=role), data, **kwargs)
