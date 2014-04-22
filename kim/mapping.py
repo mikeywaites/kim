@@ -200,7 +200,14 @@ class MarshalIterator(MappingIterator):
             if field.source == '__self__':
                 self.output.update(value)
             else:
-                self.output[field.source] = value
+                components = field.source.split('.')
+                components_except_last = components[:-1]
+                last_component = components[-1]
+                current_component = self.output
+                for component in components_except_last:
+                    current_component.setdefault(component, {})
+                    current_component = current_component[component]
+                current_component[last_component] = value
 
     def process_field(self, field, data):
 

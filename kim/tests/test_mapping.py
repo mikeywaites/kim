@@ -185,6 +185,19 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
+    def test_source_span_relationships(self):
+        name = TypeMapper('company_name', types.String(), source='user.company.name')
+        company_id = TypeMapper('company_id', types.Integer(), source='user.company.id')
+        id = TypeMapper('id', types.Integer())
+        mapping = Mapping(name, id, company_id)
+
+        data = {'company_name': 'old street labs', 'company_id': 5, 'id': 1}
+
+        exp = {'user': {'company': {'name': 'old street labs', 'id': 5}}, 'id': 1}
+
+        result = marshal(mapping, data)
+
+        self.assertEqual(exp, result)
 
 
 
