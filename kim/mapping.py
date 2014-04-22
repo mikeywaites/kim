@@ -97,6 +97,9 @@ def get_attribute(data, attr):
 
     :returns: the value for `field` from `data`
     """
+    # Dot notation can be used to span relationships. To handle this, we need
+    # to call _get_attribute recursively until we get down to the level
+    # specified
     components = attr.split('.')
     for component in components:
         data = _get_attribute(data, component)
@@ -200,6 +203,14 @@ class MarshalIterator(MappingIterator):
             if field.source == '__self__':
                 self.output.update(value)
             else:
+                # Sources can be specified using dot notation which indicates
+                # nested dicts should be created.
+                # To handle this, we need to split off all but the last
+                # part of the source string (the part after the final dot),
+                # and create dicts for all the levels below that if they don't
+                # already exist.
+                # Finally, now we've resolved the nested level we actually want
+                # to update, set the key in the last part to the value passed.
                 components = field.source.split('.')
                 components_except_last = components[:-1]
                 last_component = components[-1]
