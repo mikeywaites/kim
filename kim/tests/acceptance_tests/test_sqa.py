@@ -395,3 +395,43 @@ class SQAAcceptanceTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
 
+    def test_serialize_dot_notation(self):
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            phone = Field(types.String, source='contact_details.phone')
+
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user)
+
+        exp = {
+            'id': self.user.id,
+            'full_name': self.user.name,
+            'phone': self.deets.phone,
+        }
+        self.assertDictEqual(result, exp)
+
+    def test_marshal_dot_notation(self):
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            phone = Field(types.String, source='contact_details.phone')
+
+        serializer = UserSerializer()
+
+        data = {
+            'full_name': 'fred',
+            'phone': '234765464',
+        }
+
+        result = serializer.marshal(data, instance=self.user)
+
+        self.assertEqual(result.name, 'fred')
+        self.assertEqual(result.contact_details.phone, '234765464')
+
+        self.session.add(result)
+        self.session.commit()
