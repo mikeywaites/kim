@@ -19,7 +19,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         data = {'people': [{'name': 'Jack'}, {'name': 'Mike'}]}
 
-        result = Outer(data).serialize()
+        result = Outer().serialize(data)
 
         self.assertEquals(result, data)
 
@@ -29,7 +29,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         data = {'rooms': [[1, 2, 3], [4, 5, 6]]}
 
-        result = Outer(data).serialize()
+        result = Outer().serialize(data)
 
         self.assertEquals(result, data)
 
@@ -42,7 +42,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         data = {'user_name': 'jack'}
 
-        result = Outer(data).serialize()
+        result = Outer().serialize(data)
 
         self.assertEquals(result, {'user': {'name': 'jack'}})
 
@@ -56,7 +56,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         data = {'user': {'name': 'jack'}, 'status': 200}
 
-        result = Outer(input=data).marshal()
+        result = Outer().marshal(data)
 
         self.assertEquals(result, {'user_name': 'jack', 'status': 200})
 
@@ -87,7 +87,7 @@ class BasicAcceptanceTests(unittest.TestCase):
                 'cost': decimal.Decimal("3.50"),
         }
 
-        result = Outer(data).serialize()
+        result = Outer().serialize(data)
 
         self.assertEquals(result,
             {'user': {
@@ -105,7 +105,7 @@ class BasicAcceptanceTests(unittest.TestCase):
             }
         )
 
-        marshal_result = Outer(input=result).marshal()
+        marshal_result = Outer().marshal(result)
 
         self.assertEquals(marshal_result, data)
 
@@ -118,7 +118,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         data = [{'user_name': 'jack'}, {'user_name': 'mike'}]
 
-        result = Outer(data).serialize(many=True)
+        result = Outer().serialize(data, many=True)
 
         self.assertEquals(result, [{'user': {'name': 'jack'}},
                                    {'user': {'name': 'mike'}}])

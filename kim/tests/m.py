@@ -62,11 +62,11 @@ pprint(marshal(ProperSerializer.__mapping__, result))
 
 print "===================="
 
-result = ProperSerializer(data=data).serialize()
+result = ProperSerializer().serialize(data)
 pprint(result)
 print "===================="
 
-result = ProperSerializer(input=result).marshal()
+result = ProperSerializer().marshal(result)
 pprint(result)
 
 
@@ -76,5 +76,5 @@ pprint(result)
 result = ProperSerializer(data=[data, data, data]).serialize(many=True)
 pprint(result)
 
-result = ProperSerializer(input=result).marshal(many=True)
+result = ProperSerializer().marshal(result, many=True)
 pprint(result)

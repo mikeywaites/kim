@@ -120,8 +120,8 @@ class SQAAcceptanceTests(unittest.TestCase):
             signup_date = Field(types.DateTime(required=False))
             contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
 
-        serializer = UserSerializer(instance=self.user)
-        result = serializer.serialize()
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user)
 
         exp = {
             'id': self.user.id,
@@ -174,8 +174,8 @@ class SQAAcceptanceTests(unittest.TestCase):
             'signup_date': '2014-06-12T19:06:02'
         }
 
-        serializer = UserSerializer(input=data)
-        result = serializer.marshal()
+        serializer = UserSerializer()
+        result = serializer.marshal(data)
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -232,8 +232,8 @@ class SQAAcceptanceTests(unittest.TestCase):
             }
         }
 
-        serializer = UserSerializer(input=data, instance=self.user)
-        result = serializer.marshal()
+        serializer = UserSerializer()
+        result = serializer.marshal(data, instance=self.user)
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -283,8 +283,8 @@ class SQAAcceptanceTests(unittest.TestCase):
             'contact': self.deets.id,
         }
 
-        serializer = UserSerializer(input=data)
-        result = serializer.marshal()
+        serializer = UserSerializer()
+        result = serializer.marshal(data)
 
         self.assertTrue(isinstance(result, User))
         self.assertEqual(result.name, 'bob')
@@ -300,8 +300,8 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(result)
         self.session.commit()
 
-        serializer = UserSerializer(result)
-        serialized = serializer.serialize()
+        serializer = UserSerializer()
+        serialized = serializer.serialize(result)
 
         exp = {
             'id': result.id,
@@ -349,10 +349,10 @@ class SQAAcceptanceTests(unittest.TestCase):
             'contact': self.deets.id,
         }
 
-        serializer = UserSerializer(input=data)
+        serializer = UserSerializer()
 
         with self.assertRaises(MappingErrors):
-            serializer.marshal()
+            serializer.marshal(data)
 
     def test_marshal_by_key_only(self):
         def contact_getter(id):
@@ -391,7 +391,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             }
         }
 
-        serializer = UserSerializer(input=data)
+        serializer = UserSerializer()
         with self.assertRaises(MappingErrors):
-            serializer.marshal()
+            serializer.marshal(data)
 
