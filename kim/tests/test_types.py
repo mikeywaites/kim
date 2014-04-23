@@ -41,29 +41,29 @@ class BaseTypeTests(unittest.TestCase):
 
         my_type = String(required=True)
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(None)
+            my_type.validate(None)
 
     def test_validate_not_allow_none(self):
         my_type = String(allow_none=False, required=False)
 
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(None)
+            my_type.validate(None)
 
     def test_validate_required_value_falsey(self):
 
         my_type = Integer(required=True)
-        self.assertTrue(my_type.validate_for_marshal(0))
+        self.assertTrue(my_type.validate(0))
 
     def test_validate_allow_none(self):
 
         my_type = String(required=False, allow_none=True)
 
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))
 
     def test_validate_mapped_type(self):
         my_type = String(required=True, allow_none=False)
 
-        self.assertTrue(my_type.validate_for_marshal('foo'))
+        self.assertTrue(my_type.validate('foo'))
 
     def test_set_allow_none(self):
         my_type = String(allow_none=False)
@@ -81,18 +81,18 @@ class BaseTypeTests(unittest.TestCase):
         my_type = String(read_only=True)
         self.assertFalse(my_type.include_in_marshal())
 
-    def test_validate_for_marshal_read_only_not_none(self):
+    def test_validate_read_only_not_none(self):
         my_type = String(read_only=True)
         with self.assertRaises(ValidationError):
-            self.assertFalse(my_type.validate_for_marshal('bla'))
+            self.assertFalse(my_type.validate('bla'))
 
-    def test_validate_for_marshal_read_only_none(self):
+    def test_validate_read_only_none(self):
         my_type = String(read_only=True)
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))
 
-    def test_validate_for_marshal_not_read_only(self):
+    def test_validate_not_read_only(self):
         my_type = String(read_only=False)
-        self.assertTrue(my_type.validate_for_marshal('bla'))
+        self.assertTrue(my_type.validate('bla'))
 
 
 class TypedTypeTests(unittest.TestCase):
@@ -121,7 +121,7 @@ class TypedTypeTests(unittest.TestCase):
 
         my_type = MyType(choices=['choice1', 'choice2'])
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('choice3')
+            my_type.validate('choice3')
 
     def test_validate_choice(self):
         class MyType(TypedType):
@@ -129,7 +129,7 @@ class TypedTypeTests(unittest.TestCase):
             type_ = str
 
         my_type = MyType(choices=['choice1', 'choice2'])
-        self.assertTrue(my_type.validate_for_marshal('choice2'))
+        self.assertTrue(my_type.validate('choice2'))
 
 
 class StringTypeTests(unittest.TestCase):
@@ -331,13 +331,13 @@ class NestedTypeTests(unittest.TestCase):
 
         nested = Nested(mapped=mapping)
 
-        output = nested.validate_for_marshal({
+        output = nested.validate({
             'name': 'foo',
             'email': 'foo@bar.com'
         })
         self.assertTrue(output)
 
-        run = lambda: nested.validate_for_marshal({
+        run = lambda: nested.validate({
             'name': 123,
             'email': 'foo@bar.com'
         })
@@ -354,7 +354,7 @@ class NestedTypeTests(unittest.TestCase):
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
 
-        output = nested.validate_for_marshal({
+        output = nested.validate({
             'name': 123,
             'email': 'foo@bar.com'
         })
@@ -373,22 +373,22 @@ class NestedTypeTests(unittest.TestCase):
 
 class DateTypeTests(unittest.TestCase):
 
-    def test_validate_for_marshal_wrong_type(self):
+    def test_validate_wrong_type(self):
 
         my_type = Date()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(0)
+            my_type.validate(0)
 
     def test_validate_for_marhsal_wrong_format(self):
 
         my_type = Date()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('2014-04-ASDFSD')
+            my_type.validate('2014-04-ASDFSD')
 
-    def test_validate_for_marshal_valid(self):
+    def test_validate_valid(self):
 
         my_type = Date()
-        self.assertTrue(my_type.validate_for_marshal('2014-04-07'))
+        self.assertTrue(my_type.validate('2014-04-07'))
 
     def test_serialize(self):
         value = date(2014, 4, 7)
@@ -408,27 +408,27 @@ class DateTypeTests(unittest.TestCase):
 
 class DateTimeTypeTests(unittest.TestCase):
 
-    def test_validate_for_marshal_wrong_type(self):
+    def test_validate_wrong_type(self):
 
         my_type = DateTime()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(0)
+            my_type.validate(0)
 
     def test_validate_for_marhsal_wrong_format(self):
 
         my_type = DateTime()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('2014-04-ASDFSD')
+            my_type.validate('2014-04-ASDFSD')
 
-    def test_validate_for_marshal_valid(self):
+    def test_validate_valid(self):
 
         my_type = DateTime()
-        self.assertTrue(my_type.validate_for_marshal('2014-04-07T05:06:05+00:00'))
+        self.assertTrue(my_type.validate('2014-04-07T05:06:05+00:00'))
 
-    def test_validate_for_marshal_when_none(self):
+    def test_validate_when_none(self):
 
         my_type = DateTime(required=False)
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))
 
     def test_serialize(self):
         value = datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc())
@@ -458,10 +458,10 @@ class RegexpTypeTests(unittest.TestCase):
         my_type = Regexp(pattern=re.compile('[0-9]+'))
         self.assertTrue(my_type.validate('1234'))
 
-    def test_validate_for_marshal_when_none(self):
+    def test_validate_when_none(self):
 
         my_type = Regexp(required=False)
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))
 
 
 class EmailTypeTests(unittest.TestCase):
@@ -483,12 +483,12 @@ class FloatTypeTests(unittest.TestCase):
 
         my_type = Float()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('')
+            my_type.validate('')
 
     def test_validate_float_type(self):
 
         my_type = Float()
-        self.assertTrue(my_type.validate_for_marshal(1.343))
+        self.assertTrue(my_type.validate(1.343))
 
     def test_serialize(self):
         my_type = Float()
@@ -506,17 +506,17 @@ class FloatTypeTests(unittest.TestCase):
 
         my_type = Float(as_string=True)
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('abc')
+            my_type.validate('abc')
 
     def test_validate_for_marhsal_float_type_as_string(self):
 
         my_type = Float(as_string=True)
-        self.assertTrue(my_type.validate_for_marshal("1.343"))
+        self.assertTrue(my_type.validate("1.343"))
 
-    def test_validate_for_marshal_when_none(self):
+    def test_validate_when_none(self):
 
         my_type = Float(required=False)
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))
 
     def test_serialize_as_string(self):
         my_type = Float(as_string=True)
@@ -536,18 +536,18 @@ class DecimalTypeTests(unittest.TestCase):
 
         my_type = Decimal()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal('')
+            my_type.validate('')
 
     def test_validate_requires_valid_decimal_type(self):
 
         my_type = Decimal()
         with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(1)
+            my_type.validate(1)
 
     def test_validate_decimal_type(self):
 
         my_type = Decimal()
-        self.assertTrue(my_type.validate_for_marshal("1.343"))
+        self.assertTrue(my_type.validate("1.343"))
 
     def test_serialize(self):
         my_type = Decimal()
@@ -567,7 +567,7 @@ class DecimalTypeTests(unittest.TestCase):
 
         self.assertEqual(result, "1.35")
 
-    def test_validate_for_marshal_when_none(self):
+    def test_validate_when_none(self):
 
         my_type = Decimal(required=False)
-        self.assertTrue(my_type.validate_for_marshal(None))
+        self.assertTrue(my_type.validate(None))

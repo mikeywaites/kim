@@ -50,8 +50,8 @@ class BaseTypeMapper(object):
 
         return self.base_type.serialize_value(source_value)
 
-    def validate_for_marshal(self, source_value):
-        return self.base_type.validate_for_marshal(source_value)
+    def validate(self, source_value):
+        return self.base_type.validate(source_value)
 
     def include_in_serialize(self):
         return self.base_type.include_in_serialize()

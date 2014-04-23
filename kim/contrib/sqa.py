@@ -27,7 +27,7 @@ class NestedForeignKey(Nested):
             obj = source_value
         return obj
 
-    def validate_for_marshal(self, source_value):
+    def validate(self, source_value):
         return super(NestedForeignKey, self).validate(self.get_object(source_value))
 
     def marshal_value(self, source_value):

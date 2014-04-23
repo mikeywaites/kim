@@ -76,23 +76,18 @@ class BaseType(object):
         :raises: :class:`kim.exceptions.ValidationError`
         :returns: True
         """
-        return self._validate_helper(source_value)
-
-    def _validate_helper(self, source_value):
-        if self.required and source_value is None:
-            raise ValidationError("This is a required field")
-        elif not self.allow_none and source_value is None:
-            raise ValidationError("This field cannot be None")
-        else:
-            return True
-
-    def validate_for_marshal(self, source_value):
         if self.read_only:
             if source_value:
                 raise ValidationError('this field is read only')
-            else:
-                return True
-        return self.validate(source_value)
+            # If it's read only and we're not trying to set a value then
+            # we don't care about anything else, so return True here
+            return True
+        else:
+            if self.required and source_value is None:
+                raise ValidationError("This is a required field")
+            elif not self.allow_none and source_value is None:
+                raise ValidationError("This field cannot be None")
+            return True
 
 
 class TypedType(BaseType):
@@ -281,7 +276,7 @@ class Nested(BaseType):
         """
         return serialize(self.get_mapping(), source_value)
 
-    def validate_for_marshal(self, source_value):
+    def validate(self, source_value):
         """iterates Nested mapping calling validate for each
         field in the mapping.  Errors from each field will be stored
         and finally raised in a collection of errors
@@ -293,14 +288,14 @@ class Nested(BaseType):
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
-                field.validate_for_marshal(value)
+                field.validate(value)
             except ValidationError as e:
                 errors[field.name].append(e.message)
 
         if errors:
             raise ValidationError(errors)
         else:
-            return super(Nested, self).validate_for_marshal(source_value)
+            return super(Nested, self).validate(source_value)
 
 
 class Collection(TypedType):
@@ -342,8 +337,8 @@ class DateTime(BaseType):
     def marshal_value(self, source_value):
         return iso8601.parse_date(source_value)
 
-    def validate_for_marshal(self, source_value):
-        super(DateTime, self).validate_for_marshal(source_value)
+    def validate(self, source_value):
+        super(DateTime, self).validate(source_value)
         if source_value is not None:
             try:
                 iso8601.parse_date(source_value)
@@ -389,8 +384,8 @@ class Float(BaseType):
         self.as_string = kwargs.pop('as_string', False)
         super(Float, self).__init__(*args, **kwargs)
 
-    def validate_for_marshal(self, source_value):
-        super(Float, self).validate_for_marshal(source_value)
+    def validate(self, source_value):
+        super(Float, self).validate(source_value)
         if source_value is not None:
             if self.as_string:
                 if not isinstance(source_value, str):
@@ -427,16 +422,17 @@ class Decimal(BaseType):
     def _cast(self, value):
         return decimal.Decimal(value).quantize(self.precision)
 
-    def validate_for_marshal(self, source_value):
-        super(Decimal, self).validate_for_marshal(source_value)
-        if not isinstance(source_value, str):
-            raise ValidationError(self.get_error_message(source_value))
+    def validate(self, source_value):
+        super(Decimal, self).validate(source_value)
+        if source_value is not None:
+            if not isinstance(source_value, str):
+                raise ValidationError(self.get_error_message(source_value))
 
-        # Now just check we can cast it to a Decimal
-        try:
-            self._cast(source_value)
-        except decimal.InvalidOperation:
-            raise ValidationError('Not a valid decimal')
+            # Now just check we can cast it to a Decimal
+            try:
+                self._cast(source_value)
+            except decimal.InvalidOperation:
+                raise ValidationError('Not a valid decimal')
 
         return True
 

@@ -40,11 +40,11 @@ class TypeMapperTests(unittest.TestCase):
 
         self.assertEqual(mapped_type.default, 123)
 
-    def test_validate_for_marshal(self):
+    def test_validate(self):
         mockedtype = mock.MagicMock()
         mapped_type = TypeMapper('email', mockedtype,
                                  source='email_address')
 
-        self.assertTrue(mapped_type.validate_for_marshal('foo'))
-        self.assertTrue(mockedtype.validate_for_marshal.called)
+        self.assertTrue(mapped_type.validate('foo'))
+        self.assertTrue(mockedtype.validate.called)
 
