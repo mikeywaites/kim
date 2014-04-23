@@ -12,7 +12,7 @@ from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, Collection, Integer, BaseType,
-    TypedType, Date, DateTime, Regexp, Email, Float, Decimal)
+    TypedType, Date, DateTime, Regexp, Email, Float, Decimal, PositiveInteger)
 from kim.type_mapper import TypeMapper
 
 
@@ -148,15 +148,29 @@ class StringTypeTests(unittest.TestCase):
 
 class IntegerTypeTests(unittest.TestCase):
 
-    def test_validate_requires_valid_string_type(self):
+    def test_validate_requires_valid_integer_type(self):
 
         my_type = Integer()
         with self.assertRaises(ValidationError):
             my_type.validate('')
 
-    def test_validate_string_type(self):
+    def test_validate_integer_type(self):
 
         my_type = Integer()
+        my_type.validate(1)
+
+
+class PositiveIntegerTypeTests(unittest.TestCase):
+
+    def test_validate_requires_valid_positive_integer_type(self):
+
+        my_type = PositiveInteger()
+        with self.assertRaises(ValidationError):
+            my_type.validate(-6)
+
+    def test_validate_positive_integer_type(self):
+
+        my_type = PositiveInteger()
         my_type.validate(1)
 
 

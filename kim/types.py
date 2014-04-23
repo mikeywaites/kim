@@ -123,7 +123,7 @@ class TypedType(BaseType):
             raise ValidationError(self.get_error_message(source_value))
 
         if self.choices and source_value not in self.choices:
-            raise ValidationError(self.get_error_message(source_value))
+            raise ValidationError('not a valid choice')
 
         return True
 
@@ -136,6 +136,14 @@ class String(TypedType):
 class Integer(TypedType):
 
     type_ = int
+
+
+class PositiveInteger(Integer):
+
+    def validate(self, source_value):
+        super(PositiveInteger, self).validate(source_value)
+        if source_value < 0:
+            raise ValidationError('must be positive integer')
 
 
 class Nested(BaseType):
