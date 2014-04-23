@@ -86,6 +86,8 @@ class MarshalTests(unittest.TestCase):
             name = 'foo'
             id = 'bar'
 
+        self.assertRaises(MappingErrors, lambda: marshal(self.mapping, Data()))
+
         try:
             marshal(self.mapping, Data())
         except MappingErrors as e:
@@ -267,7 +269,7 @@ class SerializeTests(unittest.TestCase):
         self.assertRaises(MappingErrors, lambda: marshal(self.mapping, data, many=True))
 
         try:
-            serialize(self.mapping, data, many=True)
+            marshal(self.mapping, data, many=True)
         except MappingErrors as e:
             exp = [
                 {'id': [u'This field was of an incorrect type']},
