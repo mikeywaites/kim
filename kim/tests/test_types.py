@@ -41,29 +41,29 @@ class BaseTypeTests(unittest.TestCase):
 
         my_type = String(required=True)
         with self.assertRaises(ValidationError):
-            my_type.validate_for_serialize(None)
+            my_type.validate_for_marshal(None)
 
     def test_validate_not_allow_none(self):
         my_type = String(allow_none=False, required=False)
 
         with self.assertRaises(ValidationError):
-            my_type.validate_for_serialize(None)
+            my_type.validate_for_marshal(None)
 
     def test_validate_required_value_falsey(self):
 
         my_type = Integer(required=True)
-        self.assertTrue(my_type.validate_for_serialize(0))
+        self.assertTrue(my_type.validate_for_marshal(0))
 
     def test_validate_allow_none(self):
 
         my_type = String(required=False, allow_none=True)
 
-        self.assertTrue(my_type.validate_for_serialize(None))
+        self.assertTrue(my_type.validate_for_marshal(None))
 
     def test_validate_mapped_type(self):
         my_type = String(required=True, allow_none=False)
 
-        self.assertTrue(my_type.validate_for_serialize('foo'))
+        self.assertTrue(my_type.validate_for_marshal('foo'))
 
     def test_set_allow_none(self):
         my_type = String(allow_none=False)
@@ -323,22 +323,6 @@ class NestedTypeTests(unittest.TestCase):
         }
         self.assertDictEqual(output, exp)
 
-    def test_nested_validation_validates_mapped_fields_serialize(self):
-
-        name = TypeMapper('email', String(), 'email_source')
-        email = TypeMapper('name', String())
-        mapping = Mapping(name, email)
-
-        nested = Nested(mapped=mapping)
-
-        output = nested.validate_for_serialize(
-            {'name': 'foo', 'email_source': 'foo@bar.com'})
-        self.assertTrue(output)
-
-        run = lambda: nested.validate_for_serialize(
-            {'name': 123, 'email_source': 'foo@bar.com'})
-        self.assertRaises(ValidationError, run)
-
     def test_nested_validation_validates_mapped_fields_marshal(self):
 
         name = TypeMapper('email', String(), 'email_source')
@@ -376,23 +360,6 @@ class NestedTypeTests(unittest.TestCase):
         })
         self.assertTrue(output)
 
-    def test_nested_serialize_validaton_with_role(self):
-        """When a field is of an invlaid type, but is not included in the
-        role passed to a nested type, the field should be ignored
-        """
-
-        name = TypeMapper('email', String())
-        email = TypeMapper('name', String())
-        mapping = Mapping(name, email)
-
-        nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
-
-        output = nested.validate_for_serialize({
-            'name': 123,
-            'email': 'foo@bar.com'
-        })
-        self.assertTrue(output)
-
     def test_import_by_string_relative(self):
         nested = Nested(mapped='ImportByStringMapping')
 
@@ -412,22 +379,11 @@ class DateTypeTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             my_type.validate_for_marshal(0)
 
-    def test_validate_for_serialize_wrong_type(self):
-
-        my_type = Date()
-        with self.assertRaises(ValidationError):
-            my_type.validate_for_serialize(0)
-
     def test_validate_for_marhsal_wrong_format(self):
 
         my_type = Date()
         with self.assertRaises(ValidationError):
             my_type.validate_for_marshal('2014-04-ASDFSD')
-
-    def test_validate_for_serialize_valid(self):
-
-        my_type = Date()
-        self.assertTrue(my_type.validate_for_serialize(date(2014, 4, 7)))
 
     def test_validate_for_marshal_valid(self):
 
@@ -458,37 +414,21 @@ class DateTimeTypeTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             my_type.validate_for_marshal(0)
 
-    def test_validate_for_serialize_wrong_type(self):
-
-        my_type = DateTime()
-        with self.assertRaises(ValidationError):
-            my_type.validate_for_marshal(0)
-
     def test_validate_for_marhsal_wrong_format(self):
 
         my_type = DateTime()
         with self.assertRaises(ValidationError):
             my_type.validate_for_marshal('2014-04-ASDFSD')
 
-    def test_validate_for_serialize_valid(self):
-
-        my_type = DateTime()
-        self.assertTrue(my_type.validate_for_serialize(datetime(2014, 4, 7, 5, 6, 5)))
-
     def test_validate_for_marshal_valid(self):
 
         my_type = DateTime()
         self.assertTrue(my_type.validate_for_marshal('2014-04-07T05:06:05+00:00'))
 
-    def test_validate_for_serialize_when_none(self):
-
-        my_type = DateTime(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
-
     def test_validate_for_marshal_when_none(self):
 
         my_type = DateTime(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
+        self.assertTrue(my_type.validate_for_marshal(None))
 
     def test_serialize(self):
         value = datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc())
@@ -518,15 +458,10 @@ class RegexpTypeTests(unittest.TestCase):
         my_type = Regexp(pattern=re.compile('[0-9]+'))
         self.assertTrue(my_type.validate('1234'))
 
-    def test_validate_for_serialize_when_none(self):
-
-        my_type = Regexp(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
-
     def test_validate_for_marshal_when_none(self):
 
         my_type = Regexp(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
+        self.assertTrue(my_type.validate_for_marshal(None))
 
 
 class EmailTypeTests(unittest.TestCase):
@@ -578,20 +513,10 @@ class FloatTypeTests(unittest.TestCase):
         my_type = Float(as_string=True)
         self.assertTrue(my_type.validate_for_marshal("1.343"))
 
-    def test_validate_for_serialize_float_type_as_string(self):
-
-        my_type = Float(as_string=True)
-        self.assertTrue(my_type.validate_for_serialize(1.343))
-
-    def test_validate_for_serialize_when_none(self):
-
-        my_type = Float(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
-
     def test_validate_for_marshal_when_none(self):
 
         my_type = Float(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
+        self.assertTrue(my_type.validate_for_marshal(None))
 
     def test_serialize_as_string(self):
         my_type = Float(as_string=True)
@@ -642,12 +567,7 @@ class DecimalTypeTests(unittest.TestCase):
 
         self.assertEqual(result, "1.35")
 
-    def test_validate_for_serialize_when_none(self):
-
-        my_type = Decimal(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
-
     def test_validate_for_marshal_when_none(self):
 
         my_type = Decimal(required=False)
-        self.assertTrue(my_type.validate_for_serialize(None))
+        self.assertTrue(my_type.validate_for_marshal(None))

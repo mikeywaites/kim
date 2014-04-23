@@ -48,10 +48,3 @@ class TypeMapperTests(unittest.TestCase):
         self.assertTrue(mapped_type.validate_for_marshal('foo'))
         self.assertTrue(mockedtype.validate_for_marshal.called)
 
-    def test_validate_for_serialize(self):
-        mockedtype = mock.MagicMock()
-        mapped_type = TypeMapper('email', mockedtype,
-                                 source='email_address')
-
-        self.assertTrue(mapped_type.validate_for_serialize('foo'))
-        self.assertTrue(mockedtype.validate_for_serialize.called)

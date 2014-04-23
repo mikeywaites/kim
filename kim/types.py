@@ -94,9 +94,6 @@ class BaseType(object):
                 return True
         return self.validate(source_value)
 
-    def validate_for_serialize(self, source_value):
-        return self.validate(source_value)
-
 
 class TypedType(BaseType):
 
@@ -305,27 +302,6 @@ class Nested(BaseType):
         else:
             return super(Nested, self).validate_for_marshal(source_value)
 
-    def validate_for_serialize(self, source_value):
-        """iterates Nested mapping calling validate for each
-        field in the mapping.  Errors from each field will be stored
-        and finally raised in a collection of errors
-
-        :raises: ValidationError
-        :returns: True
-        """
-        errors = defaultdict(list)
-        for field in self.get_mapping().fields:
-            value = get_attribute(source_value, field.source)
-            try:
-                field.validate_for_serialize(value)
-            except ValidationError as e:
-                errors[field.source].append(e.message)
-
-        if errors:
-            raise ValidationError(errors)
-        else:
-            return super(Nested, self).validate_for_serialize(source_value)
-
 
 class Collection(TypedType):
 
@@ -374,12 +350,6 @@ class DateTime(BaseType):
             except iso8601.ParseError:
                 raise ValidationError('Date must be in iso8601 format')
         return True
-
-    def validate_for_serialize(self, source_value):
-        if source_value is not None:
-            if not isinstance(source_value, self.type_):
-                raise ValidationError('incorrect type')
-        return super(DateTime, self).validate_for_serialize(source_value)
 
 
 class Date(DateTime):

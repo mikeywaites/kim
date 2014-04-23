@@ -244,10 +244,6 @@ class SerializeIterator(MappingIterator):
     def process_field(self, field, data):
 
         value = self.get_attribute(data, field.source)
-        try:
-            field.validate_for_serialize(value)
-        except ValidationError as e:
-            raise FieldError(field.source, e.message)
 
         to_serialize = value if value is not None else field.default
         if to_serialize is not None:

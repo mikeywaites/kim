@@ -211,26 +211,6 @@ class SerializeTests(unittest.TestCase):
         self.id = id
         self.mapping = Mapping(name, id)
 
-    def test_serialize_with_invalid_data(self):
-
-        class Data(object):
-            name = 'foo'
-            id = 'bar'
-
-        with self.assertRaises(MappingErrors):
-            serialize(self.mapping, Data())
-
-    def test_field_appears_in_errors_when_invalid(self):
-
-        class Data(object):
-            name = 'foo'
-            id = 'bar'
-
-        try:
-            serialize(self.mapping, Data())
-        except MappingErrors as e:
-            self.assertIn('id', e.message)
-
     def test_field_values_returned_when_valid(self):
 
         class Data(object):
@@ -284,7 +264,7 @@ class SerializeTests(unittest.TestCase):
 
         data = [{'name': 'foo', 'id': 'abc'}, {'name': 'baz', 'id': 5}, {'name': 'bar', 'id': 'abc'}]
 
-        self.assertRaises(MappingErrors, lambda: serialize(self.mapping, data, many=True))
+        self.assertRaises(MappingErrors, lambda: marshal(self.mapping, data, many=True))
 
         try:
             serialize(self.mapping, data, many=True)
