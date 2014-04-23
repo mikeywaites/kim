@@ -114,6 +114,23 @@ class TypedTypeTests(unittest.TestCase):
 
         self.assertTrue(MyType().validate([1]))
 
+    def test_validate_requires_valid_choice(self):
+        class MyType(TypedType):
+
+            type_ = str
+
+        my_type = MyType(choices=['choice1', 'choice2'])
+        with self.assertRaises(ValidationError):
+            my_type.validate_for_marshal('choice3')
+
+    def test_validate_choice(self):
+        class MyType(TypedType):
+
+            type_ = str
+
+        my_type = MyType(choices=['choice1', 'choice2'])
+        self.assertTrue(my_type.validate_for_marshal('choice2'))
+
 
 class StringTypeTests(unittest.TestCase):
 

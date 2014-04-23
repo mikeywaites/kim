@@ -104,6 +104,10 @@ class TypedType(BaseType):
 
     error_message = 'This field was of an incorrect type'
 
+    def __init__(self, *args, **kwargs):
+        self.choices = kwargs.pop('choices', None)
+        super(TypedType, self).__init__(*args, **kwargs)
+
     def validate(self, source_value):
         """validates that source_value is of a given type
 
@@ -116,6 +120,9 @@ class TypedType(BaseType):
         super(TypedType, self).validate(source_value)
 
         if source_value is not None and not isinstance(source_value, self.type_):
+            raise ValidationError(self.get_error_message(source_value))
+
+        if self.choices and source_value not in self.choices:
             raise ValidationError(self.get_error_message(source_value))
 
         return True
