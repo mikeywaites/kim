@@ -2,7 +2,7 @@ from sqlalchemy.inspection import inspect
 
 from ..serializers import Serializer
 
-from ..types import Nested
+from ..types import Nested, Integer
 from ..exceptions import ValidationError
 
 
@@ -32,6 +32,22 @@ class NestedForeignKey(Nested):
 
     def marshal_value(self, source_value):
         return self.get_object(source_value)
+
+
+class IntegerForeignKey(Integer):
+    """Field representing an Integer ForeignKey. Behaves as Integer, but will
+    look up the required object via self.getter to ensure it exists/is valid"""
+
+    def __init__(self, *args, **kwargs):
+        self.getter = kwargs.get('getter', None)
+        super(IntegerForeignKey, self).__init__(*args, **kwargs)
+
+    def validate(self, source_value):
+        super(IntegerForeignKey, self).validate(source_value)
+        obj = self.getter(source_value)
+        if not obj:
+            raise ValidationError('invalid id')
+        return True
 
 
 def marshal_sqa(instance, result):
