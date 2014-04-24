@@ -16,9 +16,15 @@ class NestedForeignKey(Nested):
         self.marshal_by_key_only = kwargs.get('marshal_by_key_only', True)
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
+    def valid_id(self, val):
+
+        return any([isinstance(val, int),
+                    isinstance(val, basestring) and val.isdigit()])
+
     def get_object(self, source_value):
-        if type(source_value) == int:
-            obj = self.getter(source_value)
+
+        if self.valid_id(source_value):
+            obj = self.getter(int(source_value))
             if not obj:
                 raise ValidationError('invalid id')
         else:
