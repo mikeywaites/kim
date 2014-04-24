@@ -153,6 +153,9 @@ class NumericType(BaseType):
         """
         super(NumericType, self).validate(source_value)
 
+        if source_value is None:
+            return True
+
         if (isinstance(source_value, basestring)
                 and not source_value.isdigit()):
             raise ValidationError(self.get_error_message(source_value))
