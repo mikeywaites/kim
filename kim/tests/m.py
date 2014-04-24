@@ -73,7 +73,7 @@ pprint(result)
 # class BrokenSerializer(Serializer):
 #     d = String()
 
-result = ProperSerializer(data=[data, data, data]).serialize(many=True)
+result = ProperSerializer().serialize([data, data, data], many=True)
 pprint(result)
 
 result = ProperSerializer().marshal(result, many=True)

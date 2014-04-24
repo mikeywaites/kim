@@ -1,6 +1,7 @@
 from inspect import isclass
 from collections import OrderedDict
 import json
+from functools import partial
 
 from .exceptions import RoleNotFound, ConfigurationError
 from .mapping import Mapping, serialize, marshal
@@ -29,10 +30,11 @@ class Field(object):
         self.name = name
         self.source = source
 
-    def get_mapped_type(self, name):
+    def get_mapped_type(self, name, validators):
         name = self.name or name
         source = self.source or name
-        return TypeMapper(name, self.field_type, source=source)
+        return TypeMapper(name, self.field_type, source=source,
+            extra_validators=validators)
 
 
 class SerializerMetaclass(type):
@@ -40,9 +42,16 @@ class SerializerMetaclass(type):
     def __new__(mcs, name, bases, attrs):
 
         current_fields = []
+        current_validators = []
         for key, value in list(attrs.items()):
             if isinstance(value, Field):
+                # Normal Field attributes
                 current_fields.append((key, value))
+                attrs.pop(key)
+            elif callable(value) and key.startswith('validate_'):
+                # validate_X callables
+                validation_target = key[9:] # stripe 'validate_' from start
+                current_validators.append((validation_target, value))
                 attrs.pop(key)
             elif isinstance(value, BaseType):
                 # Handle common mistake of failing to wrap types in Field()
@@ -61,31 +70,28 @@ class SerializerMetaclass(type):
 
 
         attrs['declared_fields'] = OrderedDict(current_fields)
+        attrs['declared_validators'] = OrderedDict(current_validators)
 
         new_class = (super(SerializerMetaclass, mcs)
                      .__new__(mcs, name, bases, attrs))
 
         # Walk through the MRO.
         declared_fields = OrderedDict()
+        declared_validators = OrderedDict()
         for base in reversed(new_class.__mro__):
             # Collect fields from base class.
             if hasattr(base, 'declared_fields'):
                 declared_fields.update(base.declared_fields)
+            # Collect fields from base class.
+            if hasattr(base, 'declared_validators'):
+                declared_validators.update(base.declared_validators)
 
         new_class.base_fields = declared_fields
         new_class.declared_fields = declared_fields
-
-        new_class.__mapping__ = mcs.build_mapping(name, new_class)
+        new_class.base_validators = declared_validators
+        new_class.declared_validators = declared_validators
 
         return new_class
-
-    @staticmethod
-    def build_mapping(name, new_class):
-        mapping = Mapping()
-        for name, field_wrapper in new_class.declared_fields.items():
-            mapping.add_field(field_wrapper.get_mapped_type(name))
-
-        return mapping
 
 
 class SerializerOpts(object):
@@ -143,6 +149,22 @@ class Serializer(BaseSerializer):
 
     def __init__(self, data=None, input=None):
         self.opts = SerializerOpts(self.Meta)
+        self.__mapping__ = self._build_mapping()
+
+    def _build_mapping(self):
+        mapping = Mapping()
+        for name, field_wrapper in self.declared_fields.items():
+            validator = self.declared_validators.get(name)
+            if validator:
+                # As the validator will not be called as Serializer.validate_X(),
+                # but rather just validate_X(), self will not be passed. Therefore
+                # we need to curry it.
+                curried_validator = partial(validator, self)
+                validators = [curried_validator]
+            else:
+                validators = []
+            mapping.add_field(field_wrapper.get_mapped_type(name, validators))
+        return mapping
 
     def get_role(self, role):
         """Find and return a serializer role.  `role` may be provided to

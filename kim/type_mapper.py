@@ -54,6 +54,7 @@ class BaseTypeMapper(object):
 
     def validate(self, source_value):
         result = self.base_type.validate(source_value)
+
         for validator in self.extra_validators:
             result = result and validator(source_value)
         return result
