@@ -6,13 +6,14 @@ import re
 import decimal
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
-import mock
 
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, Collection, Integer, BaseType,
-    TypedType, Date, DateTime, Regexp, Email, Float, Decimal, PositiveInteger)
+                       TypedType, Date, DateTime, Regexp,
+                       Email, Float, Decimal, PositiveInteger,
+                       NumericType)
 from kim.type_mapper import TypeMapper
 
 
@@ -35,7 +36,6 @@ class BaseTypeTests(unittest.TestCase):
 
         my_type = BaseType()
         self.assertTrue(my_type.validate('foo'), True)
-
 
     def test_validate_raises_error_when_required_and_value_null(self):
 
