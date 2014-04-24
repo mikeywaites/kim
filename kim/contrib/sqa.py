@@ -1,4 +1,5 @@
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm.exc import NoResultFound
 
 from ..serializers import Serializer
 
@@ -44,7 +45,10 @@ class IntegerForeignKey(Integer):
 
     def validate(self, source_value):
         super(IntegerForeignKey, self).validate(source_value)
-        obj = self.getter(source_value)
+        try:
+            obj = self.getter(source_value)
+        except NoResultFound:
+            obj = None
         if not obj:
             raise ValidationError('invalid id')
         return True

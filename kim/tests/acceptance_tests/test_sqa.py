@@ -12,6 +12,8 @@ from kim.exceptions import MappingErrors
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm.exc import NoResultFound
+
 from sqlalchemy import (
     Column,
     Integer,
@@ -484,6 +486,28 @@ class SQAAcceptanceTests(unittest.TestCase):
     def test_integerforeignkey_field_invalid(self):
         def contact_getter(id):
             return False
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(IntegerForeignKey(getter=contact_getter), source='contact_details_id')
+
+        data = {
+            'full_name': 'bob',
+            'contact': self.deets.id,
+        }
+
+        serializer = UserSerializer()
+
+        with self.assertRaises(MappingErrors):
+            serializer.marshal(data)
+
+    def test_integerforeignkey_field_invalid_raises(self):
+        def contact_getter(id):
+            raise NoResultFound()
 
         class UserSerializer(SQASerializer):
             __model__ = User
