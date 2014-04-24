@@ -240,6 +240,10 @@ class Nested(BaseType):
         if isinstance(self._mapping, str):
             self._mapping = getattr(self._mapping_module, self._mapping)
 
+        if inspect.isclass(self._mapping):
+            # Instantiate the class if not already
+            self._mapping = self._mapping()
+
         try:
             mapping = self._mapping.__mapping__
         except AttributeError:
@@ -247,7 +251,9 @@ class Nested(BaseType):
 
         if not isinstance(mapping, BaseMapping):
             raise TypeError('Nested() must be called with a '
-                            'mapping or a mapped serializer instance')
+                            'mapping or a mapped serializer class or a mapped'
+                            'serializer instance or a python path to one'
+                            'of the above')
         return mapping
 
     @mapping.setter
