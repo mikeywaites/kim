@@ -23,7 +23,7 @@ class Field(object):
         :class:`kim.serializers.Serializer`
     """
 
-    def __init__(self, field_type, name=None, source=None):
+    def __init__(self, field_type, name=None, source=None, **params):
         if isclass(field_type):
             field_type = field_type()
         self.field_type = field_type
@@ -149,10 +149,11 @@ class Serializer(BaseSerializer):
 
     def __init__(self, data=None, input=None):
         self.opts = SerializerOpts(self.Meta)
-        self.__mapping__ = self._build_mapping()
+        self.__mapping__, self.fields = self._build_mapping()
 
     def _build_mapping(self):
         mapping = Mapping()
+        fields = {}
         for name, field_wrapper in self.declared_fields.items():
             validator = self.declared_validators.get(name)
             if validator:
@@ -163,8 +164,11 @@ class Serializer(BaseSerializer):
                 validators = [curried_validator]
             else:
                 validators = []
-            mapping.add_field(field_wrapper.get_mapped_type(name, validators))
-        return mapping
+            field = field_wrapper.get_mapped_type(name, validators)
+            mapping.add_field(field)
+            fields[name] = field
+
+        return mapping, fields
 
     def get_role(self, role):
         """Find and return a serializer role.  `role` may be provided to

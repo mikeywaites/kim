@@ -23,13 +23,13 @@ class SerializerTests(unittest.TestCase):
 
         first_field = mapping.fields[0]
         self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.base_type, String))
+        self.assertTrue(isinstance(first_field.type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
         self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.base_type, Integer))
+        self.assertTrue(isinstance(second_field.type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
 
@@ -47,19 +47,19 @@ class SerializerTests(unittest.TestCase):
 
         first_field = mapping.fields[0]
         self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.base_type, String))
+        self.assertTrue(isinstance(first_field.type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
         self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.base_type, Integer))
+        self.assertTrue(isinstance(second_field.type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
 
         third_field = mapping.fields[2]
         self.assertTrue(isinstance(third_field, TypeMapper))
-        self.assertTrue(isinstance(third_field.base_type, String))
+        self.assertTrue(isinstance(third_field.type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
 
@@ -78,19 +78,19 @@ class SerializerTests(unittest.TestCase):
 
         first_field = mapping.fields[0]
         self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.base_type, String))
+        self.assertTrue(isinstance(first_field.type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
         self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.base_type, Integer))
+        self.assertTrue(isinstance(second_field.type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'e')
 
         third_field = mapping.fields[2]
         self.assertTrue(isinstance(third_field, TypeMapper))
-        self.assertTrue(isinstance(third_field.base_type, String))
+        self.assertTrue(isinstance(third_field.type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
 
@@ -157,8 +157,8 @@ class SerializerTests(unittest.TestCase):
 
         mapped = serializer.get_mapping()
         field1, field2 = mapped.fields[0], mapped.fields[1]
-        self.assertEqual(name.field_type, field1.base_type)
-        self.assertEqual(email.field_type, field2.base_type)
+        self.assertEqual(name.field_type, field1.type)
+        self.assertEqual(email.field_type, field2.type)
 
     def test_get_mapping_with_role_name(self):
 
@@ -288,3 +288,16 @@ class SerializerTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal({'email': 'foo', 'name': 'bar'})
 
+    def test_fields_api(self):
+        name_type = String()
+        email_type = String()
+
+        class MySerializer(Serializer):
+
+            name = Field(name_type)
+            email = Field(email_type)
+
+        fields = MySerializer().fields
+
+        self.assertEqual(fields['name'].type, name_type)
+        self.assertEqual(fields['email'].type, email_type)

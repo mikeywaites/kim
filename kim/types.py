@@ -327,7 +327,7 @@ class Collection(TypedType):
                 for member in source_value]
 
     def validate(self, source_value):
-        """Call :meth:`validate` on `base_type`.
+        """Call :meth:`validate` on `type`.
 
         """
         super(Collection, self).validate(source_value)

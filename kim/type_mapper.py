@@ -13,7 +13,7 @@ class BaseTypeMapper(object):
 
     :param name: The name of the field to marshal to.
 
-    :param base_type: The `Type` class or a `Type` instance
+    :param type: The `Type` class or a `Type` instance
 
     :param source: specify attr used in marshaling and serialization
 
@@ -26,44 +26,44 @@ class BaseTypeMapper(object):
         :class:`kim.serializers.Serializer`
     """
 
-    def __init__(self, name, base_type,
+    def __init__(self, name, type,
                  source=None,
                  extra_validators=None,
                  **options):
 
-        self.base_type = base_type
+        self.type = type
         self.name = name
         self.source = source or name
-        self.default = options.pop('default', base_type.default)
+        self.default = options.pop('default', type.default)
         self.extra_validators = extra_validators or []
 
     def marshal_value(self, source_value):
-        """Call the :meth:`marshal_value` method of `base_type`.
+        """Call the :meth:`marshal_value` method of `type`.
 
         :returns: value returned from :meth:`marshal_value`
         """
-        return self.base_type.marshal_value(source_value)
+        return self.type.marshal_value(source_value)
 
     def serialize_value(self, source_value):
-        """Call the :meth:`serialize_value` method of `base_type`.
+        """Call the :meth:`serialize_value` method of `type`.
 
         :returns: value returned from :meth:`serialize_value`
         """
 
-        return self.base_type.serialize_value(source_value)
+        return self.type.serialize_value(source_value)
 
     def validate(self, source_value):
-        result = self.base_type.validate(source_value)
+        result = self.type.validate(source_value)
 
         for validator in self.extra_validators:
             result = result and validator(source_value)
         return result
 
     def include_in_serialize(self):
-        return self.base_type.include_in_serialize()
+        return self.type.include_in_serialize()
 
     def include_in_marshal(self):
-        return self.base_type.include_in_marshal()
+        return self.type.include_in_marshal()
 
 
 class TypeMapper(BaseTypeMapper):
