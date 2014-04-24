@@ -130,6 +130,44 @@ class Integer(TypedType):
     type_ = int
 
 
+class NumericType(BaseType):
+    """ a `TypedType` that allows integers to be passed as strings as well
+    as standard ints
+
+    """
+
+    type_ = int
+
+    def __init__(self, *args, **kwargs):
+        self.choices = kwargs.pop('choices', None)
+        super(NumericType, self).__init__(*args, **kwargs)
+
+    def validate(self, source_value):
+        """validates that source_value is of a given type
+
+        .. seealso::
+            :meth:`kim.types.BaseType.validate`
+
+        :raises: :class:`kim.exceptions.ValidationError`, TypeError
+        :returns: None
+        """
+        super(NumericType, self).validate(source_value)
+
+        if (isinstance(source_value, basestring)
+                and not source_value.isdigit()):
+            raise ValidationError(self.get_error_message(source_value))
+
+        try:
+            int(source_value)
+        except ValueError:
+            raise ValidationError(self.get_error_message(source_value))
+
+        if self.choices and source_value not in self.choices:
+            raise ValidationError('not a valid choice')
+
+        return True
+
+
 class PositiveInteger(Integer):
 
     def validate(self, source_value):
