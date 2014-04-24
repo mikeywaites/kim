@@ -6,13 +6,14 @@ import re
 import decimal
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
-import mock
 
 from kim.roles import Role
 from kim.mapping import Mapping
 from kim.exceptions import ValidationError
 from kim.types import (Nested, String, Collection, Integer, BaseType,
-    TypedType, Date, DateTime, Regexp, Email, Float, Decimal, PositiveInteger)
+                       TypedType, Date, DateTime, Regexp,
+                       Email, Float, Decimal, PositiveInteger,
+                       NumericType)
 from kim.type_mapper import TypeMapper
 
 
@@ -35,7 +36,6 @@ class BaseTypeTests(unittest.TestCase):
 
         my_type = BaseType()
         self.assertTrue(my_type.validate('foo'), True)
-
 
     def test_validate_raises_error_when_required_and_value_null(self):
 
@@ -172,6 +172,44 @@ class PositiveIntegerTypeTests(unittest.TestCase):
 
         my_type = PositiveInteger()
         my_type.validate(1)
+
+
+class NumericTypeTests(unittest.TestCase):
+
+    def test_numeric_string_is_accepted(self):
+
+        my_type = NumericType()
+        self.assertTrue(my_type.validate('1'))
+
+    def test_int_is_accpepted(self):
+
+        my_type = NumericType()
+        self.assertTrue(my_type.validate(1))
+
+    def test_validation_error_raised_with_non_numeric_string(self):
+
+        my_type = NumericType()
+        with self.assertRaises(ValidationError):
+            self.assertTrue(my_type.validate('woops'))
+
+    def test_validate_choice_with_valid_choice(self):
+
+        class MyType(TypedType):
+
+            type_ = str
+
+        my_type = MyType(choices=['1', 1])
+        self.assertTrue(my_type.validate('1'))
+
+    def test_validate_choice_with_invalid_choice(self):
+
+        class MyType(NumericType):
+
+            type_ = str
+
+        my_type = MyType(choices=['1', 'foo'])
+        with self.assertRaises(ValidationError):
+            self.assertTrue(my_type.validate('foo'))
 
 
 class CollectionTypeTests(unittest.TestCase):
