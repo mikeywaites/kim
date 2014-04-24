@@ -28,12 +28,14 @@ class BaseTypeMapper(object):
 
     def __init__(self, name, base_type,
                  source=None,
+                 extra_validators=None,
                  **options):
 
         self.base_type = base_type
         self.name = name
         self.source = source or name
         self.default = options.pop('default', base_type.default)
+        self.extra_validators = extra_validators or []
 
     def marshal_value(self, source_value):
         """Call the :meth:`marshal_value` method of `base_type`.
@@ -51,7 +53,10 @@ class BaseTypeMapper(object):
         return self.base_type.serialize_value(source_value)
 
     def validate(self, source_value):
-        return self.base_type.validate(source_value)
+        result = self.base_type.validate(source_value)
+        for validator in self.extra_validators:
+            result = result and validator(source_value)
+        return result
 
     def include_in_serialize(self):
         return self.base_type.include_in_serialize()

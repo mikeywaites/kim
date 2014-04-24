@@ -48,3 +48,25 @@ class TypeMapperTests(unittest.TestCase):
         self.assertTrue(mapped_type.validate('foo'))
         self.assertTrue(mockedtype.validate.called)
 
+    def test_extra_validator_pass(self):
+        mapped_type = TypeMapper('email', String(),
+            extra_validators=[lambda x: True])
+        self.assertTrue(mapped_type.validate('foo'))
+
+    def test_extra_validator_fail(self):
+        def failing_validator(x):
+            raise ValidationError()
+
+        mapped_type = TypeMapper('email', String(),
+            extra_validators=[failing_validator])
+
+        self.assertRaises(ValidationError, lambda: mapped_type.validate('foo'))
+
+    def test_extra_validator_is_called(self):
+        mocked_validator = mock.MagicMock()
+
+        mapped_type = TypeMapper('email', String(),
+            extra_validators=[mocked_validator])
+
+        mapped_type.validate('foo')
+        self.assertTrue(mocked_validator.called)
