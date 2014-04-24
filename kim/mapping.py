@@ -184,7 +184,7 @@ class MappingIterator(object):
 
         e.g::
             value = self.get_attribute(data, field.source)
-            field.validate_for_marshal(value)
+            field.validate(value)
 
             return field.marshal_value(value or field.default)
         """
@@ -226,7 +226,7 @@ class MarshalIterator(MappingIterator):
 
         value = self.get_attribute(data, field.name)
         try:
-            field.validate_for_marshal(value)
+            field.validate(value)
         except ValidationError as e:
             raise FieldError(field.name, e.message)
 
@@ -244,10 +244,6 @@ class SerializeIterator(MappingIterator):
     def process_field(self, field, data):
 
         value = self.get_attribute(data, field.source)
-        try:
-            field.validate_for_serialize(value)
-        except ValidationError as e:
-            raise FieldError(field.source, e.message)
 
         to_serialize = value if value is not None else field.default
         if to_serialize is not None:
