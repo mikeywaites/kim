@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import mock
 
-from kim.exceptions import RoleNotFound
+from kim.exceptions import RoleNotFound, ValidationError, MappingErrors
 from kim.serializers import Field, Serializer
 from kim.types import String, Integer
 from kim.type_mapper import TypeMapper
@@ -256,3 +257,34 @@ class SerializerTests(unittest.TestCase):
         result = serializer.marshal({'email': 'foo', 'name': 'bar'},
                                     role='public')
         self.assertDictEqual(result, {'email': 'foo'})
+
+    def test_validate_method_called(self):
+        mocked = mock.MagicMock()
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            validate_name = mocked
+
+        serializer = MySerializer()
+
+        serializer.marshal({'email': 'foo', 'name': 'bar'})
+
+        mocked.assert_called_with(serializer, 'bar')
+
+    def test_validate_method_failure(self):
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            def validate_name(self, source_value):
+                raise ValidationError()
+
+        serializer = MySerializer()
+
+        with self.assertRaises(MappingErrors):
+            serializer.marshal({'email': 'foo', 'name': 'bar'})
+

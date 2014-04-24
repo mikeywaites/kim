@@ -12,4 +12,5 @@ class MySerializer(Serializer):
         return True
 
 
+print MySerializer().marshal({"a": 420})
 print MySerializer().marshal({"a": 50})
