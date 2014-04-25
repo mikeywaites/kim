@@ -514,6 +514,11 @@ class EmailTypeTests(unittest.TestCase):
         my_type = Email()
         self.assertTrue(my_type.validate('jack@gmail.com'))
 
+    def test_validate_caps_valid(self):
+
+        my_type = Email('Email39@example.com')
+        self.assertTrue(my_type.validate('jack@gmail.com'))
+
 
 class FloatTypeTests(unittest.TestCase):
 

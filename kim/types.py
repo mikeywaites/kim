@@ -415,14 +415,81 @@ class Regexp(String):
         return True
 
 
-class Email(Regexp):
-    PATTERN = re.compile(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/" \
-        "=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]" \
-        "(?:[a-z0-9-]*[a-z0-9])?")
+ipv4_re = re.compile(
+    r'^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$')
+validate_ipv4_address = Regexp(pattern=ipv4_re).validate
 
-    def __init__(self, *args, **kwargs):
-        kwargs['pattern'] = self.PATTERN
+
+# TODO handle validation ipv6 domains.
+def validate_ipv46_address(value):
+    try:
+        validate_ipv4_address(value)
+    except ValidationError as e:
+        raise e
+
+
+class Email(String):
+    # Django from django forms
+
+    message = 'Enter a valid email address.'
+
+    user_regex = re.compile(
+        r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*$"  # dot-atom
+        r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"$)',  # quoted-string
+        re.IGNORECASE)
+    domain_regex = re.compile(
+        r'(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}|[A-Z0-9-]{2,})$',
+        re.IGNORECASE)
+    literal_regex = re.compile(
+        # literal form, ipv4 or ipv6 address (SMTP 4.1.3)
+        r'\[([A-f0-9:\.]+)\]$',
+        re.IGNORECASE)
+
+    domain_whitelist = ['localhost']
+
+    def __init__(self, message=None, whitelist=None, *args, **kwargs):
         super(Email, self).__init__(*args, **kwargs)
+        if message is not None:
+            self.message = message
+        if whitelist is not None:
+            self.domain_whitelist = whitelist
+
+    def validate(self, source_value):
+
+        if not source_value or '@' not in source_value:
+            raise ValidationError(self.message)
+
+        user_part, domain_part = source_value.rsplit('@', 1)
+
+        if not self.user_regex.match(user_part):
+            raise ValidationError(self.message)
+
+        if (domain_part not in self.domain_whitelist and
+                not self.validate_domain_part(domain_part)):
+            # Try for possible IDN domain-part
+            try:
+                domain_part = domain_part.encode('idna').decode('ascii')
+                if self.validate_domain_part(domain_part):
+                    return True
+            except UnicodeError:
+                pass
+            raise ValidationError(self.message)
+
+        return True
+
+    def validate_domain_part(self, domain_part):
+        if self.domain_regex.match(domain_part):
+            return True
+
+        literal_match = self.literal_regex.match(domain_part)
+        if literal_match:
+            ip_address = literal_match.group(1)
+            try:
+                validate_ipv46_address(ip_address)
+                return True
+            except ValidationError:
+                pass
+        return False
 
 
 class Float(BaseType):
