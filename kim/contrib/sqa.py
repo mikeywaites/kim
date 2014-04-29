@@ -51,12 +51,13 @@ class IntegerForeignKey(NumericType):
 
     def validate(self, source_value):
         super(IntegerForeignKey, self).validate(source_value)
-        try:
-            obj = self.getter(source_value)
-        except NoResultFound:
-            obj = None
-        if not obj:
-            raise ValidationError('invalid id')
+        if source_value is not None:
+            try:
+                obj = self.getter(source_value)
+            except NoResultFound:
+                obj = None
+            if not obj:
+                raise ValidationError('invalid id')
         return True
 
 
