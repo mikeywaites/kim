@@ -111,11 +111,12 @@ class TypedType(BaseType):
         """
         super(TypedType, self).validate(source_value)
 
-        if source_value is not None and not isinstance(source_value, self.type_):
-            raise ValidationError(self.get_error_message(source_value))
+        if source_value is not None:
+            if not isinstance(source_value, self.type_):
+                raise ValidationError(self.get_error_message(source_value))
 
-        if self.choices and source_value not in self.choices:
-            raise ValidationError('not a valid choice')
+            if self.choices and source_value not in self.choices:
+                raise ValidationError('not a valid choice')
 
         return True
 
@@ -175,7 +176,7 @@ class PositiveInteger(Integer):
 
     def validate(self, source_value):
         super(PositiveInteger, self).validate(source_value)
-        if source_value < 0:
+        if source_value is not None and source_value < 0:
             raise ValidationError('must be positive integer')
 
 
