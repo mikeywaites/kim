@@ -3,7 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ..serializers import Serializer
 
-from ..types import Nested, Integer
+from ..types import Nested, NumericType
 from ..exceptions import ValidationError
 
 
@@ -41,8 +41,8 @@ class NestedForeignKey(Nested):
         return self.get_object(source_value)
 
 
-class IntegerForeignKey(Integer):
-    """Field representing an Integer ForeignKey. Behaves as Integer, but will
+class IntegerForeignKey(NumericType):
+    """Field representing an Integer ForeignKey. Behaves as NumericType, but will
     look up the required object via self.getter to ensure it exists/is valid"""
 
     def __init__(self, *args, **kwargs):
