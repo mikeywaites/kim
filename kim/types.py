@@ -357,6 +357,7 @@ class Collection(TypedType):
 
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
+        self.default = []
         if not is_valid_type(self.inner_type):
             raise TypeError("Collection() requires a valid Type "
                             "as its first argument")
