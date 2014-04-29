@@ -131,6 +131,11 @@ class Integer(TypedType):
     type_ = int
 
 
+class Boolean(TypedType):
+
+    type_ = bool
+
+
 class NumericType(BaseType):
     """ a `TypedType` that allows integers to be passed as strings as well
     as standard ints
