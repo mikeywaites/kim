@@ -372,7 +372,8 @@ class Collection(TypedType):
 
         """
         super(Collection, self).validate(source_value)
-        return [self.inner_type.validate(mem) for mem in source_value]
+        if source_value is not None:
+            return [self.inner_type.validate(mem) for mem in source_value]
 
 
 class DateTime(BaseType):
