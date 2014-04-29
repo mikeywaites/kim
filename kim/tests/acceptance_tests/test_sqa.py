@@ -483,6 +483,50 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(serialized, exp)
 
+    def test_integerforeignkey_field_as_string(self):
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(IntegerForeignKey(getter=contact_getter), source='contact_details_id')
+
+        data = {
+            'full_name': 'bob',
+            'contact': str(self.deets.id),
+        }
+
+        serializer = UserSerializer()
+        result = serializer.marshal(data)
+
+        self.session.add(result)
+        self.session.commit()
+
+        self.assertTrue(isinstance(result, User))
+        self.assertEqual(result.name, 'bob')
+
+        contact_details = result.contact_details
+        self.assertTrue(isinstance(contact_details, ContactDetail))
+        self.assertEqual(contact_details.id, self.deets.id)
+
+
+        self.session.add(self.deets)
+
+        serializer = UserSerializer()
+        serialized = serializer.serialize(result)
+
+        exp = {
+            'id': result.id,
+            'full_name': 'bob',
+            'contact': self.deets.id,
+            'signup_date': None,
+        }
+        self.assertDictEqual(serialized, exp)
+
     def test_integerforeignkey_field_invalid(self):
         def contact_getter(id):
             return False
