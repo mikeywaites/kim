@@ -338,6 +338,11 @@ class Nested(BaseType):
         :returns: True
         """
         errors = defaultdict(list)
+
+        # TODO  This is a temp fix for KIM-36
+        if self.read_only and not source_value:
+            return True
+
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
