@@ -55,10 +55,10 @@ class NestedSerializer(Serializer):
     nested_two = Field(Nested(mapped='kim.tests.m2.InnerNestedSerializer'))
 
 from pprint import pprint
-result = serialize(ProperSerializer.__mapping__, data)
+result = serialize(ProperSerializer().get_mapping(), data)
 pprint(result)
 print "===================="
-pprint(marshal(ProperSerializer.__mapping__, result))
+pprint(marshal(ProperSerializer().get_mapping(), result))
 
 print "===================="
 

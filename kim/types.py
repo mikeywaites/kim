@@ -33,7 +33,7 @@ class BaseType(object):
         """
         return unicode(self.error_message)
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         """:meth:`marshal_value` called during marshaling of data.
 
         This method provides a hook for types to perform additonal operations
@@ -43,7 +43,7 @@ class BaseType(object):
         """
         return source_value
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         """:meth:`serialize_value` called during serialization of data.
 
         This method provides a hook for types to perform additonal operations
@@ -311,23 +311,27 @@ class Nested(BaseType):
 
         return self.mapping
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         """marshal the `mapping` for this nested type
 
         :param source_value: data to marshal this `Nested` type to
 
         :returns: marshalled mapping
         """
-        return marshal(self.get_mapping(), source_value)
+        mapping_iterator = kwargs.get('mapping_iterator')
+        return mapping_iterator.run(self.get_mapping(), source_value)
+        # return marshal(self.get_mapping(), source_value)
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         """serialize `source_value` for this NestedType's mapping.
 
         :param source_value: data to serialize this `Nested` type to
 
         :returns: serialized mapping
         """
-        return serialize(self.get_mapping(), source_value)
+        mapping_iterator = kwargs.get('mapping_iterator')
+        return mapping_iterator.run(self.get_mapping(), source_value)
+        # return serialize(self.get_mapping(), source_value)
 
     def validate(self, source_value):
         """iterates Nested mapping calling validate for each
@@ -369,14 +373,14 @@ class Collection(TypedType):
 
         super(Collection, self).__init__(*args, **kwargs)
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
 
         return [self.inner_type.marshal_value(member)
                 for member in source_value]
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
 
-        return [self.inner_type.serialize_value(member)
+        return [self.inner_type.serialize_value(member, **kwargs)
                 for member in source_value]
 
     def validate(self, source_value):
@@ -391,10 +395,10 @@ class Collection(TypedType):
 class DateTime(BaseType):
     type_ = datetime
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         return source_value.isoformat()
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         return iso8601.parse_date(source_value)
 
     def validate(self, source_value):
@@ -411,7 +415,7 @@ class Date(DateTime):
 
     type_ = date
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         return super(Date, self).marshal_value(source_value).date()
 
 
@@ -528,13 +532,13 @@ class Float(BaseType):
                     raise ValidationError(self.get_error_message(source_value))
         return True
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         if self.as_string:
             return str(source_value)
         else:
             return source_value
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         return float(source_value)
 
 
@@ -563,8 +567,8 @@ class Decimal(BaseType):
 
         return True
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         return str(self._cast(source_value))
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         return self._cast(source_value)

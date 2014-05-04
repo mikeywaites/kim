@@ -7,7 +7,7 @@ from iso8601.iso8601 import Utc
 from kim.serializers import Field
 from kim.roles import Role
 from kim import types
-from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey
+from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey, NestedNew
 from kim.exceptions import MappingErrors
 
 from sqlalchemy import create_engine
@@ -254,7 +254,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(result)
         self.session.commit()
 
-    @unittest.skip('please fix me yo')
+    # @unittest.skip('please fix me yo')
     def test_foreignkey_field(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
@@ -278,7 +278,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(read_only=True))
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(required=False))
-            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+            contact = Field(NestedNew(mapped=ContactSerializer,
                 marshal_by_key_only=False, getter=contact_getter), source='contact_details')
 
         data = {
@@ -397,6 +397,47 @@ class SQAAcceptanceTests(unittest.TestCase):
         serializer = UserSerializer()
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
+
+    def test_nested_new(self):
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+            address = Field(types.Nested(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedNew(mapped=ContactSerializer,
+                marshal_by_key_only=False, getter=contact_getter), source='contact_details')
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'phone': '082345234',
+                'address': {
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
+                }
+            }
+        }
+
+        serializer = UserSerializer()
+        # with self.assertRaises(MappingErrors):
+        serializer.marshal(data)
 
     def test_serialize_dot_notation(self):
         class UserSerializer(SQASerializer):

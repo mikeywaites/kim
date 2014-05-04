@@ -130,7 +130,7 @@ class MappingIterator(object):
         has_errors = False
         for d in data:
             try:
-                output.append(cls.run(mapping, d, many=False))
+                output.append(cls.run(mapping, d, many=False, **kwargs))
             except MappingErrors as e:
                 has_errors = True
                 errors.append(e.message)
@@ -144,7 +144,7 @@ class MappingIterator(object):
 
     @classmethod
     def run_one(cls, mapping, data, **kwargs):
-        return cls()._run(mapping, data, **kwargs)
+        return cls(**kwargs)._run(mapping, data)
 
     @classmethod
     def run(cls, mapping, data, many=False, **kwargs):
@@ -232,7 +232,7 @@ class MarshalIterator(MappingIterator):
 
         to_marshal = value if value is not None else field.default
         if to_marshal is not None:
-            return field.marshal_value(to_marshal)
+            return field.marshal_value(to_marshal, mapping_iterator=self.__class__)
 
 
 class SerializeIterator(MappingIterator):
@@ -247,7 +247,7 @@ class SerializeIterator(MappingIterator):
 
         to_serialize = value if value is not None else field.default
         if to_serialize is not None:
-            return field.serialize_value(to_serialize)
+            return field.serialize_value(to_serialize, mapping_iterator=self.__class__)
 
 
 def marshal(mapping, data, **kwargs):

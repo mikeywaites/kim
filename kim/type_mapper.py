@@ -37,20 +37,20 @@ class BaseTypeMapper(object):
         self.default = options.pop('default', type.default)
         self.extra_validators = extra_validators or []
 
-    def marshal_value(self, source_value):
+    def marshal_value(self, source_value, **kwargs):
         """Call the :meth:`marshal_value` method of `type`.
 
         :returns: value returned from :meth:`marshal_value`
         """
-        return self.type.marshal_value(source_value)
+        return self.type.marshal_value(source_value, **kwargs)
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, source_value, **kwargs):
         """Call the :meth:`serialize_value` method of `type`.
 
         :returns: value returned from :meth:`serialize_value`
         """
 
-        return self.type.serialize_value(source_value)
+        return self.type.serialize_value(source_value, **kwargs)
 
     def validate(self, source_value):
         result = self.type.validate(source_value)
