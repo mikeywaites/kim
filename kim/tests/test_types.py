@@ -241,6 +241,14 @@ class CollectionTypeTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             Collection(object())
 
+    def test_serialize_member(self):
+        c = Collection(Integer(), serialize_member=lambda m: m['a'])
+        self.assertEqual(c.serialize_value([{'a': 4}, {'a': 8}]), [4, 8])
+
+    def test_marshal_member(self):
+        c = Collection(Integer(), marshal_member=lambda m: {'a': m})
+        self.assertEqual(c.marshal_value([4, 8]), [{'a': 4}, {'a': 8}])
+
 
 class NestedTypeTests(unittest.TestCase):
 

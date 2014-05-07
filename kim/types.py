@@ -363,21 +363,35 @@ class Collection(TypedType):
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
         self.default = []
+        self.serialize_member = kwargs.pop('serialize_member', None)
+        self.marshal_member = kwargs.pop('marshal_member', None)
         if not is_valid_type(self.inner_type):
             raise TypeError("Collection() requires a valid Type "
                             "as its first argument")
 
         super(Collection, self).__init__(*args, **kwargs)
 
+    def serialize_members(self, source_value):
+        if self.serialize_member:
+            return [self.serialize_member(member) for member in source_value]
+        else:
+            return source_value
+
+    def marshal_members(self, source_value):
+        if self.marshal_member:
+            return [self.marshal_member(member) for member in source_value]
+        else:
+            return source_value
+
     def marshal_value(self, source_value):
 
         return [self.inner_type.marshal_value(member)
-                for member in source_value]
+                for member in self.marshal_members(source_value)]
 
     def serialize_value(self, source_value):
 
         return [self.inner_type.serialize_value(member)
-                for member in source_value]
+                for member in self.serialize_members(source_value)]
 
     def validate(self, source_value):
         """Call :meth:`validate` on `type`.

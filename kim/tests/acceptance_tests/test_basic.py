@@ -33,6 +33,27 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         self.assertEquals(result, data)
 
+    def test_collection_transform_serialize(self):
+        class Outer(Serializer):
+            people = Field(Collection(String(), serialize_member=lambda m: m['name']))
+
+        data = {'people': [{'name': 'Jack'}, {'name': 'Mike'}]}
+
+        result = Outer().serialize(data)
+
+        self.assertEquals(result, {'people': ['Jack', 'Mike']})
+
+    def test_collection_transform_marshal(self):
+        class Outer(Serializer):
+            people = Field(Collection(String(), marshal_member=lambda m: {'name': m}))
+
+        data = {'people': ['Jack', 'Mike']}
+        exp = {'people': [{'name': 'Jack'}, {'name': 'Mike'}]}
+
+        result = Outer().marshal(data)
+
+        self.assertEquals(result, exp)
+
     def test_self_nesting(self):
         class Inner(Serializer):
             name = Field(String(), source='user_name')
