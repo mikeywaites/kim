@@ -161,8 +161,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(read_only=True))
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(required=False))
-            contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=False), source='contact_details')
+            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -220,8 +219,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(read_only=True))
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(required=False))
-            contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=False), source='contact_details')
+            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -254,7 +252,6 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(result)
         self.session.commit()
 
-    @unittest.skip('please fix me yo')
     def test_foreignkey_field(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
@@ -279,11 +276,11 @@ class SQAAcceptanceTests(unittest.TestCase):
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(required=False))
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=False, getter=contact_getter), source='contact_details')
+                getter=contact_getter), source='contact_details')
 
         data = {
             'full_name': 'bob',
-            'contact': self.deets.id,
+            'contact': {'id': self.deets.id},
         }
 
         serializer = UserSerializer()
