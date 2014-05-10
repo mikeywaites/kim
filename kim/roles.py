@@ -33,12 +33,6 @@ class Role(BaseRole):
     """
 
     def __init__(self, *args, **kwargs):
-        # try:
-        #     name, field_names = args[0], args[1:]
-        # except IndexError:
-        #     raise TypeError('Role() requires at least one argument')
-
-        # self.name = name
         self.field_names = args
         self.whitelist = kwargs.pop('whitelist', True)
 
@@ -129,12 +123,11 @@ def whitelist(*fields, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to True
 
-    :param name: the name given to this role
     :param fields: iterable of field names
     :param role_base: specify a custom role type to create a role from
 
     e.g::
-        role=whitelist('user_public', ['name', 'email'])
+        role=whitelist('name', 'email')
 
     .. seealso::
         :func:`_create_role`
