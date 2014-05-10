@@ -33,13 +33,13 @@ class Role(BaseRole):
     """
 
     def __init__(self, *args, **kwargs):
-        try:
-            name, field_names = args[0], args[1:]
-        except IndexError:
-            raise TypeError('Role() requires at least one argument')
+        # try:
+        #     name, field_names = args[0], args[1:]
+        # except IndexError:
+        #     raise TypeError('Role() requires at least one argument')
 
-        self.name = name
-        self.field_names = field_names
+        # self.name = name
+        self.field_names = args
         self.whitelist = kwargs.pop('whitelist', True)
 
     def membership(self, field_name):
@@ -102,7 +102,7 @@ def create_mapping_from_role(role, mapping):
     )
 
 
-def _create_role(name, fields, role_base=None, whitelist=True, **kwargs):
+def _create_role(fields, role_base=None, whitelist=True, **kwargs):
     """Factory function for generating new Roles derived from an
     optional custom role class
 
@@ -119,14 +119,13 @@ def _create_role(name, fields, role_base=None, whitelist=True, **kwargs):
 
     BaseKlass = role_base or Role
     return BaseKlass(
-        name,
         whitelist=whitelist,
         *fields,
         **kwargs
     )
 
 
-def whitelist(name, *fields, **kwargs):
+def whitelist(*fields, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to True
 
@@ -143,13 +142,13 @@ def whitelist(name, *fields, **kwargs):
     :returns: New :class:`Role` type
     """
     role_base = kwargs.pop('role_base', None)
-    return _create_role(name, fields,
+    return _create_role(fields,
                         role_base=role_base,
                         whitelist=True,
                         **kwargs)
 
 
-def blacklist(name, *fields, **kwargs):
+def blacklist(*fields, **kwargs):
     """Helper function that explicitly creates a new :class`Role` type
     setting the whitelist option to False
 
@@ -166,7 +165,7 @@ def blacklist(name, *fields, **kwargs):
     :returns: New :class:`Role` type
     """
     role_base = kwargs.pop('role_base', None)
-    return _create_role(name, fields,
+    return _create_role(fields,
                         role_base=role_base,
                         whitelist=False,
                         **kwargs)

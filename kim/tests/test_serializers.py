@@ -126,7 +126,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_serializer_opts_with_role(self):
 
-        public = whitelist('public', 'a')
+        public = whitelist('a')
 
         class MySerializer(Serializer):
 
@@ -162,7 +162,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_get_mapping_with_role_name(self):
 
-        public = whitelist('public', 'email')
+        public = whitelist('email')
 
         class MySerializer(Serializer):
 
@@ -181,7 +181,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_get_mapping_with_invalid_role_name_raies_role_not_found(self):
 
-        public = whitelist('public', 'email')
+        public = whitelist('email')
 
         name = Field(String())
         email = Field(String())
@@ -201,7 +201,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_get_mapping_with_role_instance(self):
 
-        public = whitelist('public', 'email')
+        public = whitelist('email')
 
         class MySerializer(Serializer):
 
@@ -213,7 +213,7 @@ class SerializerTests(unittest.TestCase):
                 roles = {'public': public}
 
         serializer = MySerializer()
-        name_role = whitelist('name_role', 'name')
+        name_role = whitelist('name')
 
         mapped = serializer.get_mapping(role=name_role)
         self.assertEqual(len(mapped.fields), 1)
@@ -221,7 +221,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_serialize_with_role(self):
 
-        public = whitelist('public', 'email')
+        public = whitelist('email')
 
         class MySerializer(Serializer):
 
@@ -241,7 +241,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_marshal_with_role(self):
 
-        public = whitelist('public', 'email')
+        public = whitelist('email')
 
         class MySerializer(Serializer):
 

@@ -19,24 +19,14 @@ class CustomRole(Role):
 
 class RoleTests(unittest.TestCase):
 
-    def test_role_requires_name(self):
-
-        with self.assertRaises(TypeError):
-            Role()
-
-    def test_role_name_correctly_set(self):
-
-        role = Role('name', 'field_a')
-        self.assertEqual(role.name, 'name')
-
     def test_field_names_correctly_set(self):
 
-        role = Role('name', 'field_a', 'field_b')
+        role = Role('field_a', 'field_b')
         self.assertEqual(role.field_names, ('field_a', 'field_b'))
 
     def test_set_whitelist_option(self):
 
-        role = Role('name', whitelist=False)
+        role = Role(whitelist=False)
         self.assertFalse(role.whitelist)
 
     def test_membership_for_whitelist_role(self):
@@ -54,7 +44,7 @@ class RoleTests(unittest.TestCase):
     def test_create_role_mapping_uses_mapping_type(self):
 
         mapping = MyCustomMapping('users', TypeMapper('name', types.String()))
-        role = Role('public', 'name')
+        role = Role('name')
         mapped = create_mapping_from_role(role, mapping)
         self.assertIsInstance(mapped, MyCustomMapping)
 
@@ -65,7 +55,7 @@ class RoleTests(unittest.TestCase):
         mapping = MyCustomMapping('users',
                                   name,
                                   email)
-        role = Role('public', 'name')
+        role = Role('name')
 
         mapped = create_mapping_from_role(role, mapping)
         self.assertIn(name, mapped.fields)
@@ -73,19 +63,17 @@ class RoleTests(unittest.TestCase):
 
     def test_whitelist_utility_function(self):
 
-        role = whitelist('name', 'name')
-        self.assertEqual(role.name, 'name')
+        role = whitelist('name')
         self.assertEqual(role.field_names, ('name',))
         self.assertTrue(role.whitelist)
 
     def test_blacklist_utility_funcation(self):
 
-        role = blacklist('name', 'name')
-        self.assertEqual(role.name, 'name')
+        role = blacklist('name')
         self.assertEqual(role.field_names, ('name',))
         self.assertFalse(role.whitelist)
 
     def test_create_role_with_custom_base(self):
 
-        role = whitelist('foo', 'bar', role_base=CustomRole)
+        role = whitelist('bar', role_base=CustomRole)
         self.assertIsInstance(role, CustomRole)
