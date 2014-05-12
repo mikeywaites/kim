@@ -1,3 +1,4 @@
+# encoding: utf-8
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -36,7 +37,9 @@ class NestedForeignKey(Nested):
         return obj
 
     def validate(self, source_value):
-        return self.get_object(source_value)
+        super(Nested, self).validate(source_value) # HACK: bypassing Nested.validate
+        if source_value:
+            return self.get_object(source_value)
 
     def marshal_value(self, source_value):
         return self.get_object(source_value)

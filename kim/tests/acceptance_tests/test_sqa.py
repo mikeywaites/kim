@@ -354,6 +354,36 @@ class SQAAcceptanceTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
 
+    def test_foreignkey_field_not_required(self):
+        def contact_getter(id):
+            return False
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer(read_only=True))
+            phone = Field(types.String)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer(read_only=True))
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime(required=False))
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                marshal_by_key_only=False, getter=contact_getter,
+                required=False), source='contact_details')
+
+        data = {
+            'full_name': 'bob',
+        }
+
+        serializer = UserSerializer()
+
+        result = serializer.marshal(data)
+
+        self.assertIsNone(result.contact_details)
+
     def test_marshal_by_key_only(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
