@@ -23,18 +23,19 @@ class Field(object):
         :class:`kim.serializers.Serializer`
     """
 
-    def __init__(self, field_type, name=None, source=None, **params):
+    def __init__(self, field_type, name=None, source=None, **options):
         if isclass(field_type):
             field_type = field_type()
         self.field_type = field_type
         self.name = name
         self.source = source
+        self.options = options
 
     def get_mapped_type(self, name, validators):
         name = self.name or name
         source = self.source or name
         return TypeMapper(name, self.field_type, source=source,
-            extra_validators=validators)
+            extra_validators=validators, **self.options)
 
 
 class SerializerMetaclass(type):

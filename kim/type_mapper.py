@@ -30,7 +30,6 @@ class BaseTypeMapper(object):
                  source=None,
                  extra_validators=None,
                  **options):
-
         self.type = type
         self.name = name
         self.source = source or name

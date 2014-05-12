@@ -238,7 +238,9 @@ class MarshalIterator(MappingIterator):
         except ValidationError as e:
             raise FieldError(field.name, e.message)
 
+        if field.name == 'is_published': import ipdb; ipdb.set_trace()
         to_marshal = value if value is not None else field.default
+        print to_marshal
         if to_marshal is not None:
             return field.marshal_value(to_marshal)
 

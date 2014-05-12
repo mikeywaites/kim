@@ -332,3 +332,35 @@ class SerializerTests(unittest.TestCase):
 
         with self.assertRaises(MappingErrors):
             serializer.marshal({'email': 'foo', 'name': 'bar'})
+
+    def test_field_default_used(self):
+        mocked = mock.MagicMock()
+
+        class MySerializer(Serializer):
+
+            name = Field(String(required=False), default='this is a default')
+            email = Field(String())
+
+            validate = mocked
+
+        serializer = MySerializer()
+
+        serializer.marshal({'email': 'foo'})
+
+        mocked.assert_called_with({'email': 'foo', 'name': 'this is a default'})
+
+    def test_field_default_ignored(self):
+        mocked = mock.MagicMock()
+
+        class MySerializer(Serializer):
+
+            name = Field(String(), default='this is a default')
+            email = Field(String())
+
+            validate = mocked
+
+        serializer = MySerializer()
+
+        serializer.marshal({'email': 'foo', 'name': 'default unused'})
+
+        mocked.assert_called_with({'email': 'foo', 'name': 'default unused'})
