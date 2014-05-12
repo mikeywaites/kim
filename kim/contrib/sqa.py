@@ -31,7 +31,10 @@ class NestedForeignKey(Nested):
             raise ValidationError('no id passed')
         id = int(id)
         if self.valid_id(id):
-            obj = self.getter(id)
+            try:
+                obj = self.getter(id)
+            except NoResultFound:
+                obj = None
             if not obj:
                 raise ValidationError('invalid id')
         return obj
