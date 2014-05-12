@@ -152,7 +152,8 @@ class Serializer(BaseSerializer):
         self.__mapping__, self.fields = self._build_mapping()
 
     def _build_mapping(self):
-        mapping = Mapping()
+        top_level_validator = getattr(self, 'validate', None)
+        mapping = Mapping(validator=top_level_validator)
         fields = {}
         for name, field_wrapper in self.declared_fields.items():
             validator = self.declared_validators.get(name)
