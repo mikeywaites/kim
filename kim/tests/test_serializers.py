@@ -301,3 +301,34 @@ class SerializerTests(unittest.TestCase):
 
         self.assertEqual(fields['name'].type, name_type)
         self.assertEqual(fields['email'].type, email_type)
+
+    def test_top_level_validate_method_called(self):
+        mocked = mock.MagicMock()
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            validate = mocked
+
+        serializer = MySerializer()
+
+        serializer.marshal({'email': 'foo', 'name': 'bar'})
+
+        mocked.assert_called_with({'email': 'foo', 'name': 'bar'})
+
+
+    def test_top_level_validate_method_failure(self):
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            def validate(self, data):
+                raise MappingErrors({'email': ['bla']})
+
+        serializer = MySerializer()
+
+        with self.assertRaises(MappingErrors):
+            serializer.marshal({'email': 'foo', 'name': 'bar'})

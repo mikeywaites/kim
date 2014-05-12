@@ -50,6 +50,7 @@ class Mapping(BaseMapping):
         mapped_types = args[0:]
 
         self.fields = kwargs.get('collection', list())
+        self.validator = kwargs.get('validator', None)
 
         self._arg_loop(mapped_types)
 
@@ -172,6 +173,8 @@ class MappingIterator(object):
                 self.errors[e.key].append(e.message)
                 continue
 
+        self.post_process(mapping)
+
         if self.errors:
             raise MappingErrors(dict(self.errors))
 
@@ -196,6 +199,11 @@ class MappingIterator(object):
 
         raise NotImplementedError("Concrete classes must inplement "
                                   "update_output method")
+
+    def post_process(self, mapping):
+        """Called after all other fields have been processed. Can be used
+        by concrete classes eg. to implement whole-mapping validation."""
+        pass
 
 
 class MarshalIterator(MappingIterator):
@@ -233,6 +241,13 @@ class MarshalIterator(MappingIterator):
         to_marshal = value if value is not None else field.default
         if to_marshal is not None:
             return field.marshal_value(to_marshal)
+
+    def post_process(self, mapping):
+        if mapping.validator:
+            try:
+                mapping.validator(self.output)
+            except MappingErrors as e:
+                self.errors = e.message
 
 
 class SerializeIterator(MappingIterator):
