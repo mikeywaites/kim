@@ -173,7 +173,7 @@ class MappingIterator(object):
                 self.errors[e.key].append(e.message)
                 continue
 
-        self.post_process(mapping, data)
+        self.post_process(mapping)
 
         if self.errors:
             raise MappingErrors(dict(self.errors))
@@ -200,7 +200,7 @@ class MappingIterator(object):
         raise NotImplementedError("Concrete classes must inplement "
                                   "update_output method")
 
-    def post_process(self, mapping, data):
+    def post_process(self, mapping):
         """Called after all other fields have been processed. Can be used
         by concrete classes eg. to implement whole-mapping validation."""
         pass
@@ -242,10 +242,10 @@ class MarshalIterator(MappingIterator):
         if to_marshal is not None:
             return field.marshal_value(to_marshal)
 
-    def post_process(self, mapping, data):
+    def post_process(self, mapping):
         if mapping.validator:
             try:
-                mapping.validator(data)
+                mapping.validator(self.output)
             except MappingErrors as e:
                 self.errors = e.message
 
