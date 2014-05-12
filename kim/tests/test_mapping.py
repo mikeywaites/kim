@@ -201,6 +201,22 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
+    def test_post_process_validator_no_error(self):
+        my_validator = mock.MagicMock()
+        mapping = Mapping(validator=my_validator)
+
+        marshal(mapping, {})
+
+        my_validator.assert_called_with({})
+
+    def test_post_process_validator_with_error(self):
+        def my_validator(data):
+            raise MappingErrors({'lol': ['lol']})
+
+        mapping = Mapping(validator=my_validator)
+
+        with self.assertRaises(MappingErrors):
+            marshal(mapping, {})
 
 
 class SerializeTests(unittest.TestCase):
