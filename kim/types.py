@@ -77,10 +77,7 @@ class BaseType(object):
         :returns: True
         """
         if self.read_only:
-            if source_value:
-                raise ValidationError('this field is read only')
-            # If it's read only and we're not trying to set a value then
-            # we don't care about anything else, so return True here
+            # If it's read only we don't care about anything else
             return True
         else:
             if self.required and source_value is None:

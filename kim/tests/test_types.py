@@ -83,8 +83,7 @@ class BaseTypeTests(unittest.TestCase):
 
     def test_validate_read_only_not_none(self):
         my_type = String(read_only=True)
-        with self.assertRaises(ValidationError):
-            self.assertFalse(my_type.validate('bla'))
+        self.assertTrue(my_type.validate('bla'))
 
     def test_validate_read_only_none(self):
         my_type = String(read_only=True)

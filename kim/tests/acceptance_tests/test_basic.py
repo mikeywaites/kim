@@ -81,6 +81,17 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         self.assertEquals(result, {'user_name': 'jack', 'status': 200})
 
+    def test_read_only(self):
+        class Outer(Serializer):
+            id = Field(String(read_only=True))
+            user = Field(String)
+
+        data = {'user': 'jack', 'id': 'ignore this'}
+
+        result = Outer().marshal(data)
+
+        self.assertEquals(result, {'user': 'jack'})
+
     def test_multiple_types(self):
         class Inner(Serializer):
             name = Field(String())
