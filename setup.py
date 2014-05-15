@@ -28,7 +28,7 @@ setup(
     author_email='mikey.wait.es@gmail.com',
     description='A pyhton serialization library',
     long_description=__doc__,
-    packages=['kim'],
+    packages=['kim', 'kim.contrib'],
     include_package_data=True,
     zip_safe=False,
     platforms='any',
