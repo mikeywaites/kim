@@ -315,7 +315,8 @@ class Nested(BaseType):
 
         :returns: marshalled mapping
         """
-        return marshal(self.get_mapping(), source_value)
+        if not self.read_only:
+            return marshal(self.get_mapping(), source_value)
 
     def serialize_value(self, source_value):
         """serialize `source_value` for this NestedType's mapping.
@@ -337,7 +338,7 @@ class Nested(BaseType):
         errors = defaultdict(list)
 
         # TODO  This is a temp fix for KIM-36
-        if self.read_only and not source_value:
+        if self.read_only:
             return True
 
         for field in self.get_mapping().fields:

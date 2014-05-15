@@ -6,7 +6,7 @@ import mock
 
 from kim.exceptions import RoleNotFound, ValidationError, MappingErrors
 from kim.serializers import Field, Serializer
-from kim.types import String, Integer
+from kim.types import String, Integer, Nested
 from kim.type_mapper import TypeMapper
 from kim.roles import whitelist
 
@@ -364,3 +364,20 @@ class SerializerTests(unittest.TestCase):
         serializer.marshal({'email': 'foo', 'name': 'default unused'})
 
         mocked.assert_called_with({'email': 'foo', 'name': 'default unused'})
+
+    def test_nested_read_only_field_ignored_on_marshal(self):
+
+        class CompanySerialzer(Serializer):
+            name = Field(String())
+
+        class MySerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+            supplier = Field(Nested(CompanySerialzer,
+                                    read_only=True,
+                                    required=False))
+
+        serializer = MySerializer()
+        res = serializer.marshal({'email': 'foo', 'name': 'bar', 'supplier': 1})
+        self.assertEqual(res, {'email': 'foo', 'name': 'bar'})
