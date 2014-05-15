@@ -1,5 +1,5 @@
 """
-Kim - The Grand Marshaller
+Kim
 --------------------------
 
 
@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name='Kim',
-    version='0.0.1',
+    version='0.0.2',
     url='http://github.com/mikeywaites/kim/',
     license='Public Domain',
     author='Mike Waites, Jack Saunders',
