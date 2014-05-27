@@ -219,6 +219,26 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapped.fields), 1)
         self.assertEqual(mapped.fields[0].name, 'name')
 
+    def test_get_mapping_with_role_duplicate_name(self):
+
+        public = whitelist('email2')
+
+        class MySerializer(Serializer):
+
+            email1 = Field(String(), name='email')
+            email2 = Field(String(), name='email')
+
+            class Meta:
+
+                roles = {'public': public}
+
+        serializer = MySerializer()
+
+        mapped = serializer.get_mapping(role='public')
+        self.assertEqual(len(mapped.fields), 1)
+        self.assertEqual(mapped.fields[0].name, 'email')
+        self.assertEqual(mapped.fields[0].attr_name, 'email2')
+
     def test_serialize_with_role(self):
 
         public = whitelist('email')

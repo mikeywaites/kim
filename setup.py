@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name='Kim',
-    version='0.0.2',
+    version='0.0.3',
     url='http://github.com/mikeywaites/kim/',
     license='Public Domain',
     author='Mike Waites, Jack Saunders',

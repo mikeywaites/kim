@@ -93,6 +93,7 @@ def marshal_sqa(instance, result):
                 marshal_sqa(remote_instance, v)
         else:
             # This is a normal field, just update it on the model instance
+            print k, v
             setattr(instance, k, v)
 
 

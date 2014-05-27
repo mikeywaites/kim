@@ -61,6 +61,19 @@ class RoleTests(unittest.TestCase):
         self.assertIn(name, mapped.fields)
         self.assertNotIn(email, mapped.fields)
 
+    def test_create_mapping_from_role_duplicate_attr_names(self):
+        email1 = TypeMapper('email', types.String(), attr_name='email1')
+        email2 = TypeMapper('email', types.String(), attr_name='email2')
+
+        mapping = MyCustomMapping('users',
+                                  email1,
+                                  email2)
+        role = Role('email2')
+
+        mapped = create_mapping_from_role(role, mapping)
+        self.assertIn(email2, mapped.fields)
+        self.assertNotIn(email1, mapped.fields)
+
     def test_whitelist_utility_function(self):
 
         role = whitelist('name')

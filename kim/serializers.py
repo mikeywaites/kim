@@ -32,9 +32,10 @@ class Field(object):
         self.options = options
 
     def get_mapped_type(self, name, validators):
+        attr_name = name
         name = self.name or name
         source = self.source or name
-        return TypeMapper(name, self.field_type, source=source,
+        return TypeMapper(name, self.field_type, source=source, attr_name=attr_name,
             extra_validators=validators, **self.options)
 
 
