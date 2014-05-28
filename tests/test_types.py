@@ -14,7 +14,7 @@ from kim.types import (Nested, String, Collection, Integer, BaseType,
                        TypedType, Date, DateTime, Regexp,
                        Email, Float, Decimal, PositiveInteger,
                        NumericType)
-from kim.type_mapper import TypeMapper
+from kim.fields import Field
 
 
 ImportByStringMapping = Mapping()
@@ -287,7 +287,7 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_get_mapping_with_role_set(self):
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
 
         role = Role('foo', 'name')
         mapping = Mapping(name, email)
@@ -303,7 +303,7 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -321,7 +321,7 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -339,8 +339,8 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name = TypeMapper('email', String())
-        email = TypeMapper('name', String())
+        name = Field('email', String())
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
@@ -357,8 +357,8 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name = TypeMapper('email', String())
-        email = TypeMapper('name', String())
+        name = Field('email', String())
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
@@ -370,8 +370,8 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_nested_validation_validates_mapped_fields_marshal(self):
 
-        name = TypeMapper('email', String(), 'email_source')
-        email = TypeMapper('name', String())
+        name = Field('email', String(), 'email_source')
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -393,8 +393,8 @@ class NestedTypeTests(unittest.TestCase):
         role passed to a nested type, the field should be ignored
         """
 
-        name = TypeMapper('email', String(), 'email_source')
-        email = TypeMapper('name', String())
+        name = Field('email', String(), 'email_source')
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))

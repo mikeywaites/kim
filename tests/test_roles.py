@@ -6,7 +6,7 @@ import unittest
 from kim.roles import Role, create_mapping_from_role, whitelist, blacklist
 from kim.mapping import Mapping
 from kim import types
-from kim.type_mapper import TypeMapper
+from kim.fields import Field
 
 
 class MyCustomMapping(Mapping):
@@ -43,14 +43,14 @@ class RoleTests(unittest.TestCase):
 
     def test_create_role_mapping_uses_mapping_type(self):
 
-        mapping = MyCustomMapping('users', TypeMapper('name', types.String()))
+        mapping = MyCustomMapping('users', Field('name', types.String()))
         role = Role('name')
         mapped = create_mapping_from_role(role, mapping)
         self.assertIsInstance(mapped, MyCustomMapping)
 
     def test_create_mapping_from_role(self):
-        name = TypeMapper('name', types.String())
-        email = TypeMapper('email', types.String())
+        name = Field('name', types.String())
+        email = Field('email', types.String())
 
         mapping = MyCustomMapping('users',
                                   name,
@@ -62,8 +62,8 @@ class RoleTests(unittest.TestCase):
         self.assertNotIn(email, mapped.fields)
 
     def test_create_mapping_from_role_duplicate_attr_names(self):
-        email1 = TypeMapper('email', types.String(), attr_name='email1')
-        email2 = TypeMapper('email', types.String(), attr_name='email2')
+        email1 = Field('email', types.String(), attr_name='email1')
+        email2 = Field('email', types.String(), attr_name='email2')
 
         mapping = MyCustomMapping('users',
                                   email1,
