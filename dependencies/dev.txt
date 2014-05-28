@@ -1,6 +1,4 @@
 ipython
 ipdb
 pdbpp
-
-# Documentation
 Sphinx==1.2.2

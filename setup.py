@@ -96,7 +96,7 @@ setup(
     zip_safe=False,
     install_requires=read_dependencies(INSTALL_DEPS),
     extras_require={
-        'develop': read_dependencies(DEV_DEPS)
+        'develop': read_dependencies(DEV_DEPS)+read_dependencies(TEST_DEPS)
     },
     tests_require=read_dependencies(TEST_DEPS),
     cmdclass={
