@@ -96,6 +96,7 @@ class Field(object):
         self.field_type = field_type
         self.name = name
         self.source = kwargs.pop('source', name)
+        self.attr_name = kwargs.pop('attr_name', name)
         self.default = kwargs.pop('default', None)
         self.required = kwargs.pop('required', True)
         self.allow_none = kwargs.pop('allow_none', True)
