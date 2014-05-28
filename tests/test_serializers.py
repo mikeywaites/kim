@@ -12,6 +12,7 @@ from kim.roles import whitelist
 
 
 class SerializerTests(unittest.TestCase):
+
     def test_serializer(self):
         class ASerializer(Serializer):
             a = Field(String())
@@ -143,7 +144,7 @@ class SerializerTests(unittest.TestCase):
         }
         self.assertEqual(serializer.opts.roles, exp)
 
-    def test__get_mapping_with_no_role_specified(self):
+    def test_get_mapping_with_no_role_specified(self):
 
         name = Field(String())
         email = Field(String())
@@ -337,7 +338,6 @@ class SerializerTests(unittest.TestCase):
         serializer.marshal({'email': 'foo', 'name': 'bar'})
 
         mocked.assert_called_with({'email': 'foo', 'name': 'bar'})
-
 
     def test_top_level_validate_method_failure(self):
         class MySerializer(Serializer):

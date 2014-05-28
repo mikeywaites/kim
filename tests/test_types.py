@@ -411,7 +411,7 @@ class NestedTypeTests(unittest.TestCase):
         self.assertEqual(nested.mapping, ImportByStringMapping)
 
     def test_import_by_string_absolute(self):
-        nested = Nested(mapped='kim.tests.test_types.ImportByStringMapping')
+        nested = Nested(mapped='tests.test_types.ImportByStringMapping')
 
         self.assertEqual(nested.mapping, ImportByStringMapping)
 

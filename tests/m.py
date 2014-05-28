@@ -1,4 +1,4 @@
-from ..mapping import Mapping, serialize, marshal
+from kim.mapping import Mapping, serialize, marshal
 from datetime import date
 
 
