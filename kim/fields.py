@@ -129,13 +129,10 @@ class Field(object):
         :raises: :class:`kim.exceptions.ValidationError`
         :returns: True if all validators run without error.
         """
-        validators = list(self.field_type.validators)
-        validators.extend(self.extra_validators)
 
-        for validator in validators:
-            try:
-                validator(self.field_type, source)
-            except ValidationError as e:
-                raise e
+        try:
+            self.field_type.validate(source)
+        except ValidationError as e:
+            raise e
 
         return True

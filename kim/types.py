@@ -131,15 +131,7 @@ class String(TypedType):
     type_ = basestring
 
 
-def type_validator(type_, source):
-
-    if not isinstance(source, type_.type_):
-        raise ValidationError('invalid type')
-
-
 class Integer(TypedType):
-
-    validators = [type_validator, ]
 
     type_ = int
 
