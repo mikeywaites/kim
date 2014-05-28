@@ -15,11 +15,19 @@ from .mapping import get_attribute, serialize, BaseMapping, marshal
 from kim.utils import is_valid_type
 
 
+def iskimtype(type_):
+    return isinstance(type_, BaseType)
+
+
 class BaseType(object):
+
+    _kim_type = True
 
     default = None
 
     error_message = 'An error ocurred validating this field'
+
+    validators = []
 
     def __init__(self, required=True, allow_none=True, read_only=False, **options):
         self.required = required
@@ -123,7 +131,15 @@ class String(TypedType):
     type_ = basestring
 
 
+def type_validator(type_, source):
+
+    if not isinstance(source, type_.type_):
+        raise ValidationError('invalid type')
+
+
 class Integer(TypedType):
+
+    validators = [type_validator, ]
 
     type_ = int
 

@@ -7,7 +7,7 @@ import mock
 from kim import types
 from kim.exceptions import MappingErrors
 from kim.mapping import Mapping, marshal, serialize, MappingIterator
-from kim.type_mapper import TypeMapper
+from kim.fields import Field
 
 
 class NotAType(object):
@@ -20,7 +20,7 @@ class MappingTest(unittest.TestCase):
 
     def test_setting_mapping_fields(self):
 
-        name = TypeMapper('name', types.String())
+        name = Field('name', types.String())
         not_a = NotAType('foo')
         mapping = Mapping(name, not_a)
         self.assertIn(name, mapping.fields)
@@ -34,15 +34,15 @@ class MappingTest(unittest.TestCase):
     def test_mapping_add_field(self):
 
         mapping = Mapping()
-        name = TypeMapper('name', types.String())
+        name = Field('name', types.String())
 
         mapping.add_field(name)
         self.assertIn(name, mapping.fields)
 
     def test_iterate_over_mapping(self):
 
-        name = TypeMapper('name', types.String())
-        email = TypeMapper('email', types.String())
+        name = Field('name', types.String())
+        email = Field('email', types.String())
         mapping = Mapping(name, email)
 
         fields = [field for field in mapping]
@@ -61,12 +61,13 @@ class MappingIteratorTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             mi.update_output(None, None)
 
+
 class MarshalTests(unittest.TestCase):
 
     def setUp(self):
 
-        name = TypeMapper('name', types.String())
-        id = TypeMapper('id', types.Integer())
+        name = Field('name', types.String())
+        id = Field('id', types.Integer())
         self.name = name
         self.id = id
         self.mapping = Mapping(name, id)
@@ -114,7 +115,7 @@ class MarshalTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = TypeMapper('name', types.String(required=False),
+        name = Field('name', types.String(required=False),
                                 default='baz')
         mapping = Mapping(name)
         result = marshal(mapping, {})
@@ -124,7 +125,7 @@ class MarshalTests(unittest.TestCase):
 
     def test_default_not_used_when_falsey(self):
 
-        name = TypeMapper('order', types.Integer(required=False),
+        name = Field('order', types.Integer(required=False),
                                 default=123)
         mapping = Mapping(name)
         result = marshal(mapping, {'order': 0})
@@ -135,7 +136,7 @@ class MarshalTests(unittest.TestCase):
     def test_type_not_called_when_none(self):
         mockedtype = mock.MagicMock(default=None)
 
-        name = TypeMapper('name', mockedtype)
+        name = Field('name', mockedtype)
         mapping = Mapping(name)
         marshal(mapping, {})
 
@@ -144,15 +145,15 @@ class MarshalTests(unittest.TestCase):
     def test_type_not_called_when_not_none(self):
         mockedtype = mock.MagicMock(default=None)
 
-        name = TypeMapper('name', mockedtype)
+        name = Field('name', mockedtype)
         mapping = Mapping(name)
         marshal(mapping, {'name': 'bob'})
 
         self.assertTrue(mockedtype.marshal_value.called)
 
     def test_field_value_returned_when_different_source(self):
-        name = TypeMapper('name', types.String(), source='different_name')
-        id = TypeMapper('id', types.Integer())
+        name = Field('name', types.String(), source='different_name')
+        id = Field('id', types.Integer())
         mapping = Mapping(name, id)
 
         data = {'name': 'bar', 'id': 1}
@@ -175,8 +176,8 @@ class MarshalTests(unittest.TestCase):
             def include_in_marshal(self):
                 return False
 
-        name = TypeMapper('name', types.String())
-        id = TypeMapper('id', NotIncludedType())
+        name = Field('name', types.String())
+        id = Field('id', NotIncludedType())
         mapping = Mapping(name, id)
 
         data = {'name': 'bar', 'id': 1}
@@ -188,9 +189,9 @@ class MarshalTests(unittest.TestCase):
         self.assertEqual(exp, result)
 
     def test_source_span_relationships(self):
-        name = TypeMapper('company_name', types.String(), source='user.company.name')
-        company_id = TypeMapper('company_id', types.Integer(), source='user.company.id')
-        id = TypeMapper('id', types.Integer())
+        name = Field('company_name', types.String(), source='user.company.name')
+        company_id = Field('company_id', types.Integer(), source='user.company.id')
+        id = Field('id', types.Integer())
         mapping = Mapping(name, id, company_id)
 
         data = {'company_name': 'old street labs', 'company_id': 5, 'id': 1}
@@ -223,8 +224,8 @@ class SerializeTests(unittest.TestCase):
 
     def setUp(self):
 
-        name = TypeMapper('name', types.String())
-        id = TypeMapper('id', types.Integer())
+        name = Field('name', types.String())
+        id = Field('id', types.Integer())
         self.name = name
         self.id = id
         self.mapping = Mapping(name, id)
@@ -250,7 +251,7 @@ class SerializeTests(unittest.TestCase):
 
     def test_non_required_mapped_type_uses_default_value(self):
 
-        name = TypeMapper('name', types.String(required=False),
+        name = Field('name', types.String(required=False),
                           default='baz')
         mapping = Mapping(name)
         result = serialize(mapping, {})
@@ -259,8 +260,8 @@ class SerializeTests(unittest.TestCase):
         self.assertEqual(result, exp)
 
     def test_field_value_returned_when_different_source(self):
-        name = TypeMapper('name', types.String(), source='different_name')
-        id = TypeMapper('id', types.Integer())
+        name = Field('name', types.String(), source='different_name')
+        id = Field('id', types.Integer())
         mapping = Mapping(name, id)
 
         data = {'different_name': 'bar', 'id': 1}
@@ -299,8 +300,8 @@ class SerializeTests(unittest.TestCase):
             def include_in_serialize(self):
                 return False
 
-        name = TypeMapper('name', types.String())
-        id = TypeMapper('id', NotIncludedType())
+        name = Field('name', types.String())
+        id = Field('id', NotIncludedType())
         mapping = Mapping(name, id)
 
         data = {'name': 'bar', 'id': 1}
@@ -314,7 +315,7 @@ class SerializeTests(unittest.TestCase):
     def test_type_not_called_when_none(self):
         mockedtype = mock.MagicMock(default=None)
 
-        name = TypeMapper('name', mockedtype)
+        name = Field('name', mockedtype)
         mapping = Mapping(name)
         serialize(mapping, {})
 
@@ -323,15 +324,15 @@ class SerializeTests(unittest.TestCase):
     def test_type_not_called_when_not_none(self):
         mockedtype = mock.MagicMock(default=None)
 
-        name = TypeMapper('name', mockedtype)
+        name = Field('name', mockedtype)
         mapping = Mapping(name)
         serialize(mapping, {'name': 'bob'})
 
         self.assertTrue(mockedtype.serialize_value.called)
 
     def test_source_span_relationships(self):
-        name = TypeMapper('company_name', types.String(), source='user.company.name')
-        id = TypeMapper('id', types.Integer())
+        name = Field('company_name', types.String(), source='user.company.name')
+        id = Field('id', types.Integer())
         mapping = Mapping(name, id)
 
         data = {'user': {'company': {'id': 1, 'name': 'old street labs'}}, 'id': 1}

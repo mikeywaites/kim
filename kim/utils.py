@@ -27,3 +27,9 @@ def is_role(role):
     """
 
     return isinstance(role, BaseRole)
+
+
+def is_valid_field(field):
+    from .fields import Field
+
+    return isinstance(field, Field)

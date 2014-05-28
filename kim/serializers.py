@@ -5,37 +5,37 @@ from functools import partial
 
 from .exceptions import RoleNotFound, ConfigurationError
 from .mapping import Mapping, serialize, marshal
-from .type_mapper import TypeMapper
 from .utils import is_role
 from .types import BaseType
+from .fields import Field
 
 
-class Field(object):
-    """Wrapper representing a :class:`kim.types.Type` in a
-    :class:`kim.serializers.Serializer`.
-
-    :param field_type: The `Type` to use for this `Field` (note this should
-        be an instantiated object)
-    :param **params: Extra params to be passed to the `Type` constructor, eg.
-        `source`
-
-    .. seealso::
-        :class:`kim.serializers.Serializer`
-    """
-
-    def __init__(self, field_type, name=None, source=None, **options):
-        if isclass(field_type):
-            field_type = field_type()
-        self.field_type = field_type
-        self.name = name
-        self.source = source
-        self.options = options
-
-    def get_mapped_type(self, name, validators):
-        name = self.name or name
-        source = self.source or name
-        return TypeMapper(name, self.field_type, source=source,
-            extra_validators=validators, **self.options)
+#class Field(object):
+#    """Wrapper representing a :class:`kim.types.Type` in a
+#    :class:`kim.serializers.Serializer`.
+#
+#    :param field_type: The `Type` to use for this `Field` (note this should
+#        be an instantiated object)
+#    :param **params: Extra params to be passed to the `Type` constructor, eg.
+#        `source`
+#
+#    .. seealso::
+#        :class:`kim.serializers.Serializer`
+#    """
+#
+#    def __init__(self, field_type, name=None, source=None, **options):
+#        if isclass(field_type):
+#            field_type = field_type()
+#        self.field_type = field_type
+#        self.name = name
+#        self.source = source
+#        self.options = options
+#
+#    def get_mapped_type(self, name, validators):
+#        name = self.name or name
+#        source = self.source or name
+#        return TypeMapper(name, self.field_type, source=source,
+#            extra_validators=validators, **self.options)
 
 
 class SerializerMetaclass(type):
@@ -68,7 +68,6 @@ class SerializerMetaclass(type):
                 raise ConfigurationError('Serializer attributes must be wrapped ' \
                     'in Field. Raw type %s found on %s. Did you mean Field(%s)?' %
                     (type_name, name, type_name))
-
 
         attrs['declared_fields'] = OrderedDict(current_fields)
         attrs['declared_validators'] = OrderedDict(current_validators)
@@ -156,7 +155,7 @@ class Serializer(BaseSerializer):
         top_level_validator = getattr(self, 'validate', None)
         mapping = Mapping(validator=top_level_validator)
         fields = {}
-        for name, field_wrapper in self.declared_fields.items():
+        for name, field in self.declared_fields.items():
             validator = self.declared_validators.get(name)
             if validator:
                 # As the validator will not be called as Serializer.validate_X(),
@@ -166,7 +165,11 @@ class Serializer(BaseSerializer):
                 validators = [curried_validator]
             else:
                 validators = []
-            field = field_wrapper.get_mapped_type(name, validators)
+            field.name = name
+            if field.source is None:
+                field.source = name
+
+            #field = field_wrapper.get_mapped_type(name, validators)
             mapping.add_field(field)
             fields[name] = field
 

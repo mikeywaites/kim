@@ -8,10 +8,31 @@ from ..types import Nested, NumericType
 from ..exceptions import ValidationError
 
 
+def nested_foreign_key_validator(type_, source_value):
+
+    if type(source_value) != dict:
+        raise ValidationError('invalid type')
+
+    id = source_value.get(type_.id_field_name)
+    if not id:
+        raise ValidationError('no id passed')
+    id = int(id)
+    if self.valid_id(id):
+        try:
+            obj = self.getter(id)
+        except NoResultFound:
+            obj = None
+        if not obj:
+            raise ValidationError('invalid id')
+    return obj
+
+
 class NestedForeignKey(Nested):
     """Field which can function as a normal Nested field, but can also take an
     integer foreign key in an 'id' field when marshalled. In which case, it
     will look up the required object via self.getter."""
+
+    validators = [nested_foreign_key_validator, ]
 
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.get('getter', None)
@@ -48,9 +69,22 @@ class NestedForeignKey(Nested):
         return self.get_object(source_value)
 
 
+def find_by_id(type_, source):
+    if source is not None:
+        try:
+            obj = type_.getter(source)
+        except NoResultFound:
+            obj = None
+        if not obj:
+            raise ValidationError('invalid id')
+    return True
+
+
 class IntegerForeignKey(NumericType):
     """Field representing an Integer ForeignKey. Behaves as NumericType, but will
     look up the required object via self.getter to ensure it exists/is valid"""
+
+    validators = [find_by_id, ]
 
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.get('getter', None)
