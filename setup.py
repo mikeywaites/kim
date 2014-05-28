@@ -30,6 +30,23 @@ TEST_DEPS = os.path.join('dependencies', 'test.txt')
 DEV_DEPS = os.path.join('dependencies', 'dev.txt')
 
 
+from setuptools.command.test import test as TestCommand
+
+
+class PyTest(TestCommand):
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
+
 def read_dependencies(filename):
     """
     Read requirements file and process them into a list
@@ -63,7 +80,6 @@ def read(name):
     return open(name).read()
 
 
-# Setup function
 setup(
     name='Kim',
     version=read('VERSION').strip(),
@@ -74,19 +90,19 @@ setup(
                 'library written in python.',
     long_description=read('README.rst'),
     packages=find_packages(
-        exclude=[
-            "tests"]),
+        exclude=["tests"]
+    ),
     include_package_data=True,
     zip_safe=False,
-    # Dependencies
     install_requires=read_dependencies(INSTALL_DEPS),
     extras_require={
-        'test': read_dependencies(TEST_DEPS),
-        'develop': read_dependencies(DEV_DEPS)},
-    # Dependencies not hosted on PyPi
+        'develop': read_dependencies(DEV_DEPS)
+    },
+    tests_require=read_dependencies(TEST_DEPS),
+    cmdclass={
+        'test': PyTest
+    },
     dependency_links=[],
-    # Classifiers for Package Indexing
-    # Entry points, for example Flask-Script
     entry_points={},
     classifiers=[
         'Environment :: Web Environment',
@@ -98,4 +114,5 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Topic :: Software Development',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content'])
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
+    )
