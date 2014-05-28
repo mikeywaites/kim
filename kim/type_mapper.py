@@ -1,5 +1,3 @@
-from .exceptions import ValidationError
-
 
 #class BaseTypeMapper(object):
 #    """A `TypeMapper` is a Wrapper around kim `Types` used in `Mapping`
@@ -28,11 +26,13 @@ from .exceptions import ValidationError
 #
 #    def __init__(self, name, type,
 #                 source=None,
+#                 attr_name=None, # FIXME: we should rename this to name and rename name to destination
 #                 extra_validators=None,
 #                 **options):
 #        self.type = type
 #        self.name = name
 #        self.source = source or name
+#        self.attr_name = attr_name or name
 #        self.default = options.pop('default', type.default)
 #        self.extra_validators = extra_validators or []
 #

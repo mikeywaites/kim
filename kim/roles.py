@@ -86,7 +86,7 @@ def create_mapping_from_role(role, mapping):
     :returns: New mapping constructred from role.field_names
     """
     fields = [field for field in mapping.fields
-              if role.membership(field.name)]
+              if role.membership(field.attr_name)]
 
     # We create a new class here from mapping to allow custom mappers
     # TODO what other args, kwargs can a mapping have?
