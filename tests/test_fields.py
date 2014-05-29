@@ -109,12 +109,12 @@ class FieldTests(unittest.TestCase):
     def test_required_validation_error_message(self):
 
         field = Field('name', String())
+        error = None
         try:
             field.is_valid(None)
         except ValidationError as e:
-            self.assertEqual(e.message, 'This is a required field')
-        else:
-            assert False is True, 'Field is not valid'
+            error = e.message
+        self.assertEqual(error, 'This is a required field')
 
     def test_non_required_field_and_allow_none(self):
         """ensure that a non required field that does not allow null values
@@ -127,12 +127,12 @@ class FieldTests(unittest.TestCase):
 
     def test_field_allow_none_error_message(self):
         field = Field('name', String(), required=False, allow_none=False)
+        error = None
         try:
             field.is_valid(None)
         except ValidationError as e:
-            self.assertEqual(e.message, 'This field can not be None')
-        else:
-            assert False is True, 'Field is not valid'
+            error = e.message
+        self.assertEqual(error, 'This field can not be None')
 
     def test_field_type_validate_method_called(self):
         """ensure that after a field has run validation against required etc,
