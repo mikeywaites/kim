@@ -94,17 +94,6 @@ class MarshalTests(unittest.TestCase):
         except MappingErrors as e:
             self.assertIn('id', e.message)
 
-    def test_field_values_returned_when_valid(self):
-
-        class Data(object):
-            name = 'foo'
-            id = 1
-
-        exp = {'name': 'foo', 'id': 1}
-        result = marshal(self.mapping, Data())
-
-        self.assertEqual(exp, result)
-
     def test_field_values_returned_from_dict_when_valid(self):
 
         data = {'name': 'foo', 'id': 1}
@@ -112,16 +101,6 @@ class MarshalTests(unittest.TestCase):
         result = marshal(self.mapping, data)
 
         self.assertEqual(data, result)
-
-    def test_non_required_mapped_type_uses_default_value(self):
-
-        name = Field('name', types.String(required=False),
-                                default='baz')
-        mapping = Mapping(name)
-        result = marshal(mapping, {})
-        exp = {'name': 'baz'}
-
-        self.assertEqual(result, exp)
 
     def test_default_not_used_when_falsey(self):
 
@@ -133,23 +112,16 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(result, exp)
 
-    def test_type_not_called_when_none(self):
-        mockedtype = mock.MagicMock(default=None)
+    def test_type_marshal_value_called_when_not_none(self):
 
-        name = Field('name', mockedtype)
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType)
         mapping = Mapping(name)
-        marshal(mapping, {})
-
-        self.assertFalse(mockedtype.marshal_value.called)
-
-    def test_type_not_called_when_not_none(self):
-        mockedtype = mock.MagicMock(default=None)
-
-        name = Field('name', mockedtype)
-        mapping = Mapping(name)
-        marshal(mapping, {'name': 'bob'})
-
-        self.assertTrue(mockedtype.marshal_value.called)
+        with mock.patch.object(MyType, 'marshal_value') as mocked:
+            marshal(mapping, {'name': 'bob'})
+            self.assertTrue(mocked.called)
 
     def test_field_value_returned_when_different_source(self):
         name = Field('name', types.String(), source='different_name')
@@ -241,14 +213,6 @@ class SerializeTests(unittest.TestCase):
 
         self.assertEqual(exp, result)
 
-    def test_field_values_returned_from_dict_when_valid(self):
-
-        data = {'name': 'foo', 'id': 1}
-
-        result = serialize(self.mapping, data)
-
-        self.assertEqual(data, result)
-
     def test_non_required_mapped_type_uses_default_value(self):
 
         name = Field('name', types.String(required=False),
@@ -258,26 +222,6 @@ class SerializeTests(unittest.TestCase):
         exp = {'name': 'baz'}
 
         self.assertEqual(result, exp)
-
-    def test_field_value_returned_when_different_source(self):
-        name = Field('name', types.String(), source='different_name')
-        id = Field('id', types.Integer())
-        mapping = Mapping(name, id)
-
-        data = {'different_name': 'bar', 'id': 1}
-
-        exp = {'name': 'bar', 'id': 1}
-        result = serialize(mapping, data)
-
-        self.assertEqual(exp, result)
-
-    def test_many(self):
-
-        data = [{'name': 'foo', 'id': 1}, {'name': 'bar', 'id': 2}]
-
-        result = serialize(self.mapping, data, many=True)
-
-        self.assertEqual(data, result)
 
     def test_many_with_errors(self):
 
