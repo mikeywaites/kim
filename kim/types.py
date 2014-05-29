@@ -27,11 +27,6 @@ class BaseType(object):
 
     error_message = 'An error ocurred validating this field'
 
-    def __init__(self, required=True, allow_none=True, read_only=False, **options):
-        self.required = required
-        self.allow_none = allow_none
-        self.read_only = read_only
-
     def get_error_message(self, source_value):
         """Return a valiation error message for this Type
 
@@ -60,14 +55,6 @@ class BaseType(object):
 
         return source_value
 
-    def include_in_serialize(self):
-        """Should this field be included in the output from serialize?"""
-        return True
-
-    def include_in_marshal(self):
-        """Should this field be included in the output from marshal?"""
-        return not self.read_only
-
     def validate(self, source_value):
         """Validate the `source_value` is valid. If `source_value`
         is invalid a :class:`kim.exceptions.ValidationError` should be raised
@@ -82,15 +69,7 @@ class BaseType(object):
         :raises: :class:`kim.exceptions.ValidationError`
         :returns: True
         """
-        if self.read_only:
-            # If it's read only we don't care about anything else
-            return True
-        else:
-            if self.required and source_value is None:
-                raise ValidationError("This is a required field")
-            elif not self.allow_none and source_value is None:
-                raise ValidationError("This field cannot be None")
-            return True
+        return True
 
 
 class TypedType(BaseType):

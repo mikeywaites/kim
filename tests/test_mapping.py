@@ -102,16 +102,6 @@ class MarshalTests(unittest.TestCase):
 
         self.assertEqual(data, result)
 
-    def test_default_not_used_when_falsey(self):
-
-        name = Field('order', types.Integer(required=False),
-                                default=123)
-        mapping = Mapping(name)
-        result = marshal(mapping, {'order': 0})
-        exp = {'order': 0}
-
-        self.assertEqual(result, exp)
-
     def test_type_marshal_value_called_when_not_none(self):
 
         class MyType(types.BaseType):
@@ -213,16 +203,6 @@ class SerializeTests(unittest.TestCase):
         result = serialize(self.mapping, Data())
 
         self.assertEqual(exp, result)
-
-    def test_non_required_mapped_type_uses_default_value(self):
-
-        name = Field('name', types.String(required=False),
-                          default='baz')
-        mapping = Mapping(name)
-        result = serialize(mapping, {})
-        exp = {'name': 'baz'}
-
-        self.assertEqual(result, exp)
 
     def test_many_with_errors(self):
 
