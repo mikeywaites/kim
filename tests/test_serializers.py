@@ -358,7 +358,7 @@ class SerializerTests(unittest.TestCase):
 
         class MySerializer(Serializer):
 
-            name = Field(String(required=False), default='this is a default')
+            name = Field(String(), required=False, default='this is a default')
             email = Field(String())
 
             validate = mocked
@@ -394,9 +394,9 @@ class SerializerTests(unittest.TestCase):
 
             name = Field(String())
             email = Field(String())
-            supplier = Field(Nested(CompanySerialzer,
-                                    read_only=True,
-                                    required=False))
+            supplier = Field(Nested(CompanySerialzer),
+                             required=False,
+                             read_only=True)
 
         serializer = MySerializer()
         res = serializer.marshal({'email': 'foo', 'name': 'bar', 'supplier': 1})
