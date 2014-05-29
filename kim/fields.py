@@ -120,28 +120,30 @@ class Field(object):
 
     @property
     def source(self):
-        """
-        ``source`` is the attribute name the value of this field will be taken
-        from when serializing. When marshaling, source is the name of
+        """``source`` is the attribute name the value of this field will be
+        taken from when serializing. When marshaling, source is the name of
         the key that will be set on the resulting dict.
 
         if _source has no value then source will return ``self.name``
 
+        :rtype: str
+        :returns: the value of ``_source`` or ``name``
         """
         return self._source or self.name
 
     @property
-    def attr_name(self):
-        """
-        ``attr_name`` is a unique string identifying this Field.
+    def field_id(self):
+        """``field_id`` is a unique string identifying this Field.
         This can be passed to a role whitelist/blacklist.
-        When instantiated via a Serializer, ``attr_name`` will automatically be
+        When instantiated via a Serializer, ``field_id`` will automatically be
         set to the attribute name of this Field on the serializer class.
 
-        if _attr_name has no value then _attr_name will return ``self.name``
+        if _field_id has no value then _field_name will return ``self.name``
 
+        :rtype: str
+        :returns: the value of ``_field_id`` or ``name``
         """
-        return self._attr_name or self.name
+        return self._field_id or self.name
 
     def marshal(self, value):
         """Call the :meth:`marshal_value` method of `type` providing the

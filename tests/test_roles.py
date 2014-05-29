@@ -61,9 +61,9 @@ class RoleTests(unittest.TestCase):
         self.assertIn(name, mapped.fields)
         self.assertNotIn(email, mapped.fields)
 
-    def test_create_mapping_from_role_duplicate_attr_names(self):
-        email1 = Field('email', types.String(), attr_name='email1')
-        email2 = Field('email', types.String(), attr_name='email2')
+    def test_create_mapping_from_role_duplicate_field_ids(self):
+        email1 = Field('email', types.String(), field_id='email1')
+        email2 = Field('email', types.String(), field_id='email2')
 
         mapping = MyCustomMapping('users',
                                   email1,

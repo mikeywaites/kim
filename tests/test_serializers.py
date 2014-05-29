@@ -238,7 +238,7 @@ class SerializerTests(unittest.TestCase):
         mapped = serializer.get_mapping(role='public')
         self.assertEqual(len(mapped.fields), 1)
         self.assertEqual(mapped.fields[0].name, 'email')
-        self.assertEqual(mapped.fields[0].attr_name, 'email2')
+        self.assertEqual(mapped.fields[0].field_id, 'email2')
 
     def test_serialize_with_role(self):
 

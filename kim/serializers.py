@@ -170,10 +170,10 @@ class Serializer(BaseSerializer):
             if field.name is None:
                 field.name = name
 
-            if field._attr_name is None:
-                field._attr_name = name
+            if field._field_id is None:
+                field._field_id = name
 
-            #field = field_wrapper.get_mapped_type(name, validators)
+            field.extra_validators.extend(validators)
             mapping.add_field(field)
             fields[name] = field
 
