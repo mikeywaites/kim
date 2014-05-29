@@ -65,10 +65,9 @@ class Field(object):
 
         """
 
-        name = kwargs.pop('name', None)
-        field_type = kwargs.pop('field_type', None)
-
         args = list(args)
+
+        name = kwargs.pop('name', None)
         if args:
             if isinstance(args[0], basestring):
                 if name is not None:
@@ -76,6 +75,7 @@ class Field(object):
                         "May not pass name positionally and as a keyword.")
                 name = args.pop(0)
 
+        field_type = kwargs.pop('field_type', None)
         if args:
             type_ = args[0]
 
