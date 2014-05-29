@@ -166,9 +166,12 @@ class Serializer(BaseSerializer):
                 validators = [curried_validator]
             else:
                 validators = []
-            field.name = name
-            if field.source is None:
-                field.source = name
+
+            if field.name is None:
+                field.name = name
+
+            if field._attr_name is None:
+                field._attr_name = name
 
             #field = field_wrapper.get_mapped_type(name, validators)
             mapping.add_field(field)
