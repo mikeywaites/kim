@@ -27,8 +27,6 @@ class BaseType(object):
 
     error_message = 'An error ocurred validating this field'
 
-    validators = []
-
     def __init__(self, required=True, allow_none=True, read_only=False, **options):
         self.required = required
         self.allow_none = allow_none
