@@ -321,7 +321,7 @@ class Nested(BaseType):
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
-                field.validate(value)
+                field.is_valid(value)
             except ValidationError as e:
                 errors[field.name].append(e.message)
 
