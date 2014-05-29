@@ -182,7 +182,7 @@ class Field(object):
         if self.required and value is None:
             raise ValidationError("This is a required field")
         elif not self.allow_none and value is None:
-            raise ValidationError("This can not be None")
+            raise ValidationError("This field can not be None")
 
         try:
             self.field_type.validate(value)
