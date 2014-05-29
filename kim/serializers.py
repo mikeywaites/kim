@@ -10,35 +10,6 @@ from .types import BaseType
 from .fields import Field
 
 
-#class Field(object):
-#    """Wrapper representing a :class:`kim.types.Type` in a
-#    :class:`kim.serializers.Serializer`.
-#
-#    :param field_type: The `Type` to use for this `Field` (note this should
-#        be an instantiated object)
-#    :param **params: Extra params to be passed to the `Type` constructor, eg.
-#        `source`
-#
-#    .. seealso::
-#        :class:`kim.serializers.Serializer`
-#    """
-#
-#    def __init__(self, field_type, name=None, source=None, **options):
-#        if isclass(field_type):
-#            field_type = field_type()
-#        self.field_type = field_type
-#        self.name = name
-#        self.source = source
-#        self.options = options
-#
-#    def get_mapped_type(self, name, validators):
-#        attr_name = name
-#        name = self.name or name
-#        source = self.source or name
-#        return TypeMapper(name, self.field_type, source=source, attr_name=attr_name,
-#            extra_validators=validators, **self.options)
-
-
 class SerializerMetaclass(type):
 
     def __new__(mcs, name, bases, attrs):
