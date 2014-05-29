@@ -154,7 +154,7 @@ class Field(object):
         if self.is_valid(value):
             return self.field_type.marshal_value(value)
 
-    def serialize_value(self, value):
+    def serialize(self, value):
         """Call the :meth:`serialize_value` method of `type`.
 
         :returns: value returned from :meth:`serialize_value`

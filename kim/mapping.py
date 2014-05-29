@@ -262,7 +262,7 @@ class SerializeIterator(MappingIterator):
 
         to_serialize = value if value is not None else field.default
         if to_serialize is not None:
-            return field.serialize_value(to_serialize)
+            return field.serialize(to_serialize)
 
 
 def marshal(mapping, data, **kwargs):
