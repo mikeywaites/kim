@@ -42,6 +42,23 @@ class Field(object):
                 # this would generally map to
                 {'my_field': 'foo'}
 
+        :param field_id: Specify the ``field_id`` of this field.
+            ``field_id`` is a unique name indentifying this field.  This
+            can be used in conjunction with serializers to generate two fields
+            dervied from the same name e.g::
+
+                obj.foo = 'foo'
+                obj.bar = 'bar'
+
+                Field('my_name', String(), attr_name='name_1', source='foo')
+                Field('my_name', String(), attr_name='name_2', source='bar')
+
+                >>> marshal(obj, role=whitelist('name_1'))
+                {'my_name': 'foo'}
+
+                >>> marshal(obj, role=whitelist('name_2'))
+                {'my_name': 'bar'}
+
         :param default: specify a default value of this `Field`.  Non required
             fields may specify a default value for a field when no data is
             provided during serialization.
@@ -55,14 +72,14 @@ class Field(object):
             marshaling.  By default `Field` will simply ignore data for a read
             only data.
 
-        :param extra_validators: specify an iterable of callable validators
-            that will be run along with `field_types` defined validators.
-
-            .. seealso::
-                :class:`kim.validators.Validator`
-
         :param allow_none: Allow the value of `Field` to be None when
             serializing.
+
+        :param extra_validators: specify an iterable of callable validators
+            that will be run along with `field_types` defined validate method.
+
+            .. seealso::
+                :meth:``is_valid``
 
         """
 
