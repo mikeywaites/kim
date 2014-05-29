@@ -1,5 +1,6 @@
+import inspect
+
 from .exceptions import ValidationError
-from .utils import is_valid_type
 
 
 class Field(object):
@@ -85,15 +86,15 @@ class Field(object):
                         "May not pass type_ positionally and as a keyword.")
                 field_type = args.pop(0)
 
-        if field_type is None:
-            raise Exception('field type must be provided')
-        elif not is_valid_type(field_type):
+        if field_type is None or not hasattr(field_type, '_kim_type'):
+            raise TypeError('field type is not a valid kim type.')
+        elif inspect.isclass(field_type):
             field_type = field_type()
 
         self.field_type = field_type
         self.name = name
         self._source = kwargs.pop('source', None)
-        self._attr_name = kwargs.pop('attr_name', None)
+        self._field_id = kwargs.pop('field_id', None)
         self.default = kwargs.pop('default', None)
         self.required = kwargs.pop('required', True)
         self.allow_none = kwargs.pop('allow_none', True)
