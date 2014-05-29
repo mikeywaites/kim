@@ -189,4 +189,7 @@ class Field(object):
         except ValidationError as e:
             raise e
 
+        for validator in self.extra_validators:
+            validator(value)
+
         return True
