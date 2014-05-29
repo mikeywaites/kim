@@ -90,49 +90,82 @@ class Field(object):
         elif not is_valid_type(field_type):
             field_type = field_type()
 
-        self.name = name
-        self.field_type = field_type
-
         self.field_type = field_type
         self.name = name
-        self.source = kwargs.pop('source', name)
-        self.attr_name = kwargs.pop('attr_name', name)
+        self._source = kwargs.pop('source', None)
+        self._attr_name = kwargs.pop('attr_name', None)
         self.default = kwargs.pop('default', None)
         self.required = kwargs.pop('required', True)
         self.allow_none = kwargs.pop('allow_none', True)
         self.read_only = kwargs.pop('read_only', False)
         self.extra_validators = kwargs.pop('extra_validators', [])
 
-    def marshal_value(self, source_value):
-        """Call the :meth:`marshal_value` method of `type`.
+    @property
+    def source(self):
+        """
+        ``source`` is the attribute name the value of this field will be taken
+        from when serializing. When marshaling, source is the name of
+        the key that will be set on the resulting dict.
+
+        if _source has no value then source will return ``self.name``
+
+        """
+        return self._source or self.name
+
+    @property
+    def attr_name(self):
+        """
+        ``attr_name`` is a unique string identifying this Field.
+        This can be passed to a role whitelist/blacklist.
+        When instantiated via a Serializer, ``attr_name`` will automatically be
+        set to the attribute name of this Field on the serializer class.
+
+        if _attr_name has no value then _attr_name will return ``self.name``
+
+        """
+        return self._attr_name or self.name
+
+    def marshal(self, value):
+        """Call the :meth:`marshal_value` method of `type` providing the
+        ``field_type`` validates.
 
         :returns: value returned from :meth:`marshal_value`
         """
-        try:
-            return self.field_type.marshal_value(source_value)
-        except TypeError as e:
-            raise e
+        if self.is_valid(value):
+            return self.field_type.marshal_value(value)
 
-    def serialize_value(self, source_value):
+    def serialize_value(self, value):
         """Call the :meth:`serialize_value` method of `type`.
 
         :returns: value returned from :meth:`serialize_value`
         """
+        return self.field_type.serialize_value(value)
 
-        return self.field_type.serialize_value(source_value)
+    def is_valid(self, value):
+        """validates a field against ``value``.  This method handles
+        top level validation against field properties such
+        as ``read_only`` and ``required``.
 
-    def validate(self, source):
-        """validates a field against ``source_value``.
+        Once field level validation is handled :meth:``field_type.validate``
+        will be called.
 
-        :param source_value: a value that this field type should validate
-            against.
+        :param value: value passed to field for marshaling or serialization.
 
         :raises: :class:`kim.exceptions.ValidationError`
         :returns: True if all validators run without error.
         """
 
+        # if read only is True, not further validation is needed.
+        if self.read_only:
+            return True
+
+        if self.required and value is None:
+            raise ValidationError("This is a required field")
+        elif not self.allow_none and value is None:
+            raise ValidationError("This can not be None")
+
         try:
-            self.field_type.validate(source)
+            self.field_type.validate(value)
         except ValidationError as e:
             raise e
 

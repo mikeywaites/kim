@@ -112,7 +112,6 @@ class TypedType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
-        super(TypedType, self).validate(source_value)
 
         if source_value is not None:
             if not isinstance(source_value, self.type_):
@@ -160,22 +159,20 @@ class NumericType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
-        super(NumericType, self).validate(source_value)
 
-        if source_value is None:
-            return True
+        if source_value is not None:
 
-        if (isinstance(source_value, basestring)
-                and not source_value.isdigit()):
-            raise ValidationError(self.get_error_message(source_value))
+            if (isinstance(source_value, basestring)
+                    and not source_value.isdigit()):
+                raise ValidationError(self.get_error_message(source_value))
 
-        try:
-            int(source_value)
-        except ValueError:
-            raise ValidationError(self.get_error_message(source_value))
+            try:
+                int(source_value)
+            except ValueError:
+                raise ValidationError(self.get_error_message(source_value))
 
-        if self.choices and source_value not in self.choices:
-            raise ValidationError('not a valid choice')
+            if self.choices and source_value not in self.choices:
+                raise ValidationError('not a valid choice')
 
         return True
 

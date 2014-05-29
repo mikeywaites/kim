@@ -233,14 +233,14 @@ class MarshalIterator(MappingIterator):
     def process_field(self, field, data):
 
         value = self.get_attribute(data, field.name)
-        try:
-            field.validate(value)
-        except ValidationError as e:
-            raise FieldError(field.name, e.message)
+        #try:
+        #    field.is_valid(value)
+        #except ValidationError as e:
+        #    raise FieldError(field.name, e.message)
 
         to_marshal = value if value is not None else field.default
         if to_marshal is not None:
-            return field.marshal_value(to_marshal)
+            return field.marshal(to_marshal)
 
     def post_process(self, mapping):
         if mapping.validator:
