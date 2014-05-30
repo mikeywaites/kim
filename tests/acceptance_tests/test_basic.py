@@ -83,7 +83,7 @@ class BasicAcceptanceTests(unittest.TestCase):
 
     def test_read_only(self):
         class Outer(Serializer):
-            id = Field(String(read_only=True))
+            id = Field(String(), read_only=True)
             user = Field(String)
 
         data = {'user': 'jack', 'id': 'ignore this'}

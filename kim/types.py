@@ -15,16 +15,17 @@ from .mapping import get_attribute, serialize, BaseMapping, marshal
 from kim.utils import is_valid_type
 
 
+def iskimtype(type_):
+    return isinstance(type_, BaseType)
+
+
 class BaseType(object):
+
+    _kim_type = True
 
     default = None
 
     error_message = 'An error ocurred validating this field'
-
-    def __init__(self, required=True, allow_none=True, read_only=False, **options):
-        self.required = required
-        self.allow_none = allow_none
-        self.read_only = read_only
 
     def get_error_message(self, source_value):
         """Return a valiation error message for this Type
@@ -54,14 +55,6 @@ class BaseType(object):
 
         return source_value
 
-    def include_in_serialize(self):
-        """Should this field be included in the output from serialize?"""
-        return True
-
-    def include_in_marshal(self):
-        """Should this field be included in the output from marshal?"""
-        return not self.read_only
-
     def validate(self, source_value):
         """Validate the `source_value` is valid. If `source_value`
         is invalid a :class:`kim.exceptions.ValidationError` should be raised
@@ -76,15 +69,7 @@ class BaseType(object):
         :raises: :class:`kim.exceptions.ValidationError`
         :returns: True
         """
-        if self.read_only:
-            # If it's read only we don't care about anything else
-            return True
-        else:
-            if self.required and source_value is None:
-                raise ValidationError("This is a required field")
-            elif not self.allow_none and source_value is None:
-                raise ValidationError("This field cannot be None")
-            return True
+        return True
 
 
 class TypedType(BaseType):
@@ -106,7 +91,6 @@ class TypedType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
-        super(TypedType, self).validate(source_value)
 
         if source_value is not None:
             if not isinstance(source_value, self.type_):
@@ -154,22 +138,20 @@ class NumericType(BaseType):
         :raises: :class:`kim.exceptions.ValidationError`, TypeError
         :returns: None
         """
-        super(NumericType, self).validate(source_value)
 
-        if source_value is None:
-            return True
+        if source_value is not None:
 
-        if (isinstance(source_value, basestring)
-                and not source_value.isdigit()):
-            raise ValidationError(self.get_error_message(source_value))
+            if (isinstance(source_value, basestring)
+                    and not source_value.isdigit()):
+                raise ValidationError(self.get_error_message(source_value))
 
-        try:
-            int(source_value)
-        except ValueError:
-            raise ValidationError(self.get_error_message(source_value))
+            try:
+                int(source_value)
+            except ValueError:
+                raise ValidationError(self.get_error_message(source_value))
 
-        if self.choices and source_value not in self.choices:
-            raise ValidationError('not a valid choice')
+            if self.choices and source_value not in self.choices:
+                raise ValidationError('not a valid choice')
 
         return True
 
@@ -315,8 +297,7 @@ class Nested(BaseType):
 
         :returns: marshalled mapping
         """
-        if not self.read_only:
-            return marshal(self.get_mapping(), source_value)
+        return marshal(self.get_mapping(), source_value)
 
     def serialize_value(self, source_value):
         """serialize `source_value` for this NestedType's mapping.
@@ -337,14 +318,10 @@ class Nested(BaseType):
         """
         errors = defaultdict(list)
 
-        # TODO  This is a temp fix for KIM-36
-        if self.read_only:
-            return True
-
         for field in self.get_mapping().fields:
             value = get_attribute(source_value, field.name)
             try:
-                field.validate(value)
+                field.is_valid(value)
             except ValidationError as e:
                 errors[field.name].append(e.message)
 

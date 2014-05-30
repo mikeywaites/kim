@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 
-from .type_mapper import BaseTypeMapper
 from .exceptions import ValidationError, MappingErrors, FieldError
+from .utils import is_valid_field
 
 
 class BaseMapping(object):
@@ -67,7 +67,7 @@ class Mapping(BaseMapping):
         """
 
         for item in items:
-            if isinstance(item, BaseTypeMapper):
+            if is_valid_field(item):
                 self.add_field(item)
 
     def add_field(self, field):
@@ -169,8 +169,8 @@ class MappingIterator(object):
             try:
                 value = self.process_field(field, data)
                 self.update_output(field, value)
-            except FieldError as e:
-                self.errors[e.key].append(e.message)
+            except (ValidationError, FieldError) as e:
+                self.errors[field.name].append(e.message)
                 continue
 
         self.post_process(mapping)
@@ -209,7 +209,7 @@ class MappingIterator(object):
 class MarshalIterator(MappingIterator):
 
     def update_output(self, field, value):
-        if field.include_in_marshal():
+        if not field.read_only:
             if field.source == '__self__':
                 self.output.update(value)
             else:
@@ -233,14 +233,14 @@ class MarshalIterator(MappingIterator):
     def process_field(self, field, data):
 
         value = self.get_attribute(data, field.name)
-        try:
-            field.validate(value)
-        except ValidationError as e:
-            raise FieldError(field.name, e.message)
+        #try:
+        #    field.is_valid(value)
+        #except ValidationError as e:
+        #    raise FieldError(field.name, e.message)
 
         to_marshal = value if value is not None else field.default
         if to_marshal is not None:
-            return field.marshal_value(to_marshal)
+            return field.marshal(to_marshal)
 
     def post_process(self, mapping):
         if mapping.validator:
@@ -253,8 +253,8 @@ class MarshalIterator(MappingIterator):
 class SerializeIterator(MappingIterator):
 
     def update_output(self, field, value):
-        if field.include_in_serialize():
-            self.output[field.name] = value
+
+        self.output[field.name] = value
 
     def process_field(self, field, data):
 
@@ -262,7 +262,7 @@ class SerializeIterator(MappingIterator):
 
         to_serialize = value if value is not None else field.default
         if to_serialize is not None:
-            return field.serialize_value(to_serialize)
+            return field.serialize(to_serialize)
 
 
 def marshal(mapping, data, **kwargs):
