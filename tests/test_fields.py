@@ -49,8 +49,8 @@ class FieldTests(unittest.TestCase):
         self.assertIsInstance(field.field_type, MyType)
 
     def test_field_raises_error_if_field_type_arg_and_field_type_kwarg(self):
-        """ensure and Exception is raised if ``Type`` is passed as an arg and
-        as a kwarg
+        """ensure an Exception is raised if ``Type`` is passed as an arg and
+        as a keyword argument.
         """
 
         with self.assertRaises(Exception):
