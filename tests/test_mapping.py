@@ -6,7 +6,7 @@ import mock
 
 from kim import types
 from kim.exceptions import MappingErrors
-from kim.mapping import Mapping, marshal, serialize, MappingIterator
+from kim.mapping import Mapping, marshal, serialize#, MappingIterator
 from kim.fields import Field
 
 
@@ -50,16 +50,16 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(fields[1], email)
 
 
-class MappingIteratorTest(unittest.TestCase):
-    def test_process_field_not_implemented(self):
-        mi = MappingIterator()
-        with self.assertRaises(NotImplementedError):
-            mi.process_field(None, None)
+# class MappingIteratorTest(unittest.TestCase):
+#     def test_process_field_not_implemented(self):
+#         mi = MappingIterator()
+#         with self.assertRaises(NotImplementedError):
+#             mi.process_field(None, None)
 
-    def test_update_output_not_implemented(self):
-        mi = MappingIterator()
-        with self.assertRaises(NotImplementedError):
-            mi.update_output(None, None)
+#     def test_update_output_not_implemented(self):
+#         mi = MappingIterator()
+#         with self.assertRaises(NotImplementedError):
+#             mi.update_output(None, None)
 
 
 class MarshalTests(unittest.TestCase):

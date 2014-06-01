@@ -20,6 +20,7 @@ def iskimtype(type_):
 
 
 class BaseType(object):
+    __visit_name__ = 'default'
 
     _kim_type = True
 
@@ -198,6 +199,9 @@ class Nested(BaseType):
 
     """
 
+    __visit_name__ = 'nested'
+
+
     def __init__(self, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
 
@@ -334,6 +338,8 @@ class Nested(BaseType):
 class Collection(TypedType):
 
     type_ = list
+
+    __visit_name__ = 'collection'
 
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type

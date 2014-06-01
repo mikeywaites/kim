@@ -109,178 +109,247 @@ def get_attribute(data, attr):
     return data
 
 
-class MappingIterator(object):
+# class MappingIterator(object):
 
-    def __init__(self, output=None, errors=None):
-        self.output = output or dict()
-        self.errors = errors or defaultdict(list)
+#     def __init__(self, output=None, errors=None):
+#         self.output = output or dict()
+#         self.errors = errors or defaultdict(list)
 
-    def get_attribute(self, data, field_name):
-        """return the value of field_name from data.
+#     def get_attribute(self, data, field_name):
+#         """return the value of field_name from data.
 
-        .. seealso::
-            :func:`kim.mapping.get_attribute`
+#         .. seealso::
+#             :func:`kim.mapping.get_attribute`
 
-        """
-        return get_attribute(data, field_name)
+#         """
+#         return get_attribute(data, field_name)
 
-    @classmethod
-    def run_many(cls, mapping, data, **kwargs):
-        output = []
-        errors = []
-        has_errors = False
-        for d in data:
-            try:
-                output.append(cls.run(mapping, d, many=False))
-            except MappingErrors as e:
-                has_errors = True
-                errors.append(e.message)
-            else:
-                errors.append({})
+#     @classmethod
+#     def run_many(cls, mapping, data, **kwargs):
+#         output = []
+#         errors = []
+#         has_errors = False
+#         for d in data:
+#             try:
+#                 output.append(cls.run(mapping, d, many=False))
+#             except MappingErrors as e:
+#                 has_errors = True
+#                 errors.append(e.message)
+#             else:
+#                 errors.append({})
 
-        if has_errors:
-            raise MappingErrors(errors)
+#         if has_errors:
+#             raise MappingErrors(errors)
 
-        return output
+#         return output
 
-    @classmethod
-    def run_one(cls, mapping, data, **kwargs):
-        return cls()._run(mapping, data, **kwargs)
+#     @classmethod
+#     def run_one(cls, mapping, data, **kwargs):
+#         return cls()._run(mapping, data, **kwargs)
 
-    @classmethod
-    def run(cls, mapping, data, many=False, **kwargs):
-        if many:
-            return cls.run_many(mapping, data, **kwargs)
-        else:
-            return cls.run_one(mapping, data, **kwargs)
+#     @classmethod
+#     def run(cls, mapping, data, many=False, **kwargs):
+#         if many:
+#             return cls.run_many(mapping, data, **kwargs)
+#         else:
+#             return cls.run_one(mapping, data, **kwargs)
 
-    def _run(self, mapping, data, **kwargs):
-        """`run` the mapping iteration loop.
+#     def _run(self, mapping, data, **kwargs):
+#         """`run` the mapping iteration loop.
 
-        :param data: dict like data being mapped
-        :param mapping: :class:`kim.mapping.Mapping`
-        :param many: map several instances of `data` to `mapping`
+#         :param data: dict like data being mapped
+#         :param mapping: :class:`kim.mapping.Mapping`
+#         :param many: map several instances of `data` to `mapping`
 
-        :raises: MappingErrors
-        :returns: serializable output
-        """
+#         :raises: MappingErrors
+#         :returns: serializable output
+#         """
 
-        for field in mapping.fields:
-            try:
-                value = self.process_field(field, data)
-                self.update_output(field, value)
-            except (ValidationError, FieldError) as e:
-                self.errors[field.name].append(e.message)
-                continue
+#         for field in mapping.fields:
+#             try:
+#                 value = self.process_field(field, data)
+#                 self.update_output(field, value)
+#             except (ValidationError, FieldError) as e:
+#                 self.errors[field.name].append(e.message)
+#                 continue
 
-        self.post_process(mapping)
+#         self.post_process(mapping)
 
+#         if self.errors:
+#             raise MappingErrors(dict(self.errors))
+
+#         return self.output
+
+#     def process_field(self, field, data):
+#         """Process a field mapping using `data`.  This method should
+#         return both the field.name or field.source value plus the value to
+#         map to the field.
+
+#         e.g::
+#             value = self.get_attribute(data, field.source)
+#             field.validate(value)
+
+#             return field.marshal_value(value or field.default)
+#         """
+
+#         raise NotImplementedError("Concrete classes must inplement "
+#                                   "process_field method")
+
+#     def update_output(self, field, value):
+
+#         raise NotImplementedError("Concrete classes must inplement "
+#                                   "update_output method")
+
+#     def post_process(self, mapping):
+#         """Called after all other fields have been processed. Can be used
+#         by concrete classes eg. to implement whole-mapping validation."""
+#         pass
+
+
+# class MarshalIterator(MappingIterator):
+
+#     def update_output(self, field, value):
+#         if not field.read_only:
+#             if field.source == '__self__':
+#                 self.output.update(value)
+#             else:
+#                 # Sources can be specified using dot notation which indicates
+#                 # nested dicts should be created.
+#                 # To handle this, we need to split off all but the last
+#                 # part of the source string (the part after the final dot),
+#                 # and create dicts for all the levels below that if they don't
+#                 # already exist.
+#                 # Finally, now we've resolved the nested level we actually want
+#                 # to update, set the key in the last part to the value passed.
+#                 components = field.source.split('.')
+#                 components_except_last = components[:-1]
+#                 last_component = components[-1]
+#                 current_component = self.output
+#                 for component in components_except_last:
+#                     current_component.setdefault(component, {})
+#                     current_component = current_component[component]
+#                 current_component[last_component] = value
+
+#     def process_field(self, field, data):
+
+#         value = self.get_attribute(data, field.name)
+#         #try:
+#         #    field.is_valid(value)
+#         #except ValidationError as e:
+#         #    raise FieldError(field.name, e.message)
+
+#         to_marshal = value if value is not None else field.default
+#         if to_marshal is not None:
+#             return field.marshal(to_marshal)
+
+#     def post_process(self, mapping):
+#         if mapping.validator:
+#             try:
+#                 mapping.validator(self.output)
+#             except MappingErrors as e:
+#                 self.errors = e.message
+
+
+# class SerializeIterator(MappingIterator):
+
+#     def update_output(self, field, value):
+
+#         self.output[field.name] = value
+
+#     def process_field(self, field, data):
+
+#         value = self.get_attribute(data, field.source)
+
+#         to_serialize = value if value is not None else field.default
+#         if to_serialize is not None:
+#             return field.serialize(to_serialize)
+
+
+
+class Visitor(object):
+    def __init__(self, mapping, data):
+        self.mapping = mapping
+        self.data = data
+
+    def visit(self, type, data):
+        name = 'visit_%s' % type.__visit_name__
+        return getattr(self, name)(type, data)
+
+    def run(self):
+       self.output = {}
+       for field in self.mapping:
+           data = self.get_data(field)
+           result = self.visit(field.field_type, data)
+           self.update_output(field, result)
+       return self.output
+
+
+class SerializeVisitor(Visitor):
+    def get_data(self, field):
+        return get_attribute(self.data, field.source)
+
+    def update_output(self, field, result):
+        self.output[field.name] = result
+
+    def visit_default(self, type, data):
+         return type.serialize_value(data)
+
+    def visit_nested(self, type, data):
+        return SerializeVisitor(type.mapping, data).run()
+
+    def visit_collection(self, type, data):
+        result = []
+        for value in data:
+            value = self.visit(type.inner_type, value)
+            result.append(value)
+        return result
+
+
+def serialize(mapping, data, many=False):
+    if many:
+        return [SerializeVisitor(mapping, d).run() for d in data]
+    else:
+        return SerializeVisitor(mapping, data).run()
+
+
+class MarshalVisitor(Visitor):
+    def __init__(self, *args, **kwargs):
+        super(MarshalVisitor, self).__init__(*args, **kwargs)
+        self.errors = {}
+
+    def get_data(self, field):
+        data = get_attribute(self.data, field.name)
+        try:
+            if field.is_valid(data):
+                return data
+        except ValidationError as e:
+            self.errors[field.name] = e.message
+
+    def update_output(self, field, result):
+        self.output[field.source] = result
+
+    def visit_default(self, type, data):
+         return type.marshal_value(data)
+
+    def visit_nested(self, type, data):
+        return MarshalVisitor(type.mapping, data).run()
+
+    def visit_collection(self, type, data):
+        result = []
+        for value in data:
+            value = self.visit(type.inner_type, value)
+            result.append(value)
+        return result
+
+    def run(self):
+        output = super(MarshalVisitor, self).run()
         if self.errors:
-            raise MappingErrors(dict(self.errors))
+            raise MappingErrors(self.errors)
+        else:
+            return output
 
-        return self.output
-
-    def process_field(self, field, data):
-        """Process a field mapping using `data`.  This method should
-        return both the field.name or field.source value plus the value to
-        map to the field.
-
-        e.g::
-            value = self.get_attribute(data, field.source)
-            field.validate(value)
-
-            return field.marshal_value(value or field.default)
-        """
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "process_field method")
-
-    def update_output(self, field, value):
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "update_output method")
-
-    def post_process(self, mapping):
-        """Called after all other fields have been processed. Can be used
-        by concrete classes eg. to implement whole-mapping validation."""
-        pass
-
-
-class MarshalIterator(MappingIterator):
-
-    def update_output(self, field, value):
-        if not field.read_only:
-            if field.source == '__self__':
-                self.output.update(value)
-            else:
-                # Sources can be specified using dot notation which indicates
-                # nested dicts should be created.
-                # To handle this, we need to split off all but the last
-                # part of the source string (the part after the final dot),
-                # and create dicts for all the levels below that if they don't
-                # already exist.
-                # Finally, now we've resolved the nested level we actually want
-                # to update, set the key in the last part to the value passed.
-                components = field.source.split('.')
-                components_except_last = components[:-1]
-                last_component = components[-1]
-                current_component = self.output
-                for component in components_except_last:
-                    current_component.setdefault(component, {})
-                    current_component = current_component[component]
-                current_component[last_component] = value
-
-    def process_field(self, field, data):
-
-        value = self.get_attribute(data, field.name)
-        #try:
-        #    field.is_valid(value)
-        #except ValidationError as e:
-        #    raise FieldError(field.name, e.message)
-
-        to_marshal = value if value is not None else field.default
-        if to_marshal is not None:
-            return field.marshal(to_marshal)
-
-    def post_process(self, mapping):
-        if mapping.validator:
-            try:
-                mapping.validator(self.output)
-            except MappingErrors as e:
-                self.errors = e.message
-
-
-class SerializeIterator(MappingIterator):
-
-    def update_output(self, field, value):
-
-        self.output[field.name] = value
-
-    def process_field(self, field, data):
-
-        value = self.get_attribute(data, field.source)
-
-        to_serialize = value if value is not None else field.default
-        if to_serialize is not None:
-            return field.serialize(to_serialize)
-
-
-def marshal(mapping, data, **kwargs):
-    """`marshal` data to an expected output for a
-    `mapping`
-
-    :param mapping: :class:`kim.mapping.Mapping`
-    :param data: `dict` or collection of dicts to marshal to a `mapping`
-
-    :raises: TypeError, ValidationError
-    :rtype: dict
-    :returns: serializable object mapped from `mapping`
-    """
-    return MarshalIterator.run(mapping, data, **kwargs)
-
-
-def serialize(mapping, data, **kwargs):
-    """Serialize data to an expected input for a `mapping`
-
-    """
-    return SerializeIterator.run(mapping, data, **kwargs)
+def marshal(mapping, data, many=False):
+    if many:
+        return [MarshalVisitor(mapping, d).run() for d in data]
+    else:
+        return MarshalVisitor(mapping, data).run()
