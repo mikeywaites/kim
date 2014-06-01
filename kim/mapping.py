@@ -299,7 +299,7 @@ class SerializeVisitor(Visitor):
 
     def visit_collection(self, type, data):
         result = []
-        for value in data:
+        for value in type.serialize_members(data):
             value = self.visit(type.inner_type, value)
             result.append(value)
         return result
@@ -336,17 +336,26 @@ class MarshalVisitor(Visitor):
 
     def visit_collection(self, type, data):
         result = []
-        for value in data:
+        for value in type.marshal_members(data):
             value = self.visit(type.inner_type, value)
             result.append(value)
         return result
 
     def run(self):
         output = super(MarshalVisitor, self).run()
+        self.post_process()
         if self.errors:
             raise MappingErrors(self.errors)
         else:
             return output
+
+    def post_process(self):
+        if self.mapping.validator:
+            try:
+                self.mapping.validator(self.output)
+            except MappingErrors as e:
+                self.errors = e.message
+
 
 def marshal(mapping, data, many=False):
     if many:
