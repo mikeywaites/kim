@@ -282,6 +282,8 @@ class Visitor(object):
        self.output = {}
        for field in self.mapping:
            data = self.get_data(field)
+           if not data:
+               data = field.default
            if self.validate(field, data):
                result = self.visit(field.field_type, data)
                self.update_output(field, result)
