@@ -275,12 +275,16 @@ class Visitor(object):
         name = 'visit_%s' % type.__visit_name__
         return getattr(self, name)(type, data)
 
+    def validate(self, field, data):
+        return True
+
     def run(self):
        self.output = {}
        for field in self.mapping:
            data = self.get_data(field)
-           result = self.visit(field.field_type, data)
-           self.update_output(field, result)
+           if self.validate(field, data):
+               result = self.visit(field.field_type, data)
+               self.update_output(field, result)
        return self.output
 
 
@@ -305,25 +309,22 @@ class SerializeVisitor(Visitor):
         return result
 
 
-def serialize(mapping, data, many=False):
-    if many:
-        return [SerializeVisitor(mapping, d).run() for d in data]
-    else:
-        return SerializeVisitor(mapping, data).run()
-
-
 class MarshalVisitor(Visitor):
     def __init__(self, *args, **kwargs):
         super(MarshalVisitor, self).__init__(*args, **kwargs)
-        self.errors = {}
+        self.errors = defaultdict(list)
 
     def get_data(self, field):
-        data = get_attribute(self.data, field.name)
+        return get_attribute(self.data, field.name)
+
+    def validate(self, field, data):
+        if field.read_only:
+            return False
         try:
             if field.is_valid(data):
                 return data
         except ValidationError as e:
-            self.errors[field.name] = e.message
+            self.errors[field.name].append(e.message)
 
     def update_output(self, field, result):
         self.output[field.source] = result
@@ -356,9 +357,28 @@ class MarshalVisitor(Visitor):
             except MappingErrors as e:
                 self.errors = e.message
 
+def _run(Visitor, mapping, data, many=False):
+    if many:
+        result = []
+        errors = []
+        has_errors = False
+        for d in data:
+            try:
+                result.append(Visitor(mapping, d).run())
+                errors.append({})
+            except MappingErrors as e:
+                errors.append(e.message)
+                has_errors = True
+        if has_errors:
+            raise MappingErrors(errors)
+        else:
+            return result
+    else:
+        return Visitor(mapping, data).run()
+
+def serialize(mapping, data, many=False):
+    return _run(SerializeVisitor, mapping, data, many=many)
 
 def marshal(mapping, data, many=False):
-    if many:
-        return [MarshalVisitor(mapping, d).run() for d in data]
-    else:
-        return MarshalVisitor(mapping, data).run()
+    return _run(MarshalVisitor, mapping, data, many=many)
+
