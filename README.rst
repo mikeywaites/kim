@@ -1,21 +1,19 @@
-kim
-===========
+``Kim``
+=============
 
 A framework agnostic serialization and marshaling library written in python.
 
-``kim`` is currently under heavy development and is subject to heavy api changes.
 
 Contributing to ``kim``
 ------------------------
-The ``kim`` source is shipped with a Vagrant distribution. simply run `vagrant up`
-from the project root to create a provisioned vm.
+The ``kim`` source is shipped with a Vagrant distribution that will install python and create a virtualenv you can use for development.
 
-The salt proivisioner will also create a blank virtualenv for you called kim.  Once the box has booted
-simply run vagrant ssh  then run workon kim.
+Checkout the repository to your prefered location and then run ``vgarant up``.  Salt will be used to provision the new vm.  Once the provisioner
+has run and the vm has booted run ``vagrant ssh``.  Change into the directory ``~/www/kim/``.  Before installing kim you should switch the the python
+virtualenv by running ``workon kim``.  Now run ``pip install -e .[develop]``.  This will put kim
+on your python path and install all the dev dependencies.
 
-now cd to www/kim/ and run ``pip install -e .[develop]``.  Now your ready to start hacking.
-
-You can run the test suite using ``py.test``
+Once everything has been installed simply run ``py.test`` to run the tests and start hacking.
 
 Documentation
 -------------
