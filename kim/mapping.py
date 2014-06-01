@@ -328,8 +328,27 @@ class MarshalVisitor(Visitor):
         except ValidationError as e:
             self.errors[field.name].append(e.message)
 
-    def update_output(self, field, result):
-        self.output[field.source] = result
+    def update_output(self, field, value):
+        if not field.read_only:
+            if field.source == '__self__':
+                self.output.update(value)
+            else:
+                # Sources can be specified using dot notation which indicates
+                # nested dicts should be created.
+                # To handle this, we need to split off all but the last
+                # part of the source string (the part after the final dot),
+                # and create dicts for all the levels below that if they don't
+                # already exist.
+                # Finally, now we've resolved the nested level we actually want
+                # to update, set the key in the last part to the value passed.
+                components = field.source.split('.')
+                components_except_last = components[:-1]
+                last_component = components[-1]
+                current_component = self.output
+                for component in components_except_last:
+                    current_component.setdefault(component, {})
+                    current_component = current_component[component]
+                current_component[last_component] = value
 
     def visit_default(self, type, data):
          return type.marshal_value(data)
