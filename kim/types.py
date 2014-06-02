@@ -20,106 +20,130 @@ def iskimtype(type_):
 
 
 class BaseType(object):
+    """:py:class:`.BaseType` defines the default ``Type`` api used by all
+    kim types.
+    """
 
     _kim_type = True
 
-    default = None
-
     error_message = 'An error ocurred validating this field'
 
-    def get_error_message(self, source_value):
+    def get_error_message(self, value):
         """Return a valiation error message for this Type
 
         :returns: an error message explaining the error that occured
         """
         return unicode(self.error_message)
 
-    def marshal_value(self, source_value):
-        """:meth:`marshal_value` called during marshaling of data.
+    def marshal_value(self, value):
+        """called during marshaling of data.
 
         This method provides a hook for types to perform additonal operations
-        on the `source_value` being marshalled.
+        on the ``value`` being marshaled.
 
-        :returns: `source_value`
+        :rtype: mixed
+        :returns: ``value``
         """
-        return source_value
 
-    def serialize_value(self, source_value):
-        """:meth:`serialize_value` called during serialization of data.
+        return value
+
+    def serialize_value(self, value):
+        """called during serialization of data.
 
         This method provides a hook for types to perform additonal operations
-        on the `source_value` being serialized.
+        on the ``value`` being serialized.
 
-        :returns: `source_value`
+        :rtype: mixed
+        :returns: ``value``
         """
 
-        return source_value
+        return value
 
-    def validate(self, source_value):
-        """Validate the `source_value` is valid. If `source_value`
-        is invalid a :class:`kim.exceptions.ValidationError` should be raised
+    def validate(self, value):
+        """Validate that ``value`` is valid. If ``value``
+        is invalid a :py:class:`kim.exceptions.ValidationError`
+        will be raised e.g::
 
-        :param source_value: the value being validated.
-
-        e.g::
-            def validate(self, source_value):
-                if not isinstance(source_value, str):
+            def validate(self, value):
+                if not isinstance(value, str):
                     raise ValidationError("Invalid type")
 
-        :raises: :class:`kim.exceptions.ValidationError`
+        :param value: the value being validated.
+
+        :raises: :py:class:`kim.exceptions.ValidationError`
+        :rtype: boolean
         :returns: True
         """
+
         return True
 
 
 class TypedType(BaseType):
+    """This type provides the base functionality for types that expect a
+    specific python type e.g and :py:class:`.Integer` or :py:class:`.String`.
+    """
 
     type_ = None
 
     error_message = 'This field was of an incorrect type'
 
     def __init__(self, *args, **kwargs):
+        """Create a new :py:class:`.TypedType` constructed from ``args``
+        and ``kwargs``.
+
+        :param choices: provide a list of valid values for this type.  When
+            validating this type the value will be checked to ensure its an
+            allowed choice.
+
+        """
         self.choices = kwargs.pop('choices', None)
         super(TypedType, self).__init__(*args, **kwargs)
 
-    def validate(self, source_value):
-        """validates that source_value is of a given type
+    def validate(self, value):
+        """validates that ``value`` is of a given type
 
         .. seealso::
-            :meth:`kim.types.BaseType.validate`
+            * :py:meth:`kim.types.BaseType.validate`
 
-        :raises: :class:`kim.exceptions.ValidationError`, TypeError
+        :raises: :class:`kim.exceptions.ValidationError`
         :returns: None
         """
 
-        if source_value is not None:
-            if not isinstance(source_value, self.type_):
-                raise ValidationError(self.get_error_message(source_value))
+        if value is not None:
+            if not isinstance(value, self.type_):
+                raise ValidationError(self.get_error_message(value))
 
-            if self.choices and source_value not in self.choices:
+            # TODO this should be moved to the ``Field`` api.
+            if self.choices and value not in self.choices:
                 raise ValidationError('not a valid choice')
 
         return True
 
 
 class String(TypedType):
+    """a ``TypedType`` that validate the incoming value is a valid ``str``
+    """
 
     type_ = basestring
 
 
 class Integer(TypedType):
+    """a ``TypedType`` that validates the incoming value is a valid ``int``.
+    """
 
     type_ = int
 
 
 class Boolean(TypedType):
+    """a ``TypedType`` that validates the incoming value is a valid ``bool``.
+    """
 
     type_ = bool
 
 
 class NumericType(BaseType):
-    """ a `TypedType` that allows integers to be passed as strings as well
-    as standard ints
+    """a :py:class:`.TypedType` that allows integers to be passed as strings
+    as well as standard ints.
 
     """
 
@@ -129,85 +153,94 @@ class NumericType(BaseType):
         self.choices = kwargs.pop('choices', None)
         super(NumericType, self).__init__(*args, **kwargs)
 
-    def validate(self, source_value):
-        """validates that source_value is of a given type
+    def validate(self, value):
+        """validates that value is a valid int or can be converted to an int.
 
         .. seealso::
             :meth:`kim.types.BaseType.validate`
 
-        :raises: :class:`kim.exceptions.ValidationError`, TypeError
-        :returns: None
+        :raises: :py:class:`kim.exceptions.ValidationError`
+        :rtype: bool
+        :returns: True
         """
 
-        if source_value is not None:
+        if value is not None:
 
-            if (isinstance(source_value, basestring)
-                    and not source_value.isdigit()):
-                raise ValidationError(self.get_error_message(source_value))
+            if (isinstance(value, basestring)
+                    and not value.isdigit()):
+                raise ValidationError(self.get_error_message(value))
 
             try:
-                int(source_value)
+                int(value)
             except ValueError:
-                raise ValidationError(self.get_error_message(source_value))
+                raise ValidationError(self.get_error_message(value))
 
-            if self.choices and source_value not in self.choices:
+            if self.choices and value not in self.choices:
                 raise ValidationError('not a valid choice')
 
         return True
 
 
 class PositiveInteger(Integer):
+    """a ``TypedType`` that validates its value is an integer and that the value
+    is not less than zero.
+    """
 
-    def validate(self, source_value):
-        super(PositiveInteger, self).validate(source_value)
-        if source_value is not None and source_value < 0:
+    def validate(self, value):
+        """validate that ``value`` is an integer and that it is not less
+        than zero.
+
+        :param value: value to be validated.
+        """
+        super(PositiveInteger, self).validate(value)
+        if value is not None and value < 0:
             raise ValidationError('must be positive integer')
+
+        return True
 
 
 class Nested(BaseType):
-    """Create a `Nested` mapping from a :class:`kim.mapping.BaseMapping`
-    or Mapped :class:`kim.serializers.SerializerABC`
+    """Create a :py:class:`.Nested` mapping from a
+    :py:class:`kim.mapping.BaseMapping` or from a mapped
+    :py:class:`kim.serializers.Serializer` that allows users to create complex
+    re-usable data structures in kim e.g::
 
-    Nested type allow you to build up reusable mapping structures.  They
-    can be used to build up complex structures and also support the use
-    of `roles` to allow you to affect the mapped types returned in certain
-    use cases.
+        food = Mapping(Field('type', String()),
+                       Field('name', String()))
 
-    e.g::
-        food = Mapping(String('type'), String('name'))
-        user_mapping = Mapping(String('name'),
-                               Nested('foods', food_mapping)
+        user_mapping = Mapping(Field('name', String()),
+                               Field('foods', Nested(food_mapping))
 
-    a Nested type may also specify a role to allow flexibly changing the
-    types returned from a nested mapping.  This further increases the
-    flexibilty and reusability of mappings.  For example, in certain cases
-    when we want to map our food mapping to another mapping, might might not
-    always want to return the 'type' field.
+    a :py:class:`.Nested` type may also specify a role to allow flexibly
+    changing the types returned from a nested mapping.
+    This further increases the flexibilty and reusability of mappings.
+    For example, in certain cases when we want to re-use our food mapping
+    in another mapping, we might not always want to return the
+    'type' field. e.g::
 
-    e.g::
         public_food_role = Role('public', 'name')
-        food = Mapping(String('type'), String('name'))
-        user_mapping = Mapping(String('name'),
-                               Nested('foods', food_mapping,
-                                      role=public_food_role)
+        user_mapping = Mapping(Field('name', String()),
+                               Field('foods', Nested(food_mapping,
+                                      role=public_food_role))
 
-    In this example that only the `name` field should be included.
+    In this example only the `name` field from the food mapping would be
+    included in the returned data.
 
     .. seealso::
-        :class:`BaseType`
+
+        * :py:class:`.BaseType`
+        * :py:class:`kim.roles.Role`
 
     """
 
     def __init__(self, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
 
-        :param name: name of this `Nested` type
-        :param mapped: a :class:`kim.mapping.BaseMapping` or Mapped
-                   Serializer instance
-        :param role: :class:`kim.roles.RolesABC` role
+        :param name: name of this :py:class:`.Nested` type
+        :param mapped: a :py:class:`kim.mapping.Mapping` or Mapped
+            Serializer instance
+        :param role: :py:class:`kim.roles.Role` role
 
-        .. seealso::
-            :class:`BaseType`
         """
 
         self._mapping = None
