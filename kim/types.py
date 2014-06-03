@@ -9,7 +9,7 @@ import decimal
 import inspect
 import importlib
 
-from .exceptions import ValidationError
+from .exceptions import ValidationError, ConfigurationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
 
 from kim.utils import is_valid_type
@@ -80,6 +80,12 @@ class TypedType(BaseType):
 
     def __init__(self, *args, **kwargs):
         self.choices = kwargs.pop('choices', None)
+        for k in kwargs:
+            if k in ('name', 'field_type', 'source', 'field_id', 'default',
+                     'required', 'read_only', 'allow_none'):
+                raise ConfigurationError('Type %s was not expecting argument %s. ' \
+                        'Did you mean to pass this to Field instead?' % (
+                        self.__class__.__name__, k))
         super(TypedType, self).__init__(*args, **kwargs)
 
     def validate(self, source_value):
@@ -343,7 +349,6 @@ class Collection(TypedType):
         if not is_valid_type(self.inner_type):
             raise TypeError("Collection() requires a valid Type "
                             "as its first argument")
-
         super(Collection, self).__init__(*args, **kwargs)
 
     def serialize_members(self, source_value):
