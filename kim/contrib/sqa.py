@@ -35,8 +35,8 @@ class NestedForeignKey(Nested):
     validators = [nested_foreign_key_validator, ]
 
     def __init__(self, *args, **kwargs):
-        self.getter = kwargs.get('getter', None)
-        self.id_field_name = kwargs.get('id_field_name', 'id')
+        self.getter = kwargs.pop('getter', None)
+        self.id_field_name = kwargs.pop('id_field_name', 'id')
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
@@ -87,7 +87,7 @@ class IntegerForeignKey(NumericType):
     validators = [find_by_id, ]
 
     def __init__(self, *args, **kwargs):
-        self.getter = kwargs.get('getter', None)
+        self.getter = kwargs.pop('getter', None)
         super(IntegerForeignKey, self).__init__(*args, **kwargs)
 
     def validate(self, source_value):
