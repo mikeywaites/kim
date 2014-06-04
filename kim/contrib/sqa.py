@@ -9,37 +9,18 @@ from ..types import Nested, NumericType
 from ..exceptions import ValidationError
 
 
-def nested_foreign_key_validator(type_, source_value):
-
-    if type(source_value) != dict:
-        raise ValidationError('invalid type')
-
-    id = source_value.get(type_.id_field_name)
-    if not id:
-        raise ValidationError('no id passed')
-    id = int(id)
-    if self.valid_id(id):
-        try:
-            obj = self.getter(id)
-        except NoResultFound:
-            obj = None
-        if not obj:
-            raise ValidationError('invalid id')
-    return obj
-
-
 class NestedForeignKey(Nested):
     """Field which can function as a normal Nested field, but can also take an
     integer foreign key in an 'id' field when marshalled. In which case, it
     will look up the required object via self.getter."""
-
-    validators = [nested_foreign_key_validator, ]
 
     __visit_name__ = "nested_foreign_key"
 
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.pop('getter', None)
         self.id_field_name = kwargs.pop('id_field_name', 'id')
+        self.marshal_by_id_only = kwargs.pop('marshal_by_id_only', True)
+        self.allow_updates = kwargs.pop('allow_updates', False)
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
@@ -51,43 +32,31 @@ class NestedForeignKey(Nested):
         if type(source_value) != dict:
             raise ValidationError('invalid type')
         id = source_value.get(self.id_field_name)
-        if not id:
+        if not id and self.marshal_by_id_only:
             raise ValidationError('no id passed')
-        id = int(id)
         if self.valid_id(id):
+            id = int(id)
             try:
                 obj = self.getter(id)
             except NoResultFound:
                 obj = None
             if not obj:
                 raise ValidationError('invalid id')
-        return obj
+            if len(source_value) > 1 and not self.allow_updates:
+                raise ValidationError('additional update data not allowed when id passed')
+            return obj
 
     def validate(self, source_value):
-        super(Nested, self).validate(source_value) # HACK: bypassing Nested.validate
-        if source_value:
-            return self.get_object(source_value)
-
-    def marshal_value(self, source_value):
-        return self.get_object(source_value)
-
-
-def find_by_id(type_, source):
-    if source is not None:
-        try:
-            obj = type_.getter(source)
-        except NoResultFound:
-            obj = None
-        if not obj:
-            raise ValidationError('invalid id')
-    return True
+        if source_value is not None:
+            if self.get_object(source_value):
+                return True
+            else:
+                super(NestedForeignKey, self).validate(source_value)
 
 
 class IntegerForeignKey(NumericType):
     """Field representing an Integer ForeignKey. Behaves as NumericType, but will
     look up the required object via self.getter to ensure it exists/is valid"""
-
-    validators = [find_by_id, ]
 
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.pop('getter', None)
@@ -105,38 +74,9 @@ class IntegerForeignKey(NumericType):
         return True
 
 
-# def marshal_sqa(instance, result):
-#     for k, v in result.iteritems():
-#         if type(v) == dict:
-#             # This is a nested serializer
-
-#             # First check if the relationship already exists
-#             existing = getattr(instance, k)
-#             if existing:
-#                 # Exists, just update it
-#                 marshal_sqa(existing, v)
-#             else:
-#                 # If it doesn't exist, we need to create it
-
-#                 # Find what sort of model we require by introspection of
-#                 # the relationship
-#                 inspection = inspect(instance)
-#                 relationship = inspection.mapper.relationships[k]
-#                 RemoteClass = relationship.mapper.class_
-
-#                 # Now create a new instance of that model and set the relationship
-#                 remote_instance = RemoteClass()
-#                 setattr(instance, k, remote_instance)
-#                 marshal_sqa(remote_instance, v)
-#         else:
-#             # This is a normal field, just update it on the model instance
-#             setattr(instance, k, v)
-
-
 class SQASerializeVisitor(SerializeVisitor):
     def visit_type_nested_foreign_key(self, type, data):
-        return self.visit_type_default(type, data)
-
+        return SQASerializeVisitor(type.mapping, data)._run()
 
 
 class SQAMarshalVisitor(MarshalVisitor):
@@ -155,14 +95,17 @@ class SQAMarshalVisitor(MarshalVisitor):
         else:
             self.output = self.instance
 
-    def visit_type_nested(self, type, data, instance=None):
-        return SQAMarshalVisitor(type.mapping, data, instance=instance)._run()
+    def visit_type_nested_foreign_key(self, type, data, instance=None):
+        instance = type.get_object(data) or instance
+        if not type.marshal_by_id_only: # HACK???
+            return SQAMarshalVisitor(type.mapping, data, instance=instance)._run()
+        return instance
 
-    def visit_field_nested(self, field, data):
+    def visit_field_nested_foreign_key(self, field, data):
         existing = getattr(self.output, field.source)
         if existing:
             # Exists, just update it
-            return self.visit_type_nested(field.field_type, data, instance=existing)
+            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing)
         else:
             # If it doesn't exist, we need to create it
             # Find what sort of model we require by introspection of
@@ -173,11 +116,7 @@ class SQAMarshalVisitor(MarshalVisitor):
 
             # Now create a new instance of that model and set the relationship
             remote_instance = RemoteClass()
-            setattr(self.output, field.source, remote_instance)
-            return self.visit_type_nested(field.field_type, data, instance=remote_instance)
-
-    def visit_type_nested_foreign_key(self, type, data):
-        return self.visit_type_default(type, data)
+            return self.visit_type_nested_foreign_key(field.field_type, data, instance=remote_instance)
 
 
 class SQASerializer(Serializer):

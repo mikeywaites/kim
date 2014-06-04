@@ -112,7 +112,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -153,7 +153,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -161,7 +161,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime, required=False)
-            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, marshal_by_id_only=False), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -210,7 +210,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer(), read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -218,7 +218,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(), read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(), required=False)
-            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, marshal_by_id_only=False), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -266,7 +266,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -332,7 +332,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -383,7 +383,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNone(result.contact_details)
 
-    def test_marshal_by_key_only(self):
+    def test_marshal_by_id_only(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -398,7 +398,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -423,6 +423,53 @@ class SQAAcceptanceTests(unittest.TestCase):
         serializer = UserSerializer()
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
+
+    def test_allow_updates_when_id_passed(self):
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                getter=contact_getter, marshal_by_id_only=False, allow_updates_when_id_passed=True), source='contact_details')
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'id': self.deets.id,
+                'phone': '082345234',
+                'address': {
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
+                }
+            }
+        }
+
+        serializer = UserSerializer()
+        result = serializer.marshal(data)
+
+        self.session.flush()
+        self.session.expire_all()
+
+        self.assertEqual(self.deets.phone, '082345234')
+        self.assertNotEqual(self.deets.address.id, self.address.id)
 
     def test_serialize_dot_notation(self):
         class UserSerializer(SQASerializer):
