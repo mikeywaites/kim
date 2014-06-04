@@ -3,6 +3,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..serializers import Serializer
+from ..mapping import MarshalVisitor, SerializeVisitor
 
 from ..types import Nested, NumericType
 from ..exceptions import ValidationError
@@ -33,6 +34,8 @@ class NestedForeignKey(Nested):
     will look up the required object via self.getter."""
 
     validators = [nested_foreign_key_validator, ]
+
+    __visit_name__ = "nested_foreign_key"
 
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.pop('getter', None)
@@ -102,47 +105,85 @@ class IntegerForeignKey(NumericType):
         return True
 
 
-def marshal_sqa(instance, result):
-    for k, v in result.iteritems():
-        if type(v) == dict:
-            # This is a nested serializer
+# def marshal_sqa(instance, result):
+#     for k, v in result.iteritems():
+#         if type(v) == dict:
+#             # This is a nested serializer
 
-            # First check if the relationship already exists
-            existing = getattr(instance, k)
-            if existing:
-                # Exists, just update it
-                marshal_sqa(existing, v)
-            else:
-                # If it doesn't exist, we need to create it
+#             # First check if the relationship already exists
+#             existing = getattr(instance, k)
+#             if existing:
+#                 # Exists, just update it
+#                 marshal_sqa(existing, v)
+#             else:
+#                 # If it doesn't exist, we need to create it
 
-                # Find what sort of model we require by introspection of
-                # the relationship
-                inspection = inspect(instance)
-                relationship = inspection.mapper.relationships[k]
-                RemoteClass = relationship.mapper.class_
+#                 # Find what sort of model we require by introspection of
+#                 # the relationship
+#                 inspection = inspect(instance)
+#                 relationship = inspection.mapper.relationships[k]
+#                 RemoteClass = relationship.mapper.class_
 
-                # Now create a new instance of that model and set the relationship
-                remote_instance = RemoteClass()
-                setattr(instance, k, remote_instance)
-                marshal_sqa(remote_instance, v)
+#                 # Now create a new instance of that model and set the relationship
+#                 remote_instance = RemoteClass()
+#                 setattr(instance, k, remote_instance)
+#                 marshal_sqa(remote_instance, v)
+#         else:
+#             # This is a normal field, just update it on the model instance
+#             setattr(instance, k, v)
+
+
+class SQASerializeVisitor(SerializeVisitor):
+    def visit_type_nested_foreign_key(self, type, data):
+        return self.visit_type_default(type, data)
+
+
+
+class SQAMarshalVisitor(MarshalVisitor):
+    def __init__(self, *args, **kwargs):
+        self.model = kwargs.pop('model', None)
+        self.instance = kwargs.pop('instance', None)
+        super(SQAMarshalVisitor, self).__init__(*args, **kwargs)
+
+    def update_output(self, field, value):
+        if not field.read_only:
+            setattr(self.output, field.source, value)
+
+    def initialise_output(self):
+        if not self.instance:
+            self.output = self.model()
         else:
-            # This is a normal field, just update it on the model instance
-            setattr(instance, k, v)
+            self.output = self.instance
+
+    def visit_type_nested(self, type, data, instance=None):
+        return SQAMarshalVisitor(type.mapping, data, instance=instance)._run()
+
+    def visit_field_nested(self, field, data):
+        existing = getattr(self.output, field.source)
+        if existing:
+            # Exists, just update it
+            return self.visit_type_nested(field.field_type, data, instance=existing)
+        else:
+            # If it doesn't exist, we need to create it
+            # Find what sort of model we require by introspection of
+            # the relationship
+            inspection = inspect(self.output)
+            relationship = inspection.mapper.relationships[field.source]
+            RemoteClass = relationship.mapper.class_
+
+            # Now create a new instance of that model and set the relationship
+            remote_instance = RemoteClass()
+            setattr(self.output, field.source, remote_instance)
+            return self.visit_type_nested(field.field_type, data, instance=remote_instance)
+
+    def visit_type_nested_foreign_key(self, type, data):
+        return self.visit_type_default(type, data)
 
 
 class SQASerializer(Serializer):
 
-    def serialize(self, data, **kwargs):
-        return super(SQASerializer, self).serialize(data, **kwargs)
-
-    def get_model(self):
-        return self.__model__()
-
-    def get_new_model(self):
-        return self.get_model()
-
     def marshal(self, data, instance=None, **kwargs):
-        result_dict = super(SQASerializer, self).marshal(data, **kwargs)
-        model_instance = instance or self.get_model()
-        marshal_sqa(model_instance, result_dict)
-        return model_instance
+        return SQAMarshalVisitor.run(self.get_mapping(), data, model=self.__model__, instance=instance, **kwargs)
+
+    def serialize(self, data, **kwargs):
+        return SQASerializeVisitor.run(self.get_mapping(), data, **kwargs)
