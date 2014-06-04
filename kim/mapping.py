@@ -113,22 +113,33 @@ class Visitor(object):
     def __init__(self, mapping, data):
         self.mapping = mapping
         self.data = data
+        self.initialise_output()
 
-    def visit(self, type, data):
-        name = 'visit_%s' % type.__visit_name__
+    def initialise_output(self):
+        self.output = {}
+
+    def visit_field(self, field, data):
+        name = 'visit_field_%s' % field.field_type.__visit_name__
+        func = getattr(self, name, None)
+        if func:
+            return func(field, data)
+        else:
+            return self.visit_type(field.field_type, data)
+
+    def visit_type(self, type, data):
+        name = 'visit_type_%s' % type.__visit_name__
         return getattr(self, name)(type, data)
 
     def validate(self, field, data):
         return True
 
     def _run(self):
-       self.output = {}
        for field in self.mapping:
            data = self.get_data(field)
            if not data:
                data = field.default
            if self.validate(field, data):
-               result = self.visit(field.field_type, data)
+               result = self.visit_field(field, data)
                self.update_output(field, result)
        return self.output
 
@@ -139,14 +150,14 @@ class Visitor(object):
         raise NotImplementedError
 
     @classmethod
-    def run(cls, mapping, data, many=False):
+    def run(cls, mapping, data, many=False, **kwargs):
         if many:
             result = []
             errors = []
             has_errors = False
             for d in data:
                 try:
-                    result.append(cls(mapping, d)._run())
+                    result.append(cls(mapping, d, **kwargs)._run())
                     errors.append({})
                 except MappingErrors as e:
                     errors.append(e.message)
@@ -156,7 +167,7 @@ class Visitor(object):
             else:
                 return result
         else:
-            return cls(mapping, data)._run()
+            return cls(mapping, data, **kwargs)._run()
 
 
 class SerializeVisitor(Visitor):
@@ -166,18 +177,19 @@ class SerializeVisitor(Visitor):
     def update_output(self, field, result):
         self.output[field.name] = result
 
-    def visit_default(self, type, data):
-         return type.serialize_value(data)
-
-    def visit_nested(self, type, data):
-        return SerializeVisitor(type.mapping, data)._run()
-
-    def visit_collection(self, type, data):
+    def visit_type_collection(self, type, data):
         result = []
         for value in type.serialize_members(data):
-            value = self.visit(type.inner_type, value)
+            value = self.visit_type(type.inner_type, value)
             result.append(value)
         return result
+
+    def visit_type_default(self, type, data):
+         return type.serialize_value(data)
+
+    def visit_type_nested(self, type, data):
+        return SerializeVisitor(type.mapping, data)._run()
+
 
 
 class MarshalVisitor(Visitor):
@@ -219,18 +231,18 @@ class MarshalVisitor(Visitor):
                     current_component = current_component[component]
                 current_component[last_component] = value
 
-    def visit_default(self, type, data):
-         return type.marshal_value(data)
-
-    def visit_nested(self, type, data):
-        return MarshalVisitor(type.mapping, data)._run()
-
-    def visit_collection(self, type, data):
+    def visit_type_collection(self, type, data):
         result = []
         for value in type.marshal_members(data):
-            value = self.visit(type.inner_type, value)
+            value = self.visit_type(type.inner_type, value)
             result.append(value)
         return result
+
+    def visit_type_default(self, type, data):
+         return type.marshal_value(data)
+
+    def visit_type_nested(self, type, data):
+        return MarshalVisitor(type.mapping, data)._run()
 
     def _run(self):
         output = super(MarshalVisitor, self)._run()
