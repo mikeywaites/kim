@@ -392,7 +392,8 @@ class DateTime(BaseType):
     type_ = datetime
 
     def serialize_value(self, source_value):
-        return source_value.isoformat()
+        if source_value is not None:
+            return source_value.isoformat()
 
     def marshal_value(self, source_value):
         return iso8601.parse_date(source_value)
