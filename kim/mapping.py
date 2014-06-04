@@ -121,7 +121,7 @@ class Visitor(object):
     def validate(self, field, data):
         return True
 
-    def run(self):
+    def _run(self):
        self.output = {}
        for field in self.mapping:
            data = self.get_data(field)
@@ -138,6 +138,26 @@ class Visitor(object):
     def update_output(self, field, result):
         raise NotImplementedError
 
+    @classmethod
+    def run(cls, mapping, data, many=False):
+        if many:
+            result = []
+            errors = []
+            has_errors = False
+            for d in data:
+                try:
+                    result.append(cls(mapping, d)._run())
+                    errors.append({})
+                except MappingErrors as e:
+                    errors.append(e.message)
+                    has_errors = True
+            if has_errors:
+                raise MappingErrors(errors)
+            else:
+                return result
+        else:
+            return cls(mapping, data)._run()
+
 
 class SerializeVisitor(Visitor):
     def get_data(self, field):
@@ -150,7 +170,7 @@ class SerializeVisitor(Visitor):
          return type.serialize_value(data)
 
     def visit_nested(self, type, data):
-        return SerializeVisitor(type.mapping, data).run()
+        return SerializeVisitor(type.mapping, data)._run()
 
     def visit_collection(self, type, data):
         result = []
@@ -203,7 +223,7 @@ class MarshalVisitor(Visitor):
          return type.marshal_value(data)
 
     def visit_nested(self, type, data):
-        return MarshalVisitor(type.mapping, data).run()
+        return MarshalVisitor(type.mapping, data)._run()
 
     def visit_collection(self, type, data):
         result = []
@@ -212,8 +232,8 @@ class MarshalVisitor(Visitor):
             result.append(value)
         return result
 
-    def run(self):
-        output = super(MarshalVisitor, self).run()
+    def _run(self):
+        output = super(MarshalVisitor, self)._run()
         self.post_process()
         if self.errors:
             raise MappingErrors(self.errors)
@@ -227,28 +247,11 @@ class MarshalVisitor(Visitor):
             except MappingErrors as e:
                 self.errors = e.message
 
-def _run(Visitor, mapping, data, many=False):
-    if many:
-        result = []
-        errors = []
-        has_errors = False
-        for d in data:
-            try:
-                result.append(Visitor(mapping, d).run())
-                errors.append({})
-            except MappingErrors as e:
-                errors.append(e.message)
-                has_errors = True
-        if has_errors:
-            raise MappingErrors(errors)
-        else:
-            return result
-    else:
-        return Visitor(mapping, data).run()
+
 
 def serialize(mapping, data, many=False):
-    return _run(SerializeVisitor, mapping, data, many=many)
+    return SerializeVisitor.run(mapping, data, many=many)
 
 def marshal(mapping, data, many=False):
-    return _run(MarshalVisitor, mapping, data, many=many)
+    return MarshalVisitor.run(mapping, data, many=many)
 
