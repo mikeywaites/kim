@@ -115,6 +115,10 @@ class Visitor(object):
         self.data = data
         self.initialise_output()
 
+    @property
+    def Cls(self):
+        return self.__class__
+
     def initialise_output(self):
         self.output = {}
 
@@ -191,7 +195,7 @@ class SerializeVisitor(Visitor):
          return type.serialize_value(data)
 
     def visit_type_nested(self, type, data, **kwargs):
-        return SerializeVisitor(type.mapping, data)._run()
+        return self.Cls(type.mapping, data)._run()
 
 
 
@@ -242,7 +246,7 @@ class MarshalVisitor(Visitor):
          return type.marshal_value(data)
 
     def visit_type_nested(self, type, data, **kwargs):
-        return MarshalVisitor(type.mapping, data)._run()
+        return self.Cls(type.mapping, data)._run()
 
     def _run(self):
         output = super(MarshalVisitor, self)._run()

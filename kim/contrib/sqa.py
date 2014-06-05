@@ -27,7 +27,6 @@ class NestedForeignKey(Nested):
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
-
         return any([isinstance(val, int),
                     isinstance(val, basestring) and val.isdigit()])
 
@@ -79,7 +78,7 @@ class RelationshipCollection(Collection):
 
 class SQASerializeVisitor(SerializeVisitor):
     def visit_type_nested_foreign_key(self, type, data, **kwargs):
-        return SQASerializeVisitor(type.mapping, data)._run()
+        return self.visit_type_nested(type, data, **kwargs)
 
     def visit_field_relationship_collection(self, type, data, **kwargs):
         return self.visit_field_collection(type, data)
@@ -101,6 +100,14 @@ class SQAMarshalVisitor(MarshalVisitor):
         else:
             self.output = self.instance
 
+    def _get_relationship_model(self, field):
+        # Find what sort of model we require by introspection of
+        # the relationship
+        inspection = inspect(self.output)
+        relationship = inspection.mapper.relationships[field.source]
+        RemoteClass = relationship.mapper.class_
+        return RemoteClass
+
     def visit_type_nested_foreign_key(self, type, data, instance=None, model=None, **kwargs):
         # 1. User has passed an id and no updates are allowed.
         #    Resolve the id to an object and return immediately
@@ -117,38 +124,26 @@ class SQAMarshalVisitor(MarshalVisitor):
 
         if resolved:
             if type.allow_updates:
-                return SQAMarshalVisitor(type.mapping, data, instance=resolved, model=model)._run()
+                return self.Cls(type.mapping, data, instance=resolved, model=model)._run()
             else:
                 return resolved
         else:
             if type.allow_updates_in_place:
-                return SQAMarshalVisitor(type.mapping, data, instance=instance, model=model)._run()
+                return self.Cls(type.mapping, data, instance=instance, model=model)._run()
             elif type.allow_create:
-                return SQAMarshalVisitor(type.mapping, data, model=model)._run()
+                return self.Cls(type.mapping, data, model=model)._run()
             else:
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
     def visit_field_nested_foreign_key(self, field, data):
         existing = getattr(self.output, field.source)
-
-        # Find what sort of model we require by introspection of
-        # the relationship
-        inspection = inspect(self.output)
-        relationship = inspection.mapper.relationships[field.source]
-        RemoteClass = relationship.mapper.class_
-
+        RemoteClass = self._get_relationship_model(field)
         return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
 
     def visit_field_relationship_collection(self, field, data):
-        instance_list = getattr(self.output, field.source)
-
-        # Find what sort of model we require by introspection of
-        # the relationship
-        inspection = inspect(self.output)
-        relationship = inspection.mapper.relationships[field.source]
-        RemoteClass = relationship.mapper.class_
-
-        return self.visit_type_relationship_collection(field.field_type, data, instance_list=instance_list, model=RemoteClass)
+        existing_list = getattr(self.output, field.source)
+        RemoteClass = self._get_relationship_model(field)
+        return self.visit_type_relationship_collection(field.field_type, data, instance_list=existing_list, model=RemoteClass)
 
     def visit_type_relationship_collection(self, type, data, instance_list=None, model=None, **kwargs):
         result = []
