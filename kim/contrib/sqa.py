@@ -33,8 +33,6 @@ class NestedForeignKey(Nested):
         if type(source_value) != dict:
             raise ValidationError('invalid type')
         id = source_value.get(self.id_field_name)
-        # if not id and self.marshal_by_id_only:
-        #     raise ValidationError('no id passed')
         if self.valid_id(id):
             id = int(id)
             try:
@@ -43,8 +41,6 @@ class NestedForeignKey(Nested):
                 obj = None
             if not obj:
                 raise ValidationError('invalid id')
-            # if len(source_value) > 1 and not self.allow_updates:
-            #     raise ValidationError('additional update data not allowed when id passed')
             return obj
 
     def validate(self, source_value):

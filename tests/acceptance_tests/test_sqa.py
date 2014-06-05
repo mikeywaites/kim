@@ -140,7 +140,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(result, exp)
 
-    def test_nested_marshal_new_object(self):
+    def test_nested_marshal_allow_create(self):
+        """When allow_create is True and we pass a nested object without an id,
+        we expect a new object to be created and populated with that data."""
         class AddressSerializer(SQASerializer):
             __model__ = Address
 
@@ -198,7 +200,10 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNotNone(result.id)
 
-    def test_nested_marshal_existing_object(self):
+    def test_nested_marshal_allow_update_in_place(self):
+        """When allow_update_in_place is True and we pass a nested object without an id,
+        and there is already an object associated with this foreign key,
+        we expect the existing object to be updated with that data."""
         class AddressSerializer(SQASerializer):
             __model__ = Address
 
@@ -251,7 +256,10 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(result)
         self.session.commit()
 
-    def test_foreignkey_field(self):
+    def test_foreignkey_field_pass_id(self):
+        """With default options, when a nested object is passed with an id,
+        we expect that id to be resolved and the foreign key set to the
+        resolved object"""
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -317,7 +325,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(serialized, exp)
 
-    def test_foreignkey_field_invalid(self):
+    def test_foreignkey_field_getter_error(self):
+        """When we pass an id to a foreign key, and the getter for the type
+        returns False, we expect an error to be raised."""
         def contact_getter(id):
             return False
 
@@ -345,7 +355,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         data = {
             'full_name': 'bob',
-            'contact': self.deets.id,
+            'contact': {'id': self.deets.id},
         }
 
         serializer = UserSerializer()
@@ -354,6 +364,8 @@ class SQAAcceptanceTests(unittest.TestCase):
             serializer.marshal(data)
 
     def test_foreignkey_field_not_required(self):
+        """When a foreign key field is not required, we expect it to be ignored
+        if not present in the marshalled data."""
         def contact_getter(id):
             return False
 
@@ -383,7 +395,9 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNone(result.contact_details)
 
-    def test_allow_updates_false(self):
+    def test_nested_marshal_allow_updates_false(self):
+        """With the default settings (allow_updates=False), if a nested object
+        is passed without an id, we expect an error to be raised."""
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -424,7 +438,10 @@ class SQAAcceptanceTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
 
-    def test_allow_updates(self):
+    def test_nested_marshal_allow_updates(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
