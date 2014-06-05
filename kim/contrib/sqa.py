@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from ..serializers import Serializer
 from ..mapping import MarshalVisitor, SerializeVisitor
 
-from ..types import Nested, NumericType
+from ..types import Nested, NumericType, Collection
 from ..exceptions import ValidationError, ConfigurationError
 
 
@@ -73,9 +73,16 @@ class IntegerForeignKey(NumericType):
         return True
 
 
+class RelationshipCollection(Collection):
+    __visit_name__ = 'relationship_collection'
+
+
 class SQASerializeVisitor(SerializeVisitor):
-    def visit_type_nested_foreign_key(self, type, data):
+    def visit_type_nested_foreign_key(self, type, data, **kwargs):
         return SQASerializeVisitor(type.mapping, data)._run()
+
+    def visit_field_relationship_collection(self, type, data, **kwargs):
+        return self.visit_field_collection(type, data)
 
 
 class SQAMarshalVisitor(MarshalVisitor):
@@ -94,7 +101,7 @@ class SQAMarshalVisitor(MarshalVisitor):
         else:
             self.output = self.instance
 
-    def visit_type_nested_foreign_key(self, type, data, instance=None, model=None):
+    def visit_type_nested_foreign_key(self, type, data, instance=None, model=None, **kwargs):
         # 1. User has passed an id and no updates are allowed.
         #    Resolve the id to an object and return immediately
         # 2. User has passed an id and updates are allowed.
@@ -131,6 +138,28 @@ class SQAMarshalVisitor(MarshalVisitor):
         RemoteClass = relationship.mapper.class_
 
         return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
+
+    def visit_field_relationship_collection(self, field, data):
+        instance_list = getattr(self.output, field.source)
+
+        # Find what sort of model we require by introspection of
+        # the relationship
+        inspection = inspect(self.output)
+        relationship = inspection.mapper.relationships[field.source]
+        RemoteClass = relationship.mapper.class_
+
+        return self.visit_type_relationship_collection(field.field_type, data, instance_list=instance_list, model=RemoteClass)
+
+    def visit_type_relationship_collection(self, type, data, instance_list=None, model=None, **kwargs):
+        result = []
+        for i, value in enumerate(type.marshal_members(data)):
+            try:
+                instance = instance_list[i]
+            except IndexError:
+                instance = None
+            value = self.visit_type(type.inner_type, value, instance=instance, model=model)
+            result.append(value)
+        return result
 
 
 class SQASerializer(Serializer):

@@ -7,7 +7,7 @@ from iso8601.iso8601 import Utc
 from kim.serializers import Field
 from kim.roles import Role
 from kim import types
-from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey
+from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey, RelationshipCollection
 from kim.exceptions import MappingErrors, ConfigurationError
 
 from sqlalchemy import create_engine
@@ -37,7 +37,7 @@ class User(Base):
     name = Column(Integer, nullable=False)
     signup_date = Column(DateTime, nullable=True)
 
-    contact_details_id = Column(Integer, ForeignKey('contact_detail.id'), nullable=False)
+    contact_details_id = Column(Integer, ForeignKey('contact_detail.id'), nullable=True)
     contact_details = relationship("ContactDetail", backref="users")
 
 
@@ -487,6 +487,207 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertEqual(self.deets.phone, '082345234')
         self.assertNotEqual(self.deets.address.id, self.address.id)
+
+    def test_nested_marshal_collection_id_only(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter)))
+
+        user1 = User(name='bob')
+        user2 = User(name='jim')
+        user3 = User(name='harry')
+
+        self.session.add_all([user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'id': user1.id},
+                {'id': user2.id},
+                {'id': user3.id},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+
+    def test_nested_marshal_collection_allow_update(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_updates=True)))
+
+        user1 = User(name='bob')
+        user2 = User(name='jim')
+        user3 = User(name='harry')
+
+        self.session.add_all([user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'id': user1.id, 'full_name': 'this is a new name'},
+                {'id': user2.id, 'full_name': 'this is another name'},
+                {'id': user3.id, 'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+        self.assertEqual(user1.name, 'this is a new name')
+        self.assertEqual(user2.name, 'this is another name')
+        self.assertEqual(user3.name, 'this is a third name')
+
+    def test_nested_marshal_collection_allow_updates_in_place(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_updates_in_place=True)))
+
+        contact = ContactDetail(phone='235345', address=self.address)
+
+        user1 = User(name='bob', contact_details=contact)
+        user2 = User(name='jim', contact_details=contact)
+        user3 = User(name='harry', contact_details=contact)
+
+        self.session.add_all([contact, user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'full_name': 'this is a new name'},
+                {'full_name': 'this is another name'},
+                {'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data, instance=contact)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+        self.assertEqual(user1.name, 'this is a new name')
+        self.assertEqual(user2.name, 'this is another name')
+        self.assertEqual(user3.name, 'this is a third name')
+
+    def test_nested_marshal_collection_allow_create(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_create=True)))
+
+        contact = ContactDetail(phone='235345', address=self.address)
+
+        self.session.add(contact)
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'full_name': 'this is a new name'},
+                {'full_name': 'this is another name'},
+                {'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data, instance=contact)
+
+        self.session.add(result)
+        self.session.flush()
+
+        self.assertEqual(result.users[0].contact_details_id, result.id)
+        self.assertEqual(result.users[1].contact_details_id, result.id)
+        self.assertEqual(result.users[2].contact_details_id, result.id)
+        self.assertEqual(result.users[0].name, 'this is a new name')
+        self.assertEqual(result.users[1].name, 'this is another name')
+        self.assertEqual(result.users[2].name, 'this is a third name')
+
 
     def test_foreignkey_field_allow_create_allow_updates_in_place_mutually_exclusive(self):
         with self.assertRaises(ConfigurationError):

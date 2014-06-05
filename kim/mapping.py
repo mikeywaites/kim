@@ -126,9 +126,9 @@ class Visitor(object):
         else:
             return self.visit_type(field.field_type, data)
 
-    def visit_type(self, type, data):
+    def visit_type(self, type, data, **kwargs):
         name = 'visit_type_%s' % type.__visit_name__
-        return getattr(self, name)(type, data)
+        return getattr(self, name)(type, data, **kwargs)
 
     def validate(self, field, data):
         return True
@@ -180,17 +180,17 @@ class SerializeVisitor(Visitor):
     def update_output(self, field, result):
         self.output[field.name] = result
 
-    def visit_type_collection(self, type, data):
+    def visit_type_collection(self, type, data, **kwargs):
         result = []
         for value in type.serialize_members(data):
-            value = self.visit_type(type.inner_type, value)
+            value = self.visit_type(type.inner_type, value, **kwargs)
             result.append(value)
         return result
 
-    def visit_type_default(self, type, data):
+    def visit_type_default(self, type, data, **kwargs):
          return type.serialize_value(data)
 
-    def visit_type_nested(self, type, data):
+    def visit_type_nested(self, type, data, **kwargs):
         return SerializeVisitor(type.mapping, data)._run()
 
 
@@ -231,17 +231,17 @@ class MarshalVisitor(Visitor):
                     current_component = current_component[component]
                 current_component[last_component] = value
 
-    def visit_type_collection(self, type, data):
+    def visit_type_collection(self, type, data, **kwargs):
         result = []
         for value in type.marshal_members(data):
-            value = self.visit_type(type.inner_type, value)
+            value = self.visit_type(type.inner_type, value, **kwargs)
             result.append(value)
         return result
 
-    def visit_type_default(self, type, data):
+    def visit_type_default(self, type, data, **kwargs):
          return type.marshal_value(data)
 
-    def visit_type_nested(self, type, data):
+    def visit_type_nested(self, type, data, **kwargs):
         return MarshalVisitor(type.mapping, data)._run()
 
     def _run(self):
