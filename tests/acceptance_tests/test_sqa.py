@@ -8,7 +8,7 @@ from kim.serializers import Field
 from kim.roles import Role
 from kim import types
 from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey
-from kim.exceptions import MappingErrors
+from kim.exceptions import MappingErrors, ConfigurationError
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
@@ -200,8 +200,8 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNotNone(result.id)
 
-    def test_nested_marshal_allow_update_in_place(self):
-        """When allow_update_in_place is True and we pass a nested object without an id,
+    def test_nested_marshal_allow_updates_in_place(self):
+        """When allow_updates_in_place is True and we pass a nested object without an id,
         and there is already an object associated with this foreign key,
         we expect the existing object to be updated with that data."""
         class AddressSerializer(SQASerializer):
@@ -215,7 +215,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer(), read_only=True)
             phone = Field(types.String)
-            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_update_in_place=True))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_updates_in_place=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -223,7 +223,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(), read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(), required=False)
-            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_update_in_place=True), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_updates_in_place=True), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -487,6 +487,22 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertEqual(self.deets.phone, '082345234')
         self.assertNotEqual(self.deets.address.id, self.address.id)
+
+    def test_foreignkey_field_allow_create_allow_updates_in_place_mutually_exclusive(self):
+        with self.assertRaises(ConfigurationError):
+            class ContactSerializer(SQASerializer):
+                __model__ = ContactDetail
+
+                id = Field(types.Integer, read_only=True)
+                phone = Field(types.String)
+
+            class UserSerializer(SQASerializer):
+                __model__ = User
+
+                id = Field(types.Integer, read_only=True)
+                contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                    allow_updates_in_place=True, allow_create=True), source='contact_details')
+
 
     def test_serialize_dot_notation(self):
         class UserSerializer(SQASerializer):

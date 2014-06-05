@@ -6,7 +6,7 @@ from ..serializers import Serializer
 from ..mapping import MarshalVisitor, SerializeVisitor
 
 from ..types import Nested, NumericType
-from ..exceptions import ValidationError
+from ..exceptions import ValidationError, ConfigurationError
 
 
 class NestedForeignKey(Nested):
@@ -20,8 +20,10 @@ class NestedForeignKey(Nested):
         self.getter = kwargs.pop('getter', None)
         self.id_field_name = kwargs.pop('id_field_name', 'id')
         self.allow_updates = kwargs.pop('allow_updates', False)
-        self.allow_update_in_place = kwargs.pop('allow_update_in_place', False)
+        self.allow_updates_in_place = kwargs.pop('allow_updates_in_place', False)
         self.allow_create = kwargs.pop('allow_create', False)
+        if self.allow_updates_in_place and self.allow_create:
+            raise ConfigurationError('allow_create and allow_updates_in_place may not be used together')
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
@@ -102,7 +104,7 @@ class SQAMarshalVisitor(MarshalVisitor):
         # 4. User has not passed an id and creation of new objects is allowed
         #    Call recursively to create a new object
         # 5. User has not passed an id and creation of new objects is not
-        #    allowed. Raise an exception.
+        #    allowed, nor are in place updates. Raise an exception.
 
         resolved = type.get_object(data)
 
@@ -112,7 +114,7 @@ class SQAMarshalVisitor(MarshalVisitor):
             else:
                 return resolved
         else:
-            if type.allow_update_in_place:
+            if type.allow_updates_in_place:
                 return SQAMarshalVisitor(type.mapping, data, instance=instance, model=model)._run()
             elif type.allow_create:
                 return SQAMarshalVisitor(type.mapping, data, model=model)._run()
