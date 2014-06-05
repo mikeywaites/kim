@@ -119,7 +119,6 @@ class SQAMarshalVisitor(MarshalVisitor):
             else:
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
-
     def visit_field_nested_foreign_key(self, field, data):
         existing = getattr(self.output, field.source)
 
@@ -129,13 +128,7 @@ class SQAMarshalVisitor(MarshalVisitor):
         relationship = inspection.mapper.relationships[field.source]
         RemoteClass = relationship.mapper.class_
 
-        if existing:
-            # Exists, just update it
-            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
-        else:
-            # Now create a new instance of that model and set the relationship
-            # remote_instance = RemoteClass()
-            return self.visit_type_nested_foreign_key(field.field_type, data, model=RemoteClass)
+        return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
 
 
 class SQASerializer(Serializer):
