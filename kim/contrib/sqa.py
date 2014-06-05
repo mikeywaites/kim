@@ -19,8 +19,9 @@ class NestedForeignKey(Nested):
     def __init__(self, *args, **kwargs):
         self.getter = kwargs.pop('getter', None)
         self.id_field_name = kwargs.pop('id_field_name', 'id')
-        self.marshal_by_id_only = kwargs.pop('marshal_by_id_only', True)
         self.allow_updates = kwargs.pop('allow_updates', False)
+        self.allow_update_in_place = kwargs.pop('allow_update_in_place', False)
+        self.allow_create = kwargs.pop('allow_create', False)
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
@@ -32,8 +33,8 @@ class NestedForeignKey(Nested):
         if type(source_value) != dict:
             raise ValidationError('invalid type')
         id = source_value.get(self.id_field_name)
-        if not id and self.marshal_by_id_only:
-            raise ValidationError('no id passed')
+        # if not id and self.marshal_by_id_only:
+        #     raise ValidationError('no id passed')
         if self.valid_id(id):
             id = int(id)
             try:
@@ -42,8 +43,8 @@ class NestedForeignKey(Nested):
                 obj = None
             if not obj:
                 raise ValidationError('invalid id')
-            if len(source_value) > 1 and not self.allow_updates:
-                raise ValidationError('additional update data not allowed when id passed')
+            # if len(source_value) > 1 and not self.allow_updates:
+            #     raise ValidationError('additional update data not allowed when id passed')
             return obj
 
     def validate(self, source_value):
@@ -95,28 +96,50 @@ class SQAMarshalVisitor(MarshalVisitor):
         else:
             self.output = self.instance
 
-    def visit_type_nested_foreign_key(self, type, data, instance=None):
-        instance = type.get_object(data) or instance
-        if not type.marshal_by_id_only: # HACK???
-            return SQAMarshalVisitor(type.mapping, data, instance=instance)._run()
-        return instance
+    def visit_type_nested_foreign_key(self, type, data, instance=None, model=None):
+        # 1. User has passed an id and no updates are allowed.
+        #    Resolve the id to an object and return immediately
+        # 2. User has passed an id and updates are allowed.
+        #    Resolve the id to an object and call recursively to update it
+        # 3. Object already exists, user has not passed an id and in place
+        #    updates are allowed. Call recursively to update existing object.
+        # 4. User has not passed an id and creation of new objects is allowed
+        #    Call recursively to create a new object
+        # 5. User has not passed an id and creation of new objects is not
+        #    allowed. Raise an exception.
+
+        resolved = type.get_object(data)
+
+        if resolved:
+            if type.allow_updates:
+                return SQAMarshalVisitor(type.mapping, data, instance=resolved, model=model)._run()
+            else:
+                return resolved
+        else:
+            if type.allow_update_in_place:
+                return SQAMarshalVisitor(type.mapping, data, instance=instance, model=model)._run()
+            elif type.allow_create:
+                return SQAMarshalVisitor(type.mapping, data, model=model)._run()
+            else:
+                raise ValidationError('No id passed and creation or update in place not allowed')
+
 
     def visit_field_nested_foreign_key(self, field, data):
         existing = getattr(self.output, field.source)
+
+        # Find what sort of model we require by introspection of
+        # the relationship
+        inspection = inspect(self.output)
+        relationship = inspection.mapper.relationships[field.source]
+        RemoteClass = relationship.mapper.class_
+
         if existing:
             # Exists, just update it
-            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing)
+            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
         else:
-            # If it doesn't exist, we need to create it
-            # Find what sort of model we require by introspection of
-            # the relationship
-            inspection = inspect(self.output)
-            relationship = inspection.mapper.relationships[field.source]
-            RemoteClass = relationship.mapper.class_
-
             # Now create a new instance of that model and set the relationship
-            remote_instance = RemoteClass()
-            return self.visit_type_nested_foreign_key(field.field_type, data, instance=remote_instance)
+            # remote_instance = RemoteClass()
+            return self.visit_type_nested_foreign_key(field.field_type, data, model=RemoteClass)
 
 
 class SQASerializer(Serializer):

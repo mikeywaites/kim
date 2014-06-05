@@ -153,7 +153,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_create=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -161,7 +161,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime, required=False)
-            contact = Field(NestedForeignKey(mapped=ContactSerializer, marshal_by_id_only=False), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_create=True), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -210,7 +210,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer(), read_only=True)
             phone = Field(types.String)
-            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_update_in_place=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -218,7 +218,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(), read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(), required=False)
-            contact = Field(NestedForeignKey(mapped=ContactSerializer, marshal_by_id_only=False), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_update_in_place=True), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -383,7 +383,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNone(result.contact_details)
 
-    def test_marshal_by_id_only(self):
+    def test_allow_updates_false(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -424,7 +424,7 @@ class SQAAcceptanceTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
 
-    def test_allow_updates_when_id_passed(self):
+    def test_allow_updates(self):
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -439,7 +439,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(NestedForeignKey(mapped=AddressSerializer, marshal_by_id_only=False))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_create=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -448,7 +448,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                getter=contact_getter, marshal_by_id_only=False, allow_updates_when_id_passed=True), source='contact_details')
+                getter=contact_getter, allow_updates=True), source='contact_details')
 
         data = {
             'full_name': 'bob',

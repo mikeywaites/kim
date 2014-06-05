@@ -135,12 +135,15 @@ class Visitor(object):
 
     def _run(self):
        for field in self.mapping:
-           data = self.get_data(field)
-           if not data:
-               data = field.default
-           if self.validate(field, data):
-               result = self.visit_field(field, data)
-               self.update_output(field, result)
+            data = self.get_data(field)
+            if not data:
+                data = field.default
+            try:
+                if self.validate(field, data):
+                    result = self.visit_field(field, data)
+                    self.update_output(field, result)
+            except ValidationError as e:
+                self.errors[field.name].append(e.message)
        return self.output
 
     def get_data(self, field):
@@ -203,11 +206,8 @@ class MarshalVisitor(Visitor):
     def validate(self, field, data):
         if field.read_only:
             return False
-        try:
-            if field.is_valid(data):
-                return data
-        except ValidationError as e:
-            self.errors[field.name].append(e.message)
+        if field.is_valid(data):
+            return data
 
     def update_output(self, field, value):
         if not field.read_only:
