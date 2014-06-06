@@ -124,14 +124,14 @@ class SQAMarshalVisitor(MarshalVisitor):
 
         if resolved:
             if type.allow_updates:
-                return self.Cls(type.mapping, data, instance=resolved, model=model)._run()
+                return self.Cls(type.get_mapping(), data, instance=resolved, model=model)._run()
             else:
                 return resolved
         else:
             if type.allow_updates_in_place:
-                return self.Cls(type.mapping, data, instance=instance, model=model)._run()
+                return self.Cls(type.get_mapping(), data, instance=instance, model=model)._run()
             elif type.allow_create:
-                return self.Cls(type.mapping, data, model=model)._run()
+                return self.Cls(type.get_mapping(), data, model=model)._run()
             else:
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
