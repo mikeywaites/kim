@@ -136,9 +136,10 @@ class SQAMarshalVisitor(MarshalVisitor):
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
     def visit_field_nested_foreign_key(self, field, data):
-        existing = getattr(self.output, field.source)
-        RemoteClass = self._get_relationship_model(field)
-        return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
+        if data is not None:
+            existing = getattr(self.output, field.source)
+            RemoteClass = self._get_relationship_model(field)
+            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
 
     def visit_field_relationship_collection(self, field, data):
         existing_list = getattr(self.output, field.source)

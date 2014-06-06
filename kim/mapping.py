@@ -206,7 +206,8 @@ class SerializeVisitor(Visitor):
          return type.serialize_value(data)
 
     def visit_type_nested(self, type, data, **kwargs):
-        return self.Cls(type.get_mapping(), data)._run()
+        if data is not None:
+            return self.Cls(type.get_mapping(), data)._run()
 
 
 
@@ -257,7 +258,8 @@ class MarshalVisitor(Visitor):
          return type.marshal_value(data)
 
     def visit_type_nested(self, type, data, **kwargs):
-        return self.Cls(type.get_mapping(), data)._run()
+        if data is not None:
+            return self.Cls(type.get_mapping(), data)._run()
 
     def _run(self):
         output = super(MarshalVisitor, self)._run()
