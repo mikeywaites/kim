@@ -159,8 +159,8 @@ class SQAMarshalVisitor(MarshalVisitor):
 
 class SQASerializer(Serializer):
 
-    def marshal(self, data, instance=None, **kwargs):
-        return SQAMarshalVisitor.run(self.get_mapping(), data, model=self.__model__, instance=instance, **kwargs)
+    def marshal(self, data, instance=None, role=None, **kwargs):
+        return SQAMarshalVisitor.run(self.get_mapping(role=role), data, model=self.__model__, instance=instance, **kwargs)
 
-    def serialize(self, data, **kwargs):
-        return SQASerializeVisitor.run(self.get_mapping(), data, **kwargs)
+    def serialize(self, data, role=None, **kwargs):
+        return SQASerializeVisitor.run(self.get_mapping(role=role), data, **kwargs)
