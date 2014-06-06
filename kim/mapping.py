@@ -223,7 +223,7 @@ class MarshalVisitor(Visitor):
         if field.read_only:
             return False
         if field.is_valid(data):
-            return data
+            return True
 
     def update_output(self, field, value):
         if not field.read_only:
