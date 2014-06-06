@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import sys
+
 from collections import defaultdict
 
-from .exceptions import ValidationError, MappingErrors, FieldError
+from .exceptions import ValidationError, MappingErrors, FieldError, KimError
 from .utils import is_valid_field
 
 
@@ -140,7 +142,7 @@ class Visitor(object):
     def _run(self):
        for field in self.mapping:
             data = self.get_data(field)
-            if not data:
+            if data is None:
                 data = field.default
             try:
                 if self.validate(field, data):
@@ -148,6 +150,15 @@ class Visitor(object):
                     self.update_output(field, result)
             except ValidationError as e:
                 self.errors[field.name].append(e.message)
+            except Exception as e:
+                # If we catch anything else something's genuinely gone wrong,
+                # but the stacktrace will be indecipherable. Append the actual
+                # details of which field we're on to help.
+                msg = 'Caught error whilst processing %s in %s.\n' \
+                      'Original exception was "%s: %s"' % (
+                          field.field_id, self.mapping, e.__class__.__name__, e)
+                raise KimError(msg), None, sys.exc_info()[2]
+
        return self.output
 
     def get_data(self, field):
