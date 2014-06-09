@@ -140,6 +140,39 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(result, exp)
 
+    def test_nested_serialize_with_role(self):
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+            email = Field(types.String)
+
+            class Meta:
+                roles = {'phone': whitelist('phone')}
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                role=ContactSerializer.Meta.roles['phone']), source='contact_details')
+
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user)
+
+        exp = {
+            'id': self.user.id,
+            'full_name': self.user.name,
+            'contact': {
+                'phone': self.deets.phone,
+            },
+            'signup_date': '2014-04-11T04:06:02'
+        }
+        self.assertDictEqual(result, exp)
+
     def test_nested_marshal_allow_create(self):
         """When allow_create is True and we pass a nested object without an id,
         we expect a new object to be created and populated with that data."""
