@@ -183,3 +183,13 @@ class BasicAcceptanceTests(unittest.TestCase):
         result = Outer().marshal(data)
 
         self.assertEquals(result, {'user': None})
+
+    def test_collection_when_none(self):
+        class Outer(Serializer):
+            mylist = Field(Collection(Integer()), required=False)
+
+        data = {'mylist': None}
+
+        result = Outer().marshal(data)
+
+        self.assertEquals(result, {'mylist': []})

@@ -113,6 +113,39 @@ class MarshalTests(unittest.TestCase):
             marshal(mapping, {'name': 'bob'})
             self.assertTrue(mocked.called)
 
+    def test_type_marshal_value_not_called_when_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType, required=False)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'marshal_value') as mocked:
+            marshal(mapping, {'name': None})
+            self.assertFalse(mocked.called)
+
+    def test_type_validate_not_called_when_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType, required=False)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'validate') as mocked:
+            marshal(mapping, {'name': None})
+            self.assertFalse(mocked.called)
+
+    def test_type_validate_called_when_not_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'validate') as mocked:
+            marshal(mapping, {'name': 'bob'})
+            self.assertTrue(mocked.called)
+
     def test_field_value_returned_when_different_source(self):
         name = Field('name', types.String(), source='different_name')
         id = Field('id', types.Integer())
