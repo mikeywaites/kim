@@ -7,6 +7,7 @@ from iso8601.iso8601 import Utc
 from kim.serializers import Serializer, Field
 from kim.types import (String, Collection, Nested, Integer, Email, Date,
     DateTime, Decimal)
+from kim.roles import whitelist
 
 
 class BasicAcceptanceTests(unittest.TestCase):
@@ -154,4 +155,18 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         self.assertEquals(result, [{'user': {'name': 'jack'}},
                                    {'user': {'name': 'mike'}}])
+
+    def test_nested_with_role(self):
+        class Inner(Serializer):
+            name = Field(String)
+            email = Field(String)
+
+        class Outer(Serializer):
+            user = Field(Nested(Inner, role=whitelist('name')))
+
+        data = {'user': {'name': 'jack', 'email': 'hello@example.com'}}
+
+        result = Outer().serialize(data)
+
+        self.assertEquals(result, {'user': {'name': 'jack'}})
 
