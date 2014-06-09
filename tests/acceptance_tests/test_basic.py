@@ -170,3 +170,16 @@ class BasicAcceptanceTests(unittest.TestCase):
 
         self.assertEquals(result, {'user': {'name': 'jack'}})
 
+    def test_nested_when_none(self):
+        class Inner(Serializer):
+            name = Field(String)
+            email = Field(String)
+
+        class Outer(Serializer):
+            user = Field(Nested(Inner, role=whitelist('name')), required=False)
+
+        data = {'user': None}
+
+        result = Outer().marshal(data)
+
+        self.assertEquals(result, {'user': None})
