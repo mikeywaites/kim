@@ -5,7 +5,7 @@ import unittest
 import mock
 
 from kim import types
-from kim.exceptions import MappingErrors
+from kim.exceptions import MappingErrors, KimError
 from kim.mapping import Mapping, marshal, serialize, Visitor
 from kim.fields import Field
 
@@ -182,6 +182,24 @@ class MarshalTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             marshal(mapping, {})
 
+    def test_reraise(self):
+        class MyType(types.BaseType):
+            def validate(self, source_value):
+                # Deliberately raise an unhandled exception
+                raise ValueError
+
+        error = None
+
+        name = Field('name', MyType)
+        mapping = Mapping(name)
+
+        try:
+            marshal(mapping, {'name': 'bob'})
+        except Exception as e:
+            error = e
+
+        self.assertIsInstance(error, KimError)
+
 
 class SerializeTests(unittest.TestCase):
 
@@ -247,3 +265,4 @@ class SerializeTests(unittest.TestCase):
         with mock.patch.object(MyType, 'serialize_value') as mocked:
             serialize(mapping, {'name': 'bob'})
             self.assertTrue(mocked.called)
+
