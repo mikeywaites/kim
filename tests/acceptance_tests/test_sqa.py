@@ -5,7 +5,7 @@ import unittest
 from iso8601.iso8601 import Utc
 
 from kim.serializers import Field
-from kim.roles import Role
+from kim.roles import whitelist
 from kim import types
 from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey, RelationshipCollection
 from kim.exceptions import MappingErrors, ConfigurationError
@@ -720,6 +720,25 @@ class SQAAcceptanceTests(unittest.TestCase):
             'id': self.user.id,
             'full_name': self.user.name,
             'phone': self.deets.phone,
+        }
+        self.assertDictEqual(result, exp)
+
+    def test_roles(self):
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime)
+
+            class Meta:
+                roles = {'name_only': whitelist('full_name')}
+
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user, role='name_only')
+
+        exp = {
+            'full_name': self.user.name,
         }
         self.assertDictEqual(result, exp)
 
