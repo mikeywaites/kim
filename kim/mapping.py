@@ -249,13 +249,15 @@ class MarshalVisitor(Visitor):
 
     def visit_type_collection(self, type, data, **kwargs):
         result = []
-        for value in type.marshal_members(data):
-            value = self.visit_type(type.inner_type, value, **kwargs)
-            result.append(value)
+        if data is not None:
+            for value in type.marshal_members(data):
+                value = self.visit_type(type.inner_type, value, **kwargs)
+                result.append(value)
         return result
 
     def visit_type_default(self, type, data, **kwargs):
-         return type.marshal_value(data)
+        if data is not None:
+            return type.marshal_value(data)
 
     def visit_type_nested(self, type, data, **kwargs):
         if data is not None:
