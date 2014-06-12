@@ -7,17 +7,17 @@ For these examples, assume we have objects that look like this:
 
 .. code-block:: python
 
-	class England(object):
-		name = 'England'
-		nickname = 'The Three Lions'
+    class England(object):
+        name = 'England'
+        nickname = 'The Three Lions'
 
-	class Gerrard(object):
-		name = 'Steve Gerrard'
-		goals_per_game = Decimal('0.24')
-		date_of_birth = datetime(1980, 5, 30)
-		team = England()
+    class Gerrard(object):
+        name = 'Steve Gerrard'
+        goals_per_game = Decimal('0.24')
+        date_of_birth = datetime(1980, 5, 30)
+        team = England()
 
-	gerrard = Gerrard()
+    gerrard = Gerrard()
 
 
 In a real application these would most likely be ORM objects from your database,
@@ -32,15 +32,15 @@ fields the output/input should consist of and their expected types.
 
 .. code-block:: python
 
-	from kim.serializers import Serializer
-	from kim.fields import Field
-	import kim.types as t
+    from kim.serializers import Serializer
+    from kim.fields import Field
+    import kim.types as t
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
 
-	>>> PlayerSerializer().serialize(gerrard)
-	{'name': 'Steven Gerrard'}
+    >>> PlayerSerializer().serialize(gerrard)
+    {'name': 'Steven Gerrard'}
 
 
 Options on Fields
@@ -65,13 +65,13 @@ object:
 
 .. code-block:: python
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
-		birthday = Field(t.DateTime, source='date_of_birth')
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
+        birthday = Field(t.DateTime, source='date_of_birth')
 
-	>>> PlayerSerializer().serialize(gerrard)
-	{'name': 'Steven Gerrard',
-	 'birthday': '1980-05-30T00:00:00Z'}
+    >>> PlayerSerializer().serialize(gerrard)
+    {'name': 'Steven Gerrard',
+     'birthday': '1980-05-30T00:00:00Z'}
 
 
 Types
@@ -96,15 +96,15 @@ Let's add `goals_per_game` as a Decimal type and specify the precision:
 
 .. code-block:: python
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
-		birthday = Field(t.DateTime, source='date_of_birth')
-		goals_per_game = Field(t.Decimal(precision=2))
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
+        birthday = Field(t.DateTime, source='date_of_birth')
+        goals_per_game = Field(t.Decimal(precision=2))
 
-	>>> PlayerSerializer().serialize(gerrard)
-	{'name': 'Steven Gerrard',
-	 'birthday': '1980-05-30T00:00:00Z',
-	 'goals_per_game': '0.24'}
+    >>> PlayerSerializer().serialize(gerrard)
+    {'name': 'Steven Gerrard',
+     'birthday': '1980-05-30T00:00:00Z',
+     'goals_per_game': '0.24'}
 
 
 Note that the Decimal type serializes to a string in order to avoid rounding
@@ -119,15 +119,15 @@ dictionaries, you can use the *many* option:
 
 .. code-block:: python
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
 
-	players = [Gerrard(), Gerrard(), Gerrard()]
+    players = [Gerrard(), Gerrard(), Gerrard()]
 
-	>>> PlayerSerializer().serialize(players, many=True)
-	[{'name': 'Steven Gerrard'},
-	 {'name': 'Steven Gerrard'},
-	 {'name': 'Steven Gerrard'}]
+    >>> PlayerSerializer().serialize(players, many=True)
+    [{'name': 'Steven Gerrard'},
+     {'name': 'Steven Gerrard'},
+     {'name': 'Steven Gerrard'}]
 
 
 Nested Types
@@ -141,24 +141,24 @@ as it's first argument:
 
 .. code-block:: python
 
-	class TeamSerializer(Serializer):
-		name = Field(t.String)
-		nickname = Field(t.String)
+    class TeamSerializer(Serializer):
+        name = Field(t.String)
+        nickname = Field(t.String)
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
-		birthday = Field(t.DateTime, source='date_of_birth')
-		goals_per_game = Field(t.Decimal(precision=2))
-		team = Field(t.Nested(TeamSerializer))
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
+        birthday = Field(t.DateTime, source='date_of_birth')
+        goals_per_game = Field(t.Decimal(precision=2))
+        team = Field(t.Nested(TeamSerializer))
 
-	>>> PlayerSerializer().serialize(gerrard)
-	{'name': 'Steven Gerrard',
-	 'birthday': '1980-05-30T00:00:00Z',
-	 'goals_per_game': '0.24',
-	 'team': {
-	 	'name': 'England',
-	 	'nickname': 'The Three Lions'
-	 }}
+    >>> PlayerSerializer().serialize(gerrard)
+    {'name': 'Steven Gerrard',
+     'birthday': '1980-05-30T00:00:00Z',
+     'goals_per_game': '0.24',
+     'team': {
+        'name': 'England',
+        'nickname': 'The Three Lions'
+     }}
 
 
 
@@ -174,25 +174,25 @@ Let's add a simple role to our serializer:
 
 .. code-block:: python
 
-	from kim.roles import whitelist
+    from kim.roles import whitelist
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String)
-		birthday = Field(t.DateTime, source='date_of_birth')
-		goals_per_game = Field(t.Decimal(precision=2))
+    class PlayerSerializer(Serializer):
+        name = Field(t.String)
+        birthday = Field(t.DateTime, source='date_of_birth')
+        goals_per_game = Field(t.Decimal(precision=2))
 
-		class Meta:
-			roles = {'simple': whitelist('name', 'birthday')}
+        class Meta:
+            roles = {'simple': whitelist('name', 'birthday')}
 
-	>>> PlayerSerializer().serialize(gerrard, role='simple')
-	{'name': 'Steven Gerrard',
-	 'birthday': '1980-05-30T00:00:00Z'}
+    >>> PlayerSerializer().serialize(gerrard, role='simple')
+    {'name': 'Steven Gerrard',
+     'birthday': '1980-05-30T00:00:00Z'}
 
-	# If no role passed, all fields will be included as normal
-	>>> PlayerSerializer().serialize(gerrard)
-	{'name': 'Steven Gerrard',
-	 'birthday': '1980-05-30T00:00:00Z',
-	 'goals_per_game': '0.24'}
+    # If no role passed, all fields will be included as normal
+    >>> PlayerSerializer().serialize(gerrard)
+    {'name': 'Steven Gerrard',
+     'birthday': '1980-05-30T00:00:00Z',
+     'goals_per_game': '0.24'}
 
 
 Roles may also be used in Nested Serializers, by passing `role` to the Nested
@@ -223,18 +223,18 @@ Let's use our PlayerSerializer to marshal some data.
 
 .. code-block:: python
 
-	from kim.roles import whitelist
+    from kim.roles import whitelist
 
-	class PlayerSerializer(Serializer):
-		name = Field(t.String, required=True)
-		birthday = Field(t.DateTime, source='date_of_birth')
-		goals_per_game = Field(t.Decimal(precision=2))
+    class PlayerSerializer(Serializer):
+        name = Field(t.String, required=True)
+        birthday = Field(t.DateTime, source='date_of_birth')
+        goals_per_game = Field(t.Decimal(precision=2))
 
-	post_data = {'name': 'Steven Gerrard', 'birthday': '1980-05-30T00:00:00Z'}
+    post_data = {'name': 'Steven Gerrard', 'birthday': '1980-05-30T00:00:00Z'}
 
-	>>> player = PlayerSerializer().marshal(post_data)
-	{'name': 'Steven Gerrard',
-	 'date_of_birth': datetime(1980, 5, 30)}
+    >>> player = PlayerSerializer().marshal(post_data)
+    {'name': 'Steven Gerrard',
+     'date_of_birth': datetime(1980, 5, 30)}
 
 Note that because the `source` of the birthday field is `date_of_birth`, the
 result of marshaling puts the date in `date_of_birth`.
@@ -244,11 +244,11 @@ a `MappingErrors`. You could catch this and return a 400.
 
 .. code-block:: python
 
-	post_data = {'birthday': 'this is not a date!'}
+    post_data = {'birthday': 'this is not a date!'}
 
-	>>> player = PlayerSerializer().marshal(post_data)
-	MappingErrors: {'name': ['This is a required field'],
-	                'birthday': ['Date must be in iso8601 format']}
+    >>> player = PlayerSerializer().marshal(post_data)
+    MappingErrors: {'name': ['This is a required field'],
+                    'birthday': ['Date must be in iso8601 format']}
 
 
 

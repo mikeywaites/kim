@@ -18,28 +18,28 @@ Example
 -------
 .. code-block:: python
 
-	class Person(db.Model):
-		name = Column(String)
-		age = Column(Integer)
+    class Person(db.Model):
+        name = Column(String)
+        age = Column(Integer)
 
 
-	class MySerializer(SQASerializer):
-		name = Field(String)
-		current_age = Field(Integer, source='age')
+    class MySerializer(SQASerializer):
+        name = Field(String)
+        current_age = Field(Integer, source='age')
 
 
-	person1 = db.session.query(Person).first()
+    person1 = db.session.query(Person).first()
 
-	>>> MySerializer().serialize(person)
-	{'name': 'jack', 'current_age': 24}
+    >>> MySerializer().serialize(person)
+    {'name': 'jack', 'current_age': 24}
 
-	person2 = MySerializer().marshal({'name': 'mike', 'current_age': 28})
+    person2 = MySerializer().marshal({'name': 'mike', 'current_age': 28})
 
-	>>> person2.name
-	'mike'
+    >>> person2.name
+    'mike'
 
-	>>> person2.age
-	28
+    >>> person2.age
+    28
 
 
 Features
@@ -60,7 +60,7 @@ Installation
 ------------
 .. code-block:: shell
 
-	pip install kim
+    pip install kim
 
 
 .. Contributing to ``kim``
