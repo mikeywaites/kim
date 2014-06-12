@@ -44,7 +44,8 @@ Example
 
 Features
 --------
-* Serialization (output) and marshalling (input)
+* Serialization (output) and marshaling (input)
+* Automatic validation and sanitization of input when marshaling.
 * Declarative Serializer definition syntax
 * Flexible Types API - many common types built in or easily define your own
 * Support for roles - whitelist/blacklist fields for different use cases
