@@ -46,7 +46,9 @@ fields the output/input should consist of and their expected types.
 Options on Fields
 -----------------
 
-*Fields* can take options which control where and how the data is treated.
+*Fields* can take options which control where the data is found and how it is
+treated.
+
 Common options include:
 
 * `required` - specify this field may not be omitted when marshaling
@@ -59,7 +61,7 @@ Common options include:
 See the API reference for other options.
 
 Let's use the source parameter to rename the `date_of_birth` attribute on our
-object.
+object:
 
 .. code-block:: python
 
@@ -113,7 +115,7 @@ Serializing Many Objects at Once
 --------------------------------
 
 If you have a list of objects and would like to output a list of serialized
-dictionaries, you can use the *many* parameter:
+dictionaries, you can use the *many* option:
 
 .. code-block:: python
 
@@ -123,7 +125,9 @@ dictionaries, you can use the *many* parameter:
 	players = [Gerrard(), Gerrard(), Gerrard()]
 
 	>>> PlayerSerializer().serialize(players, many=True)
-	[{'name': 'Steven Gerrard'}, {'name': 'Steven Gerrard'}, {'name': 'Steven Gerrard'}]
+	[{'name': 'Steven Gerrard'},
+	 {'name': 'Steven Gerrard'},
+	 {'name': 'Steven Gerrard'}]
 
 
 Nested Types
@@ -243,7 +247,8 @@ a `MappingErrors`. You could catch this and return a 400.
 	post_data = {'birthday': 'this is not a date!'}
 
 	>>> player = PlayerSerializer().marshal(post_data)
-	MappingErrors: {'name': ['This is a required field'], 'birthday': ['Date must be in iso8601 format']}
+	MappingErrors: {'name': ['This is a required field'],
+	                'birthday': ['Date must be in iso8601 format']}
 
 
 
