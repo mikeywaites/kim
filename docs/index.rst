@@ -11,11 +11,11 @@ Usage Documentation
 .. toctree::
    :maxdepth: 3
 
-   introduction
-   installation
+   .. introduction
+   .. installation
    quickstart
-   core
-   serializers
+   .. core
+   .. serializers
 
 Reference
 ---------
