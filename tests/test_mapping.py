@@ -5,8 +5,8 @@ import unittest
 import mock
 
 from kim import types
-from kim.exceptions import MappingErrors
-from kim.mapping import Mapping, marshal, serialize, MappingIterator
+from kim.exceptions import MappingErrors, KimError
+from kim.mapping import Mapping, marshal, serialize, Visitor
 from kim.fields import Field
 
 
@@ -50,14 +50,14 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(fields[1], email)
 
 
-class MappingIteratorTest(unittest.TestCase):
-    def test_process_field_not_implemented(self):
-        mi = MappingIterator()
+class VisitorTest(unittest.TestCase):
+    def test_get_data_not_implemented(self):
+        mi = Visitor(None, None)
         with self.assertRaises(NotImplementedError):
-            mi.process_field(None, None)
+            mi.get_data(None)
 
     def test_update_output_not_implemented(self):
-        mi = MappingIterator()
+        mi = Visitor(None, None)
         with self.assertRaises(NotImplementedError):
             mi.update_output(None, None)
 
@@ -110,6 +110,39 @@ class MarshalTests(unittest.TestCase):
         name = Field('name', MyType)
         mapping = Mapping(name)
         with mock.patch.object(MyType, 'marshal_value') as mocked:
+            marshal(mapping, {'name': 'bob'})
+            self.assertTrue(mocked.called)
+
+    def test_type_marshal_value_not_called_when_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType, required=False)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'marshal_value') as mocked:
+            marshal(mapping, {'name': None})
+            self.assertFalse(mocked.called)
+
+    def test_type_validate_not_called_when_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType, required=False)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'validate') as mocked:
+            marshal(mapping, {'name': None})
+            self.assertFalse(mocked.called)
+
+    def test_type_validate_called_when_not_none(self):
+
+        class MyType(types.BaseType):
+            pass
+
+        name = Field('name', MyType)
+        mapping = Mapping(name)
+        with mock.patch.object(MyType, 'validate') as mocked:
             marshal(mapping, {'name': 'bob'})
             self.assertTrue(mocked.called)
 
@@ -182,6 +215,24 @@ class MarshalTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             marshal(mapping, {})
 
+    def test_reraise(self):
+        class MyType(types.BaseType):
+            def validate(self, source_value):
+                # Deliberately raise an unhandled exception
+                raise ValueError
+
+        error = None
+
+        name = Field('name', MyType)
+        mapping = Mapping(name)
+
+        try:
+            marshal(mapping, {'name': 'bob'})
+        except Exception as e:
+            error = e
+
+        self.assertIsInstance(error, KimError)
+
 
 class SerializeTests(unittest.TestCase):
 
@@ -247,3 +298,4 @@ class SerializeTests(unittest.TestCase):
         with mock.patch.object(MyType, 'serialize_value') as mocked:
             serialize(mapping, {'name': 'bob'})
             self.assertTrue(mocked.called)
+

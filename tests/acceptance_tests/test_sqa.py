@@ -5,10 +5,10 @@ import unittest
 from iso8601.iso8601 import Utc
 
 from kim.serializers import Field
-from kim.roles import Role
+from kim.roles import whitelist
 from kim import types
-from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey
-from kim.exceptions import MappingErrors
+from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey, RelationshipCollection
+from kim.exceptions import MappingErrors, ConfigurationError
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
@@ -37,7 +37,7 @@ class User(Base):
     name = Column(Integer, nullable=False)
     signup_date = Column(DateTime, nullable=True)
 
-    contact_details_id = Column(Integer, ForeignKey('contact_detail.id'), nullable=False)
+    contact_details_id = Column(Integer, ForeignKey('contact_detail.id'), nullable=True)
     contact_details = relationship("ContactDetail", backref="users")
 
 
@@ -110,16 +110,16 @@ class SQAAcceptanceTests(unittest.TestCase):
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
 
         serializer = UserSerializer()
@@ -140,7 +140,42 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(result, exp)
 
-    def test_nested_marshal_new_object(self):
+    def test_nested_serialize_with_role(self):
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+            email = Field(types.String)
+
+            class Meta:
+                roles = {'phone': whitelist('phone')}
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                role=ContactSerializer.Meta.roles['phone']), source='contact_details')
+
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user)
+
+        exp = {
+            'id': self.user.id,
+            'full_name': self.user.name,
+            'contact': {
+                'phone': self.deets.phone,
+            },
+            'signup_date': '2014-04-11T04:06:02'
+        }
+        self.assertDictEqual(result, exp)
+
+    def test_nested_marshal_allow_create(self):
+        """When allow_create is True and we pass a nested object without an id,
+        we expect a new object to be created and populated with that data."""
         class AddressSerializer(SQASerializer):
             __model__ = Address
 
@@ -151,17 +186,17 @@ class SQAAcceptanceTests(unittest.TestCase):
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_create=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
-            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_create=True), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -198,7 +233,10 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNotNone(result.id)
 
-    def test_nested_marshal_existing_object(self):
+    def test_nested_marshal_allow_updates_in_place(self):
+        """When allow_updates_in_place is True and we pass a nested object without an id,
+        and there is already an object associated with this foreign key,
+        we expect the existing object to be updated with that data."""
         class AddressSerializer(SQASerializer):
             __model__ = Address
 
@@ -210,7 +248,7 @@ class SQAAcceptanceTests(unittest.TestCase):
 
             id = Field(types.Integer(), read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_updates_in_place=True))
 
         class UserSerializer(SQASerializer):
             __model__ = User
@@ -218,7 +256,7 @@ class SQAAcceptanceTests(unittest.TestCase):
             id = Field(types.Integer(), read_only=True)
             full_name = Field(types.String, source='name')
             signup_date = Field(types.DateTime(), required=False)
-            contact = Field(types.Nested(mapped=ContactSerializer), source='contact_details')
+            contact = Field(NestedForeignKey(mapped=ContactSerializer, allow_updates_in_place=True), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -251,7 +289,10 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.session.add(result)
         self.session.commit()
 
-    def test_foreignkey_field(self):
+    def test_foreignkey_field_pass_id(self):
+        """With default options, when a nested object is passed with an id,
+        we expect that id to be resolved and the foreign key set to the
+        resolved object"""
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -264,16 +305,16 @@ class SQAAcceptanceTests(unittest.TestCase):
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
                 getter=contact_getter), source='contact_details')
 
@@ -317,7 +358,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         }
         self.assertDictEqual(serialized, exp)
 
-    def test_foreignkey_field_invalid(self):
+    def test_foreignkey_field_getter_error(self):
+        """When we pass an id to a foreign key, and the getter for the type
+        returns False, we expect an error to be raised."""
         def contact_getter(id):
             return False
 
@@ -330,22 +373,22 @@ class SQAAcceptanceTests(unittest.TestCase):
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=False, getter=contact_getter), source='contact_details')
+                getter=contact_getter), source='contact_details')
 
         data = {
             'full_name': 'bob',
-            'contact': self.deets.id,
+            'contact': {'id': self.deets.id},
         }
 
         serializer = UserSerializer()
@@ -354,24 +397,26 @@ class SQAAcceptanceTests(unittest.TestCase):
             serializer.marshal(data)
 
     def test_foreignkey_field_not_required(self):
+        """When a foreign key field is not required, we expect it to be ignored
+        if not present in the marshalled data."""
         def contact_getter(id):
             return False
 
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=False, getter=contact_getter,
-                required=False), source='contact_details')
+                getter=contact_getter),
+                required=False, source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -383,7 +428,9 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNone(result.contact_details)
 
-    def test_marshal_by_key_only(self):
+    def test_nested_marshal_allow_updates_false(self):
+        """With the default settings (allow_updates=False), if a nested object
+        is passed without an id, we expect an error to be raised."""
         def contact_getter(id):
             return self.session.query(ContactDetail).get(id)
 
@@ -396,18 +443,18 @@ class SQAAcceptanceTests(unittest.TestCase):
         class ContactSerializer(SQASerializer):
             __model__ = ContactDetail
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             phone = Field(types.String)
-            address = Field(types.Nested(mapped=AddressSerializer))
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
 
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(NestedForeignKey(mapped=ContactSerializer,
-                marshal_by_key_only=True, getter=contact_getter), source='contact_details')
+                getter=contact_getter), source='contact_details')
 
         data = {
             'full_name': 'bob',
@@ -424,11 +471,278 @@ class SQAAcceptanceTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
 
+    def test_nested_marshal_allow_updates(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def contact_getter(id):
+            return self.session.query(ContactDetail).get(id)
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+            address = Field(NestedForeignKey(mapped=AddressSerializer, allow_create=True))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                getter=contact_getter, allow_updates=True), source='contact_details')
+
+        data = {
+            'full_name': 'bob',
+            'contact': {
+                'id': self.deets.id,
+                'phone': '082345234',
+                'address': {
+                    'country': 'uk',
+                    'postcode': 'sg1 3ab',
+                }
+            }
+        }
+
+        serializer = UserSerializer()
+        result = serializer.marshal(data)
+
+        self.session.flush()
+        self.session.expire_all()
+
+        self.assertEqual(self.deets.phone, '082345234')
+        self.assertNotEqual(self.deets.address.id, self.address.id)
+
+    def test_nested_marshal_collection_id_only(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter)))
+
+        user1 = User(name='bob')
+        user2 = User(name='jim')
+        user3 = User(name='harry')
+
+        self.session.add_all([user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'id': user1.id},
+                {'id': user2.id},
+                {'id': user3.id},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+
+    def test_nested_marshal_collection_allow_update(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_updates=True)))
+
+        user1 = User(name='bob')
+        user2 = User(name='jim')
+        user3 = User(name='harry')
+
+        self.session.add_all([user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'id': user1.id, 'full_name': 'this is a new name'},
+                {'id': user2.id, 'full_name': 'this is another name'},
+                {'id': user3.id, 'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+        self.assertEqual(user1.name, 'this is a new name')
+        self.assertEqual(user2.name, 'this is another name')
+        self.assertEqual(user3.name, 'this is a third name')
+
+    def test_nested_marshal_collection_allow_updates_in_place(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_updates_in_place=True)))
+
+        contact = ContactDetail(phone='235345', address=self.address)
+
+        user1 = User(name='bob', contact_details=contact)
+        user2 = User(name='jim', contact_details=contact)
+        user3 = User(name='harry', contact_details=contact)
+
+        self.session.add_all([contact, user1, user2, user3])
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'full_name': 'this is a new name'},
+                {'full_name': 'this is another name'},
+                {'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data, instance=contact)
+
+        self.assertEqual(user1.contact_details_id, result.id)
+        self.assertEqual(user2.contact_details_id, result.id)
+        self.assertEqual(user3.contact_details_id, result.id)
+        self.assertEqual(user1.name, 'this is a new name')
+        self.assertEqual(user2.name, 'this is another name')
+        self.assertEqual(user3.name, 'this is a third name')
+
+    def test_nested_marshal_collection_allow_create(self):
+        """When allow_updates is True, if a nested object is passed with an id,
+        we expect the object with that id to be resolved and updated with that
+        data."""
+        def user_getter(id):
+            return self.session.query(User).get(id)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer,
+                getter=user_getter, allow_create=True)))
+
+        contact = ContactDetail(phone='235345', address=self.address)
+
+        self.session.add(contact)
+        self.session.flush()
+
+        data = {
+            'phone': '0124234',
+            'users': [
+                {'full_name': 'this is a new name'},
+                {'full_name': 'this is another name'},
+                {'full_name': 'this is a third name'},
+            ]
+        }
+
+        serializer = ContactSerializer()
+        result = serializer.marshal(data, instance=contact)
+
+        self.session.add(result)
+        self.session.flush()
+
+        self.assertEqual(result.users[0].contact_details_id, result.id)
+        self.assertEqual(result.users[1].contact_details_id, result.id)
+        self.assertEqual(result.users[2].contact_details_id, result.id)
+        self.assertEqual(result.users[0].name, 'this is a new name')
+        self.assertEqual(result.users[1].name, 'this is another name')
+        self.assertEqual(result.users[2].name, 'this is a third name')
+
+
+    def test_foreignkey_field_allow_create_allow_updates_in_place_mutually_exclusive(self):
+        with self.assertRaises(ConfigurationError):
+            class ContactSerializer(SQASerializer):
+                __model__ = ContactDetail
+
+                id = Field(types.Integer, read_only=True)
+                phone = Field(types.String)
+
+            class UserSerializer(SQASerializer):
+                __model__ = User
+
+                id = Field(types.Integer, read_only=True)
+                contact = Field(NestedForeignKey(mapped=ContactSerializer,
+                    allow_updates_in_place=True, allow_create=True), source='contact_details')
+
+
     def test_serialize_dot_notation(self):
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
             phone = Field(types.String, source='contact_details.phone')
 
@@ -439,6 +753,25 @@ class SQAAcceptanceTests(unittest.TestCase):
             'id': self.user.id,
             'full_name': self.user.name,
             'phone': self.deets.phone,
+        }
+        self.assertDictEqual(result, exp)
+
+    def test_roles(self):
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime)
+
+            class Meta:
+                roles = {'name_only': whitelist('full_name')}
+
+        serializer = UserSerializer()
+        result = serializer.serialize(self.user, role='name_only')
+
+        exp = {
+            'full_name': self.user.name,
         }
         self.assertDictEqual(result, exp)
 
@@ -472,9 +805,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(IntegerForeignKey(getter=contact_getter), source='contact_details_id')
 
         data = {
@@ -516,9 +849,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(IntegerForeignKey(getter=contact_getter), source='contact_details_id')
 
         data = {
@@ -582,9 +915,9 @@ class SQAAcceptanceTests(unittest.TestCase):
         class UserSerializer(SQASerializer):
             __model__ = User
 
-            id = Field(types.Integer(read_only=True))
+            id = Field(types.Integer, read_only=True)
             full_name = Field(types.String, source='name')
-            signup_date = Field(types.DateTime(required=False))
+            signup_date = Field(types.DateTime, required=False)
             contact = Field(IntegerForeignKey(getter=contact_getter), source='contact_details_id')
 
         data = {

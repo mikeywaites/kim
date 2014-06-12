@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import sys
+
 from collections import defaultdict
 
-from .exceptions import ValidationError, MappingErrors, FieldError
+from .exceptions import ValidationError, MappingErrors, FieldError, KimError
 from .utils import is_valid_field
 
 
@@ -109,104 +111,119 @@ def get_attribute(data, attr):
     return data
 
 
-class MappingIterator(object):
+class Visitor(object):
+    def __init__(self, mapping, data):
+        self.mapping = mapping
+        self.data = data
+        self.initialise_output()
 
-    def __init__(self, output=None, errors=None):
-        self.output = output or dict()
-        self.errors = errors or defaultdict(list)
+    @property
+    def Cls(self):
+        return self.__class__
 
-    def get_attribute(self, data, field_name):
-        """return the value of field_name from data.
+    def initialise_output(self):
+        self.output = {}
 
-        .. seealso::
-            :func:`kim.mapping.get_attribute`
+    def visit_field(self, field, data):
+        name = 'visit_field_%s' % field.field_type.__visit_name__
+        func = getattr(self, name, None)
+        if func:
+            return func(field, data)
+        else:
+            return self.visit_type(field.field_type, data)
 
-        """
-        return get_attribute(data, field_name)
+    def visit_type(self, type, data, **kwargs):
+        name = 'visit_type_%s' % type.__visit_name__
+        return getattr(self, name)(type, data, **kwargs)
 
-    @classmethod
-    def run_many(cls, mapping, data, **kwargs):
-        output = []
-        errors = []
-        has_errors = False
-        for d in data:
+    def validate(self, field, data):
+        return True
+
+    def _run(self):
+       for field in self.mapping:
+            data = self.get_data(field)
+            if data is None:
+                data = field.default
             try:
-                output.append(cls.run(mapping, d, many=False))
-            except MappingErrors as e:
-                has_errors = True
-                errors.append(e.message)
-            else:
-                errors.append({})
+                if self.validate(field, data):
+                    result = self.visit_field(field, data)
+                    self.update_output(field, result)
+            except ValidationError as e:
+                self.errors[field.name].append(e.message)
+            except Exception as e:
+                # If we catch anything else something's genuinely gone wrong,
+                # but the stacktrace will be indecipherable. Append the actual
+                # details of which field we're on to help.
+                msg = 'Caught error whilst processing %s in %s.\n' \
+                      'Original exception was "%s: %s"' % (
+                          field.field_id, self.mapping, e.__class__.__name__, e)
+                raise KimError(msg), None, sys.exc_info()[2]
 
-        if has_errors:
-            raise MappingErrors(errors)
+       return self.output
 
-        return output
+    def get_data(self, field):
+        raise NotImplementedError
 
-    @classmethod
-    def run_one(cls, mapping, data, **kwargs):
-        return cls()._run(mapping, data, **kwargs)
+    def update_output(self, field, result):
+        raise NotImplementedError
 
     @classmethod
     def run(cls, mapping, data, many=False, **kwargs):
         if many:
-            return cls.run_many(mapping, data, **kwargs)
+            result = []
+            errors = []
+            has_errors = False
+            for d in data:
+                try:
+                    result.append(cls(mapping, d, **kwargs)._run())
+                    errors.append({})
+                except MappingErrors as e:
+                    errors.append(e.message)
+                    has_errors = True
+            if has_errors:
+                raise MappingErrors(errors)
+            else:
+                return result
         else:
-            return cls.run_one(mapping, data, **kwargs)
-
-    def _run(self, mapping, data, **kwargs):
-        """`run` the mapping iteration loop.
-
-        :param data: dict like data being mapped
-        :param mapping: :class:`kim.mapping.Mapping`
-        :param many: map several instances of `data` to `mapping`
-
-        :raises: MappingErrors
-        :returns: serializable output
-        """
-
-        for field in mapping.fields:
-            try:
-                value = self.process_field(field, data)
-                self.update_output(field, value)
-            except (ValidationError, FieldError) as e:
-                self.errors[field.name].append(e.message)
-                continue
-
-        self.post_process(mapping)
-
-        if self.errors:
-            raise MappingErrors(dict(self.errors))
-
-        return self.output
-
-    def process_field(self, field, data):
-        """Process a field mapping using `data`.  This method should
-        return both the field.name or field.source value plus the value to
-        map to the field.
-
-        e.g::
-            value = self.get_attribute(data, field.source)
-            field.validate(value)
-
-            return field.marshal_value(value or field.default)
-        """
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "process_field method")
-
-    def update_output(self, field, value):
-
-        raise NotImplementedError("Concrete classes must inplement "
-                                  "update_output method")
-
-    def post_process(self, mapping):
-        """Called after all other fields have been processed. Can be used
-        by concrete classes eg. to implement whole-mapping validation."""
-        pass
+            return cls(mapping, data, **kwargs)._run()
 
 
-class MarshalIterator(MappingIterator):
+class SerializeVisitor(Visitor):
+    def get_data(self, field):
+        return get_attribute(self.data, field.source)
+
+    def update_output(self, field, result):
+        self.output[field.name] = result
+
+    def visit_type_collection(self, type, data, **kwargs):
+        result = []
+        for value in type.serialize_members(data):
+            value = self.visit_type(type.inner_type, value, **kwargs)
+            result.append(value)
+        return result
+
+    def visit_type_default(self, type, data, **kwargs):
+         return type.serialize_value(data)
+
+    def visit_type_nested(self, type, data, **kwargs):
+        if data is not None:
+            return self.Cls(type.get_mapping(), data)._run()
+
+
+
+class MarshalVisitor(Visitor):
+    def __init__(self, *args, **kwargs):
+        super(MarshalVisitor, self).__init__(*args, **kwargs)
+        self.errors = defaultdict(list)
+
+    def get_data(self, field):
+        return get_attribute(self.data, field.name)
+
+    def validate(self, field, data):
+        if field.read_only:
+            return False
+        if field.is_valid(data):
+            return True
 
     def update_output(self, field, value):
         if not field.read_only:
@@ -230,57 +247,42 @@ class MarshalIterator(MappingIterator):
                     current_component = current_component[component]
                 current_component[last_component] = value
 
-    def process_field(self, field, data):
+    def visit_type_collection(self, type, data, **kwargs):
+        result = []
+        if data is not None:
+            for value in type.marshal_members(data):
+                value = self.visit_type(type.inner_type, value, **kwargs)
+                result.append(value)
+        return result
 
-        value = self.get_attribute(data, field.name)
-        #try:
-        #    field.is_valid(value)
-        #except ValidationError as e:
-        #    raise FieldError(field.name, e.message)
+    def visit_type_default(self, type, data, **kwargs):
+        if data is not None:
+            return type.marshal_value(data)
 
-        to_marshal = value if value is not None else field.default
-        if to_marshal is not None:
-            return field.marshal(to_marshal)
+    def visit_type_nested(self, type, data, **kwargs):
+        if data is not None:
+            return MarshalVisitor(type.get_mapping(), data)._run()
 
-    def post_process(self, mapping):
-        if mapping.validator:
+    def _run(self):
+        output = super(MarshalVisitor, self)._run()
+        self.post_process()
+        if self.errors:
+            raise MappingErrors(self.errors)
+        else:
+            return output
+
+    def post_process(self):
+        if self.mapping.validator:
             try:
-                mapping.validator(self.output)
+                self.mapping.validator(self.output)
             except MappingErrors as e:
                 self.errors = e.message
 
 
-class SerializeIterator(MappingIterator):
 
-    def update_output(self, field, value):
+def serialize(mapping, data, many=False):
+    return SerializeVisitor.run(mapping, data, many=many)
 
-        self.output[field.name] = value
+def marshal(mapping, data, many=False):
+    return MarshalVisitor.run(mapping, data, many=many)
 
-    def process_field(self, field, data):
-
-        value = self.get_attribute(data, field.source)
-
-        to_serialize = value if value is not None else field.default
-        if to_serialize is not None:
-            return field.serialize(to_serialize)
-
-
-def marshal(mapping, data, **kwargs):
-    """`marshal` data to an expected output for a
-    `mapping`
-
-    :param mapping: :class:`kim.mapping.Mapping`
-    :param data: `dict` or collection of dicts to marshal to a `mapping`
-
-    :raises: TypeError, ValidationError
-    :rtype: dict
-    :returns: serializable object mapped from `mapping`
-    """
-    return MarshalIterator.run(mapping, data, **kwargs)
-
-
-def serialize(mapping, data, **kwargs):
-    """Serialize data to an expected input for a `mapping`
-
-    """
-    return SerializeIterator.run(mapping, data, **kwargs)

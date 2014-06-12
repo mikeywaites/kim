@@ -9,7 +9,7 @@ import decimal
 import inspect
 import importlib
 
-from .exceptions import ValidationError
+from .exceptions import ValidationError, ConfigurationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
 
 from kim.utils import is_valid_type
@@ -23,6 +23,8 @@ class BaseType(object):
     """:py:class:`.BaseType` defines the default ``Type`` api used by all
     kim types.
     """
+
+    __visit_name__ = 'default'
 
     _kim_type = True
 
@@ -97,6 +99,12 @@ class TypedType(BaseType):
 
         """
         self.choices = kwargs.pop('choices', None)
+        for k in kwargs:
+            if k in ('name', 'field_type', 'source', 'field_id', 'default',
+                     'required', 'read_only', 'allow_none'):
+                raise ConfigurationError('Type %s was not expecting argument %s. ' \
+                        'Did you mean to pass this to Field instead?' % (
+                        self.__class__.__name__, k))
         super(TypedType, self).__init__(*args, **kwargs)
 
     def validate(self, value):
@@ -233,6 +241,9 @@ class Nested(BaseType):
 
     """
 
+    __visit_name__ = 'nested'
+
+
     def __init__(self, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
 
@@ -368,6 +379,8 @@ class Collection(TypedType):
 
     type_ = list
 
+    __visit_name__ = 'collection'
+
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
         self.default = []
@@ -376,7 +389,6 @@ class Collection(TypedType):
         if not is_valid_type(self.inner_type):
             raise TypeError("Collection() requires a valid Type "
                             "as its first argument")
-
         super(Collection, self).__init__(*args, **kwargs)
 
     def serialize_members(self, source_value):
@@ -414,7 +426,8 @@ class DateTime(BaseType):
     type_ = datetime
 
     def serialize_value(self, source_value):
-        return source_value.isoformat()
+        if source_value is not None:
+            return source_value.isoformat()
 
     def marshal_value(self, source_value):
         return iso8601.parse_date(source_value)

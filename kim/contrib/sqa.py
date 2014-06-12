@@ -3,28 +3,10 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..serializers import Serializer
+from ..mapping import MarshalVisitor, SerializeVisitor
 
-from ..types import Nested, NumericType
-from ..exceptions import ValidationError
-
-
-def nested_foreign_key_validator(type_, source_value):
-
-    if type(source_value) != dict:
-        raise ValidationError('invalid type')
-
-    id = source_value.get(type_.id_field_name)
-    if not id:
-        raise ValidationError('no id passed')
-    id = int(id)
-    if self.valid_id(id):
-        try:
-            obj = self.getter(id)
-        except NoResultFound:
-            obj = None
-        if not obj:
-            raise ValidationError('invalid id')
-    return obj
+from ..types import Nested, NumericType, Collection
+from ..exceptions import ValidationError, ConfigurationError
 
 
 class NestedForeignKey(Nested):
@@ -32,15 +14,19 @@ class NestedForeignKey(Nested):
     integer foreign key in an 'id' field when marshalled. In which case, it
     will look up the required object via self.getter."""
 
-    validators = [nested_foreign_key_validator, ]
+    __visit_name__ = "nested_foreign_key"
 
     def __init__(self, *args, **kwargs):
-        self.getter = kwargs.get('getter', None)
-        self.id_field_name = kwargs.get('id_field_name', 'id')
+        self.getter = kwargs.pop('getter', None)
+        self.id_field_name = kwargs.pop('id_field_name', 'id')
+        self.allow_updates = kwargs.pop('allow_updates', False)
+        self.allow_updates_in_place = kwargs.pop('allow_updates_in_place', False)
+        self.allow_create = kwargs.pop('allow_create', False)
+        if self.allow_updates_in_place and self.allow_create:
+            raise ConfigurationError('allow_create and allow_updates_in_place may not be used together')
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
     def valid_id(self, val):
-
         return any([isinstance(val, int),
                     isinstance(val, basestring) and val.isdigit()])
 
@@ -48,46 +34,30 @@ class NestedForeignKey(Nested):
         if type(source_value) != dict:
             raise ValidationError('invalid type')
         id = source_value.get(self.id_field_name)
-        if not id:
-            raise ValidationError('no id passed')
-        id = int(id)
         if self.valid_id(id):
+            id = int(id)
             try:
                 obj = self.getter(id)
             except NoResultFound:
                 obj = None
             if not obj:
                 raise ValidationError('invalid id')
-        return obj
+            return obj
 
     def validate(self, source_value):
-        super(Nested, self).validate(source_value) # HACK: bypassing Nested.validate
-        if source_value:
-            return self.get_object(source_value)
-
-    def marshal_value(self, source_value):
-        return self.get_object(source_value)
-
-
-def find_by_id(type_, source):
-    if source is not None:
-        try:
-            obj = type_.getter(source)
-        except NoResultFound:
-            obj = None
-        if not obj:
-            raise ValidationError('invalid id')
-    return True
+        if source_value is not None:
+            if self.get_object(source_value):
+                return True
+            else:
+                super(NestedForeignKey, self).validate(source_value)
 
 
 class IntegerForeignKey(NumericType):
     """Field representing an Integer ForeignKey. Behaves as NumericType, but will
     look up the required object via self.getter to ensure it exists/is valid"""
 
-    validators = [find_by_id, ]
-
     def __init__(self, *args, **kwargs):
-        self.getter = kwargs.get('getter', None)
+        self.getter = kwargs.pop('getter', None)
         super(IntegerForeignKey, self).__init__(*args, **kwargs)
 
     def validate(self, source_value):
@@ -102,47 +72,96 @@ class IntegerForeignKey(NumericType):
         return True
 
 
-def marshal_sqa(instance, result):
-    for k, v in result.iteritems():
-        if type(v) == dict:
-            # This is a nested serializer
+class RelationshipCollection(Collection):
+    __visit_name__ = 'relationship_collection'
 
-            # First check if the relationship already exists
-            existing = getattr(instance, k)
-            if existing:
-                # Exists, just update it
-                marshal_sqa(existing, v)
-            else:
-                # If it doesn't exist, we need to create it
 
-                # Find what sort of model we require by introspection of
-                # the relationship
-                inspection = inspect(instance)
-                relationship = inspection.mapper.relationships[k]
-                RemoteClass = relationship.mapper.class_
+class SQASerializeVisitor(SerializeVisitor):
+    def visit_type_nested_foreign_key(self, type, data, **kwargs):
+        return self.visit_type_nested(type, data, **kwargs)
 
-                # Now create a new instance of that model and set the relationship
-                remote_instance = RemoteClass()
-                setattr(instance, k, remote_instance)
-                marshal_sqa(remote_instance, v)
+    def visit_field_relationship_collection(self, type, data, **kwargs):
+        return self.visit_field_collection(type, data)
+
+
+class SQAMarshalVisitor(MarshalVisitor):
+    def __init__(self, *args, **kwargs):
+        self.model = kwargs.pop('model', None)
+        self.instance = kwargs.pop('instance', None)
+        super(SQAMarshalVisitor, self).__init__(*args, **kwargs)
+
+    def update_output(self, field, value):
+        if not field.read_only:
+            setattr(self.output, field.source, value)
+
+    def initialise_output(self):
+        if not self.instance:
+            self.output = self.model()
         else:
-            # This is a normal field, just update it on the model instance
-            setattr(instance, k, v)
+            self.output = self.instance
+
+    def _get_relationship_model(self, field):
+        # Find what sort of model we require by introspection of
+        # the relationship
+        inspection = inspect(self.output)
+        relationship = inspection.mapper.relationships[field.source]
+        RemoteClass = relationship.mapper.class_
+        return RemoteClass
+
+    def visit_type_nested_foreign_key(self, type, data, instance=None, model=None, **kwargs):
+        # 1. User has passed an id and no updates are allowed.
+        #    Resolve the id to an object and return immediately
+        # 2. User has passed an id and updates are allowed.
+        #    Resolve the id to an object and call recursively to update it
+        # 3. Object already exists, user has not passed an id and in place
+        #    updates are allowed. Call recursively to update existing object.
+        # 4. User has not passed an id and creation of new objects is allowed
+        #    Call recursively to create a new object
+        # 5. User has not passed an id and creation of new objects is not
+        #    allowed, nor are in place updates. Raise an exception.
+
+        resolved = type.get_object(data)
+
+        if resolved:
+            if type.allow_updates:
+                return self.Cls(type.get_mapping(), data, instance=resolved, model=model)._run()
+            else:
+                return resolved
+        else:
+            if type.allow_updates_in_place:
+                return self.Cls(type.get_mapping(), data, instance=instance, model=model)._run()
+            elif type.allow_create:
+                return self.Cls(type.get_mapping(), data, model=model)._run()
+            else:
+                raise ValidationError('No id passed and creation or update in place not allowed')
+
+    def visit_field_nested_foreign_key(self, field, data):
+        if data is not None:
+            existing = getattr(self.output, field.source)
+            RemoteClass = self._get_relationship_model(field)
+            return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
+
+    def visit_field_relationship_collection(self, field, data):
+        existing_list = getattr(self.output, field.source)
+        RemoteClass = self._get_relationship_model(field)
+        return self.visit_type_relationship_collection(field.field_type, data, instance_list=existing_list, model=RemoteClass)
+
+    def visit_type_relationship_collection(self, type, data, instance_list=None, model=None, **kwargs):
+        result = []
+        for i, value in enumerate(type.marshal_members(data)):
+            try:
+                instance = instance_list[i]
+            except IndexError:
+                instance = None
+            value = self.visit_type(type.inner_type, value, instance=instance, model=model)
+            result.append(value)
+        return result
 
 
 class SQASerializer(Serializer):
 
-    def serialize(self, data, **kwargs):
-        return super(SQASerializer, self).serialize(data, **kwargs)
+    def marshal(self, data, instance=None, role=None, **kwargs):
+        return SQAMarshalVisitor.run(self.get_mapping(role=role), data, model=self.__model__, instance=instance, **kwargs)
 
-    def get_model(self):
-        return self.__model__()
-
-    def get_new_model(self):
-        return self.get_model()
-
-    def marshal(self, data, instance=None, **kwargs):
-        result_dict = super(SQASerializer, self).marshal(data, **kwargs)
-        model_instance = instance or self.get_model()
-        marshal_sqa(model_instance, result_dict)
-        return model_instance
+    def serialize(self, data, role=None, **kwargs):
+        return SQASerializeVisitor.run(self.get_mapping(role=role), data, **kwargs)
