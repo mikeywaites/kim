@@ -223,18 +223,16 @@ Let's use our PlayerSerializer to marshal some data.
 
 .. code-block:: python
 
-    from kim.roles import whitelist
-
     class PlayerSerializer(Serializer):
         name = Field(t.String, required=True)
         birthday = Field(t.DateTime, source='date_of_birth')
         goals_per_game = Field(t.Decimal(precision=2))
 
-    post_data = {'name': 'Steven Gerrard', 'birthday': '1980-05-30T00:00:00Z'}
+    post_data = {'name': 'Wayne Rooney', 'birthday': '1985-10-24T00:00:00Z'}
 
     >>> player = PlayerSerializer().marshal(post_data)
-    {'name': 'Steven Gerrard',
-     'date_of_birth': datetime(1980, 5, 30)}
+    {'name': 'Wayne Rooney',
+     'date_of_birth': datetime(1980, 10, 24)}
 
 Note that because the `source` of the birthday field is `date_of_birth`, the
 result of marshaling puts the date in `date_of_birth`.
@@ -249,6 +247,80 @@ a `MappingErrors`. You could catch this and return a 400.
     >>> player = PlayerSerializer().marshal(post_data)
     MappingErrors: {'name': ['This is a required field'],
                     'birthday': ['Date must be in iso8601 format']}
+
+
+Defining Custom Validators
+--------------------------
+
+If you wish to perform additional business logic level validation, you can do
+this by defining a custom validator on your Serializer.
+
+The API is very similar to `clean` methods on Django Forms. Defining a method
+called `validate_<field name>` will result in it being called after the
+Type level validation for that field is completed.
+
+Validators must return `True` if no problems are found. Otherwise, they should
+raise a ValidationError.
+
+Let's restrict our birthday field to players with names beginning with the
+letter F:
+
+.. code-block:: python
+
+    from kim.exceptions import ValidationError
+
+    class PlayerSerializer(Serializer):
+        name = Field(t.String, required=True)
+        goals_per_game = Field(t.Decimal(precision=2))
+
+        def validate_name(self, value):
+            if value.startswith('L'):
+                return True
+            else:
+                raise ValidationError('player name must begin with F')
+
+    post_data = {'name': 'Wayne Rooney'}
+
+    >>> player = PlayerSerializer().marshal(post_data)
+    MappingErrors: {'name': ['player name must begin with F']}
+
+    post_data = {'name': 'Frank Lampard'}
+
+    >>> player = PlayerSerializer().marshal(post_data)
+    {'name': 'Frank Lampard'}
+
+
+If you want to validate across the entire data, for example to check fields
+which are dependent on each other, define a method called `validate`, which
+will be called once all the individual fields have successfully validated.
+
+
+
+Let's only allow players with long names if they've scored lots of goals:
+
+
+.. code-block:: python
+
+    from kim.exceptions import MappingErrors
+
+    class PlayerSerializer(Serializer):
+        name = Field(t.String, required=True)
+
+        def validate_name(self, data):
+            if value.startswith('L'):
+                return True
+            else:
+                raise ValidationError('player name must begin with F')
+
+    post_data = {'name': 'Wayne Rooney'}
+
+    >>> player = PlayerSerializer().marshal(post_data)
+    MappingErrors: {'name': ['player name must begin with F']}
+
+    post_data = {'name': 'Frank Lampard'}
+
+    >>> player = PlayerSerializer().marshal(post_data)
+    {'name': 'Frank Lampard'}
 
 
 

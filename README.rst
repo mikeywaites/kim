@@ -22,11 +22,9 @@ Example
         name = Column(String)
         age = Column(Integer)
 
-
     class MySerializer(SQASerializer):
         name = Field(String)
         current_age = Field(Integer, source='age')
-
 
     person1 = db.session.query(Person).first()
 
