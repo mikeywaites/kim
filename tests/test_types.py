@@ -172,6 +172,16 @@ class CollectionTypeTests(unittest.TestCase):
         c = Collection(Integer())
         self.assertEqual(c.serialize_value([1, 2, 3]), [1, 2, 3])
 
+    def test_serialize_value_when_none(self):
+
+        c = Collection(Integer())
+        self.assertEqual(c.serialize_value(None), [])
+
+    def test_marshal_value_when_none(self):
+
+        c = Collection(Integer())
+        self.assertEqual(c.marshal_value(None), [])
+
     def test_validate_iterates_type(self):
 
         c = Collection(Integer())

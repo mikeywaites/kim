@@ -349,7 +349,6 @@ class Collection(TypedType):
 
     def __init__(self, inner_type, *args, **kwargs):
         self.inner_type = inner_type
-        self.default = []
         self.serialize_member = kwargs.pop('serialize_member', None)
         self.marshal_member = kwargs.pop('marshal_member', None)
         if not is_valid_type(self.inner_type):
@@ -361,13 +360,19 @@ class Collection(TypedType):
         if self.serialize_member:
             return [self.serialize_member(member) for member in source_value]
         else:
-            return source_value
+            if source_value is None:
+                return []
+            else:
+                return source_value
 
     def marshal_members(self, source_value):
         if self.marshal_member:
             return [self.marshal_member(member) for member in source_value]
         else:
-            return source_value
+            if source_value is None:
+                return []
+            else:
+                return source_value
 
     def marshal_value(self, source_value):
 
