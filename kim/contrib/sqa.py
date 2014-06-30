@@ -80,8 +80,8 @@ class SQASerializeVisitor(SerializeVisitor):
     def visit_type_nested_foreign_key(self, type, data, **kwargs):
         return self.visit_type_nested(type, data, **kwargs)
 
-    def visit_field_relationship_collection(self, type, data, **kwargs):
-        return self.visit_field_collection(type, data)
+    def visit_type_relationship_collection(self, type, data, **kwargs):
+        return self.visit_type_collection(type, data)
 
 
 class SQAMarshalVisitor(MarshalVisitor):

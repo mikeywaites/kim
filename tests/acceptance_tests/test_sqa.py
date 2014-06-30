@@ -521,6 +521,46 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertEqual(self.deets.phone, '082345234')
         self.assertNotEqual(self.deets.address.id, self.address.id)
 
+    def test_nested_serialize_collection(self):
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+
+        # Contrary to other tests, this time we go via the backref contact -> users
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+
+            users = Field(RelationshipCollection(NestedForeignKey(mapped=UserSerializer)))
+
+        contact = ContactDetail(phone='235345', address=self.address)
+
+        user1 = User(name='bob', contact_details=contact)
+        user2 = User(name='jim', contact_details=contact)
+        user3 = User(name='harry', contact_details=contact)
+
+        self.session.add_all([contact, user1, user2, user3])
+        self.session.flush()
+
+        serializer = ContactSerializer()
+        result = serializer.serialize(contact)
+
+        self.assertEqual(result,
+            {
+                'id': contact.id,
+                'phone': '235345',
+                'users': [
+                    {'id': user1.id, 'signup_date': None, 'full_name': 'bob'},
+                    {'id': user2.id, 'signup_date': None, 'full_name': 'jim'},
+                    {'id': user3.id, 'signup_date': None, 'full_name': 'harry'},
+                ]
+            })
+
     def test_nested_marshal_collection_id_only(self):
         """When allow_updates is True, if a nested object is passed with an id,
         we expect the object with that id to be resolved and updated with that
