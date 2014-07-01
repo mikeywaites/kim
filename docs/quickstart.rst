@@ -294,7 +294,8 @@ If you want to validate across the entire data, for example to check fields
 which are dependent on each other, define a method called `validate`, which
 will be called once all the individual fields have successfully validated.
 
-
+In this case, you should raise `MappingErrors` from validate, not
+`ValidationError`.
 
 Let's only allow players with long names if they've scored lots of goals:
 
@@ -305,22 +306,23 @@ Let's only allow players with long names if they've scored lots of goals:
 
     class PlayerSerializer(Serializer):
         name = Field(t.String, required=True)
+        goals_per_game = Field(t.Decimal(precision=2))
 
-        def validate_name(self, data):
-            if value.startswith('L'):
-                return True
+        def validate(self, data):
+            if len(data['name']) > 10 and data['goals_per_game'] < 2:
+                raise MappingErrors({'goals_per_game': 'not enough goals scored for name length'})
             else:
-                raise ValidationError('player name must begin with F')
+                return True
 
-    post_data = {'name': 'Wayne Rooney'}
-
-    >>> player = PlayerSerializer().marshal(post_data)
-    MappingErrors: {'name': ['player name must begin with F']}
-
-    post_data = {'name': 'Frank Lampard'}
+    post_data = {'name': 'Wayne Rooney', 'goals_per_game': 1}
 
     >>> player = PlayerSerializer().marshal(post_data)
-    {'name': 'Frank Lampard'}
+    MappingErrors: {'goals_per_game': 'not enough goals scored for name length'}
+
+    post_data = {'name': 'Frank Lampard', 'goals_per_game': 5}
+
+    >>> player = PlayerSerializer().marshal(post_data)
+    {'name': 'Frank Lampard', 'goals_per_game': Decimal('5.00')}
 
 
 
