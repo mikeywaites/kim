@@ -9,29 +9,29 @@ class Field(object):
     """
 
     def __init__(self, *args, **kwargs):
-        """Construct a new ``Field`` object
+        """Construct a new :py:class:`.Field` object
 
-        :param name: The name of this ``Field`` inside of a
+        :param name: The name of this :py:class:`.Field` inside of a
             :class:`kim.mapping.Mapping` data structure.
 
             The name arg may be omitted at contsruction time.  This is to
-            allow the lower level ``Field`` object, which maybe useed directly
-            with the mapping api to work with the higher level serializer api
+            allow the lower level :py:class:`.Field` object, which maybe used directly
+            with the mapping api, to work with the higher level serializer api
             where the name will be set by the
-            :class:`kim.serializers.Serializer` meta class.
+            :py:class:`kim.serializers.Serializer` meta class. e.g::
+
+                Field('id', String())
+                Field(String())
 
         :param field_type: The fields type.  Set using a subclass of
-            :class:`kim.types.BaseType`.  the field type argument may be passed
-            as an instance of `Type` if type requires arguments or may simply
-            be passed as a class.
+            :py:class:`kim.types.BaseType`.  the field type argument may be passed
+            as an instance of ``Type`` if type requires arguments or may simply
+            be passed as a class. e.g::
 
-            # specify type with arguments
-            Field('id', MyType(foo='bar'))
+                Field('id', MyType(foo='bar'))
+                Field('id', MyType)
 
-            # specify with no type arguments.
-            Field('id', MyType)
-
-        :param source: Specify the source of this field. ``Field`` may specify
+        :param source: Specify the source of this field. :py:class:`.Field` may specify
             a seperate name of the property or key to its `name`.
             When serializing kim will use the source attribute to perform a
             lookup on the data passed to field. e.g::
@@ -53,10 +53,10 @@ class Field(object):
                 Field('my_name', String(), attr_name='name_1', source='foo')
                 Field('my_name', String(), attr_name='name_2', source='bar')
 
-                >>> marshal(obj, role=whitelist('name_1'))
+                marshal(obj, role=whitelist('name_1'))
                 {'my_name': 'foo'}
 
-                >>> marshal(obj, role=whitelist('name_2'))
+                marshal(obj, role=whitelist('name_2'))
                 {'my_name': 'bar'}
 
         :param default: specify a default value of this `Field`.  Non required
@@ -79,8 +79,7 @@ class Field(object):
             that will be run along with `field_types` defined validate method.
 
             .. seealso::
-                :meth:``is_valid``
-
+                * :py:meth:`kim.fields.Field.is_valid`.
         """
 
         args = list(args)
@@ -166,12 +165,12 @@ class Field(object):
         top level validation against field properties such
         as ``read_only`` and ``required``.
 
-        Once field level validation is handled :meth:``field_type.validate``
-        will be called.
+        Once field level validation is handled
+        :py:meth:`kim.types.BaseType.validate` will be called.
 
         :param value: value passed to field for marshaling or serialization.
 
-        :raises: :class:`kim.exceptions.ValidationError`
+        :raises: :py:class:`kim.exceptions.ValidationError`
         :returns: True if all validators run without error.
         """
 
