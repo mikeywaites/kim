@@ -233,6 +233,44 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNotNone(result.id)
 
+    def test_nested_marshal_allow_create_remote_class(self):
+        """When allow_create is True and we pass a nested object without an id,
+        we expect a new object to be created and populated with that data.
+        When remote_class is also passed, we expect the object to be of that type"""
+        class MyRemoteClass(object):
+            phone = None
+
+        class MyRemoteSerializer(SQASerializer):
+            __model__ = MyRemoteClass
+
+            phone = Field(types.String)
+            # address = Field(NestedForeignKey(mapped=AddressSerializer, allow_create=True))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            my_remote_object = Field(NestedForeignKey(mapped=MyRemoteSerializer,
+                allow_create=True, remote_class=MyRemoteClass))
+
+        data = {
+            'full_name': 'bob',
+            'my_remote_object': {
+                'phone': '082345234',
+            },
+        }
+
+        user = User()
+        user.my_remote_object = None
+
+        serializer = UserSerializer()
+        result = serializer.marshal(data, instance=user)
+
+        remote =result.my_remote_object
+        self.assertTrue(isinstance(remote, MyRemoteClass))
+        self.assertEqual(remote.phone, '082345234')
+
     def test_nested_marshal_allow_updates_in_place(self):
         """When allow_updates_in_place is True and we pass a nested object without an id,
         and there is already an object associated with this foreign key,

@@ -22,6 +22,7 @@ class NestedForeignKey(Nested):
         self.allow_updates = kwargs.pop('allow_updates', False)
         self.allow_updates_in_place = kwargs.pop('allow_updates_in_place', False)
         self.allow_create = kwargs.pop('allow_create', False)
+        self.remote_class = kwargs.pop('remote_class', None)
         if self.allow_updates_in_place and self.allow_create:
             raise ConfigurationError('allow_create and allow_updates_in_place may not be used together')
         super(NestedForeignKey, self).__init__(*args, **kwargs)
@@ -101,10 +102,13 @@ class SQAMarshalVisitor(MarshalVisitor):
             self.output = self.instance
 
     def _get_relationship_model(self, field):
+        if hasattr(field.field_type, 'remote_class') and \
+                field.field_type.remote_class is not None:
+            return field.field_type.remote_class
         # Find what sort of model we require by introspection of
         # the relationship
         inspection = inspect(self.output)
-        relationship = inspection.mapper.relationships[field.source]
+        relationship = inspection.mapper.relationships.get(field.source)
         RemoteClass = relationship.mapper.class_
         return RemoteClass
 
