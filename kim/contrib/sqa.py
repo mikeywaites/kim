@@ -76,6 +76,10 @@ class IntegerForeignKey(NumericType):
 class RelationshipCollection(Collection):
     __visit_name__ = 'relationship_collection'
 
+    def __init__(self, *args, **kwargs):
+        self.remote_class = kwargs.pop('remote_class', None)
+        super(RelationshipCollection, self).__init__(*args, **kwargs)
+
 
 class SQASerializeVisitor(SerializeVisitor):
     def visit_type_nested_foreign_key(self, type, data, **kwargs):
@@ -102,8 +106,7 @@ class SQAMarshalVisitor(MarshalVisitor):
             self.output = self.instance
 
     def _get_relationship_model(self, field):
-        if hasattr(field.field_type, 'remote_class') and \
-                field.field_type.remote_class is not None:
+        if field.field_type.remote_class:
             return field.field_type.remote_class
         # Find what sort of model we require by introspection of
         # the relationship
