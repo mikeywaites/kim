@@ -3,7 +3,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..serializers import Serializer
-from ..mapping import MarshalVisitor, SerializeVisitor
+from ..mapping import MarshalVisitor, SerializeVisitor, get_attribute
 
 from ..types import Nested, NumericType, Collection
 from ..exceptions import ValidationError, ConfigurationError
@@ -97,7 +97,11 @@ class SQAMarshalVisitor(MarshalVisitor):
 
     def update_output(self, field, value):
         if not field.read_only:
-            setattr(self.output, field.source, value)
+            components = field.source.split('.')
+            output = self.output
+            for component in components[:-1]:
+                output = getattr(output, component)
+            setattr(output, components[-1], value)
 
     def initialise_output(self):
         if not self.instance:
@@ -110,9 +114,12 @@ class SQAMarshalVisitor(MarshalVisitor):
             return field.field_type.remote_class
         # Find what sort of model we require by introspection of
         # the relationship
-        inspection = inspect(self.output)
-        relationship = inspection.mapper.relationships.get(field.source)
-        RemoteClass = relationship.mapper.class_
+        components = field.source.split('.')
+        RemoteClass = self.output
+        for component in components:
+            inspection = inspect(RemoteClass)
+            relationship = inspection.mapper.relationships.get(component)
+            RemoteClass = relationship.mapper.class_
         return RemoteClass
 
     def visit_type_nested_foreign_key(self, type, data, instance=None, model=None, **kwargs):
@@ -144,12 +151,12 @@ class SQAMarshalVisitor(MarshalVisitor):
 
     def visit_field_nested_foreign_key(self, field, data):
         if data is not None:
-            existing = getattr(self.output, field.source)
+            existing = get_attribute(self.output, field.source)
             RemoteClass = self._get_relationship_model(field)
             return self.visit_type_nested_foreign_key(field.field_type, data, instance=existing, model=RemoteClass)
 
     def visit_field_relationship_collection(self, field, data):
-        existing_list = getattr(self.output, field.source)
+        existing_list = get_attribute(self.output, field.source)
         RemoteClass = self._get_relationship_model(field)
         return self.visit_type_relationship_collection(field.field_type, data, instance_list=existing_list, model=RemoteClass)
 
