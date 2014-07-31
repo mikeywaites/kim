@@ -32,6 +32,8 @@ class NestedForeignKey(Nested):
                     isinstance(val, basestring) and val.isdigit()])
 
     def get_object(self, source_value):
+        if self.allow_updates_in_place:
+            return
         if type(source_value) != dict:
             raise ValidationError('invalid type')
         id = source_value.get(self.id_field_name)
