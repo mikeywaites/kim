@@ -7,6 +7,7 @@ from ..mapping import MarshalVisitor, SerializeVisitor, get_attribute
 
 from ..types import Nested, NumericType, Collection
 from ..exceptions import ValidationError, ConfigurationError
+from ..utils import recursive_defaultdict
 
 
 class NestedForeignKey(Nested):
@@ -174,10 +175,53 @@ class SQAMarshalVisitor(MarshalVisitor):
         return result
 
 
+class SQARawSerializeVisitor(SQASerializeVisitor):
+    Cls = SQASerializeVisitor # somewhat hacky: make nested calls go to the parent class not this one
+
+    def transform_data(self, data):
+        """Transform flat data from a KeyedTuple with keys in the form:
+            [
+                'id',
+                'name',
+                'contact_details__phone',
+                'contact_details__address__postcode'
+            ]
+            Into:
+            {
+                'id': x,
+                'name': x,
+                'contact_details': {
+                    'phone': x,
+                    'address': {
+                        'postcode': x
+                    }
+                }
+            }
+        """
+        output = recursive_defaultdict()
+        for key in data.keys():
+            path = key.split('__')
+            target = output
+            # Walk along the path until we find the final dict to insert the
+            # data into
+            for component in path[:-1]:
+                target = target[component]
+            # And finally set the key on the final dict to the relevant data
+            target[path[-1]] = getattr(data, key)
+        return output
+
+    def __init__(self, mapping, data):
+        transformed_data = self.transform_data(data)
+        super(SQARawSerializeVisitor, self).__init__(mapping, transformed_data)
+
+
 class SQASerializer(Serializer):
 
     def marshal(self, data, instance=None, role=None, **kwargs):
         return SQAMarshalVisitor.run(self.get_mapping(role=role), data, model=self.__model__, instance=instance, **kwargs)
 
-    def serialize(self, data, role=None, **kwargs):
-        return SQASerializeVisitor.run(self.get_mapping(role=role), data, **kwargs)
+    def serialize(self, data, role=None, raw=False, **kwargs):
+        if raw:
+            return SQARawSerializeVisitor.run(self.get_mapping(role=role), data, **kwargs)
+        else:
+            return SQASerializeVisitor.run(self.get_mapping(role=role), data, **kwargs)

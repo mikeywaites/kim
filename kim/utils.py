@@ -3,6 +3,8 @@
 
 from .roles import BaseRole
 
+from collections import defaultdict
+
 
 def is_valid_type(type_):
     """Validate that `type_` is an instance or subclass of
@@ -33,3 +35,7 @@ def is_valid_field(field):
     from .fields import Field
 
     return isinstance(field, Field)
+
+
+def recursive_defaultdict():
+    return defaultdict(recursive_defaultdict)

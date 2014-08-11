@@ -1007,3 +1007,56 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         with self.assertRaises(MappingErrors):
             serializer.marshal(data)
+
+
+    def test_nested_serialize_raw(self):
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+
+        class ContactSerializer(SQASerializer):
+            __model__ = ContactDetail
+
+            id = Field(types.Integer, read_only=True)
+            phone = Field(types.String)
+            address = Field(NestedForeignKey(mapped=AddressSerializer))
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            full_name = Field(types.String, source='name')
+            signup_date = Field(types.DateTime, required=False)
+            contact = Field(NestedForeignKey(mapped=ContactSerializer), source='contact_details')
+
+        serializer = UserSerializer()
+
+        result = self.session.query(
+            User.id,
+            User.name,
+            User.signup_date,
+            ContactDetail.id.label('contact_details__id'),
+            ContactDetail.phone.label('contact_details__phone'),
+            Address.country.label('contact_details__address__country'),
+            Address.postcode.label('contact_details__address__postcode'),
+        ).join(ContactDetail, Address).one()
+
+        result = serializer.serialize(result, raw=True)
+
+        exp = {
+            'id': self.user.id,
+            'full_name': self.user.name,
+            'contact': {
+                'id': self.deets.id,
+                'phone': self.deets.phone,
+                'address': {
+                    'country': self.address.country,
+                    'postcode': self.address.postcode,
+                }
+            },
+            'signup_date': '2014-04-11T04:06:02'
+        }
+        self.assertDictEqual(result, exp)
