@@ -1,4 +1,6 @@
 # encoding: utf-8
+from collections import defaultdict
+
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -178,6 +180,20 @@ class SQAMarshalVisitor(MarshalVisitor):
 class SQARawSerializeVisitor(SQASerializeVisitor):
     Cls = SQASerializeVisitor # somewhat hacky: make nested calls go to the parent class not this one
 
+    def _remove_none(self, output):
+        # If all components of a dictionary are none, remove it and mark the entire thing as none
+        all_none = True
+        for k, v in output.iteritems():
+            if type(v) == defaultdict:
+                output[k] = self._remove_none(v)
+            else:
+                if v is not None:
+                    all_none = False
+        if all_none:
+            return None
+        else:
+            return output
+
     def transform_data(self, data):
         """Transform flat data from a KeyedTuple with keys in the form:
             [
@@ -208,7 +224,8 @@ class SQARawSerializeVisitor(SQASerializeVisitor):
                 target = target[component]
             # And finally set the key on the final dict to the relevant data
             target[path[-1]] = getattr(data, key)
-        return output
+
+        return self._remove_none(output)
 
     def __init__(self, mapping, data):
         transformed_data = self.transform_data(data)
