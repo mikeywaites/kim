@@ -1,2 +1,2 @@
-iso8601==0.1.10
-SQLAlchemy==0.9.4
+iso8601>=0.1.10
+SQLAlchemy>=0.9
