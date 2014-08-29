@@ -233,6 +233,68 @@ class SQAAcceptanceTests(unittest.TestCase):
 
         self.assertIsNotNone(result.id)
 
+    def test_marshal_with_partial_existing_instance(self):
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            address_1 = Field(types.String, required=False)
+            address_2 = Field(types.String, required=False)
+            city = Field(types.String, required=False)
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        address = Address(
+            address_1='1 Foo Street',
+            city='Foo Town',
+            country='The Peopls Republic of Foo',
+            postcode='F00 BAR')
+
+        self.session.add(address)
+        self.session.commit()
+
+        data = {
+            'address_2': 'Foo Place'
+        }
+
+        serializer = AddressSerializer()
+        result = serializer.marshal(data, instance=address, partial=True)
+
+        self.assertEqual(result.address_1, '1 Foo Street')
+        self.assertEqual(result.address_2, 'Foo Place')
+        self.assertEqual(result.city, 'Foo Town')
+        self.assertEqual(result.country, 'The Peopls Republic of Foo')
+        self.assertEqual(result.postcode, 'F00 BAR')
+
+    def test_marshal_with_partial_new_instance(self):
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            address_1 = Field(types.String, required=False)
+            address_2 = Field(types.String, required=False)
+            city = Field(types.String, required=False)
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        address = Address()
+
+        data = {
+            'address_1': '1 Foo Street',
+            'postcode': 'F00 BAR'
+        }
+
+        serializer = AddressSerializer()
+
+        with self.assertRaises(MappingErrors) as e:
+            serializer.marshal(data, instance=address, partial=True)
+
+        self.assertIn('country', e.exception.message)
+        self.assertNotIn('postcode', e.exception.message)
+        self.assertNotIn('city', e.exception.message)
+        self.assertNotIn('address_1', e.exception.message)
+        self.assertNotIn('address_2', e.exception.message)
+
     def test_nested_marshal_allow_create_remote_class(self):
         """When allow_create is True and we pass a nested object without an id,
         we expect a new object to be created and populated with that data.
