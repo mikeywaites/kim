@@ -107,8 +107,9 @@ class SQAMarshalVisitor(MarshalVisitor):
         """
 
         if self.instance and self.partial:
-            data = get_attribute(self.data, field.name)
-            if data is None:
+            if field.name in self.data:
+                data = get_attribute(self.data, field.name)
+            else:
                 data = get_attribute(self.instance, field.name)
             return data
         else:

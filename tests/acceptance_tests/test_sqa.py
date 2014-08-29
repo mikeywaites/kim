@@ -295,6 +295,41 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertNotIn('address_1', e.exception.message)
         self.assertNotIn('address_2', e.exception.message)
 
+
+    def test_marshal_with_partial_data_can_be_none(self):
+
+        class AddressSerializer(SQASerializer):
+            __model__ = Address
+
+            address_1 = Field(types.String, required=False)
+            address_2 = Field(types.String, required=False)
+            city = Field(types.String, required=False)
+            country = Field(types.String)
+            postcode = Field(types.String)
+
+        address = Address(
+            address_1='1 Foo Street',
+            address_2='Foo Place',
+            city='Foo Town',
+            country='The Peopls Republic of Foo',
+            postcode='F00 BAR')
+
+        self.session.add(address)
+        self.session.commit()
+
+        data = {
+            'address_2': None
+        }
+
+        serializer = AddressSerializer()
+        result = serializer.marshal(data, instance=address, partial=True)
+
+        self.assertEqual(result.address_1, '1 Foo Street')
+        self.assertEqual(result.address_2, None)
+        self.assertEqual(result.city, 'Foo Town')
+        self.assertEqual(result.country, 'The Peopls Republic of Foo')
+        self.assertEqual(result.postcode, 'F00 BAR')
+
     def test_nested_marshal_allow_create_remote_class(self):
         """When allow_create is True and we pass a nested object without an id,
         we expect a new object to be created and populated with that data.
