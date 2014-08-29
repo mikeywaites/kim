@@ -98,7 +98,21 @@ class SQAMarshalVisitor(MarshalVisitor):
     def __init__(self, *args, **kwargs):
         self.model = kwargs.pop('model', None)
         self.instance = kwargs.pop('instance', None)
+        self.partial = kwargs.pop('partial', False)
         super(SQAMarshalVisitor, self).__init__(*args, **kwargs)
+
+    def get_data(self, field):
+        """ Override super so if instance and partial we can populate the
+        field data from the instance.
+        """
+
+        if self.instance and self.partial:
+            data = get_attribute(self.data, field.name)
+            if data is None:
+                data = get_attribute(self.instance, field.name)
+            return data
+        else:
+            return super(SQAMarshalVisitor, self).get_data(field)
 
     def update_output(self, field, value):
         if not field.read_only:
