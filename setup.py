@@ -81,7 +81,7 @@ def read(name):
 
 
 setup(
-    name='Kim',
+    name='py-kim',
     version=read('VERSION').strip(),
     author='Mikey Waites, Jack Saunders',
     author_email='code@bruv.io',
