@@ -10,4 +10,4 @@ dependencies:
 
 test:
   override:
-    - docker run -it --rm -v $(pwd):/opt/kim kim python setup.py test
+    - docker run -it -v $(pwd):/opt/kim kim python setup.py test
