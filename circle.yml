@@ -1,0 +1,13 @@
+machine:
+  services:
+    - docker
+
+
+dependencies:
+  override:
+    - docker info
+    - docker build -t kim .
+
+test:
+  override:
+    - docker run -it --rm -v $(pwd):/opt/kim kim python setup.py test
