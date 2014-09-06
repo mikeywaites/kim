@@ -41,7 +41,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here. outside, the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
@@ -84,8 +84,9 @@ setup(
     name='Kim',
     version=read('VERSION').strip(),
     author='Mikey Waites, Jack Saunders',
-    author_email='devs@bruv.io',
+    author_email='code@bruv.io',
     url='https://github.com/mikeywaites/kim',
+    download_url='https://github.com/mikeywaites/kim/releases/tag/0.0.16',
     description='A framework agnostic serialization and marshaling '
                 'library written in python.',
     long_description=read('README.rst'),
@@ -107,7 +108,7 @@ setup(
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'Development Status :: 1 - Planning',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
