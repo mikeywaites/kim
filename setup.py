@@ -82,7 +82,7 @@ def read(name):
 
 setup(
     name='py-kim',
-    version='0.0.16',
+    version='0.0.17',
     author='Mikey Waites, Jack Saunders',
     author_email='code@bruv.io',
     url='https://github.com/mikeywaites/kim',
