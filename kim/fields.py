@@ -1,10 +1,18 @@
+#!/usr/bin/python
+# kim/fields.py
+# Copyright (C) 2014 the kim authors and contributors
+# <see AUTHORS file>
+#
+# This module is part of Kim and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
 import inspect
 
 from .exceptions import ValidationError
 
 
 class Field(object):
-    """Represents a mapping of a field name and `Type` in a `Mapping`
+    """Represents a mapping of a field name and ``Type`` in a ``Mapping``
 
     """
 
@@ -15,8 +23,9 @@ class Field(object):
             :class:`kim.mapping.Mapping` data structure.
 
             The name arg may be omitted at contsruction time.  This is to
-            allow the lower level :py:class:`.Field` object, which maybe used directly
-            with the mapping api, to work with the higher level serializer api
+            allow the lower level :py:class:`.Field` object,
+            which maybe used directly with the mapping api,
+            to work with the higher level serializer api
             where the name will be set by the
             :py:class:`kim.serializers.Serializer` meta class. e.g::
 
@@ -24,15 +33,16 @@ class Field(object):
                 Field(String())
 
         :param field_type: The fields type.  Set using a subclass of
-            :py:class:`kim.types.BaseType`.  the field type argument may be passed
-            as an instance of ``Type`` if type requires arguments or may simply
+            :py:class:`kim.types.BaseType`.
+            The field type argument may be passed as an instance of ``Type``
+            if type requires arguments or may simply
             be passed as a class. e.g::
 
                 Field('id', MyType(foo='bar'))
                 Field('id', MyType)
 
-        :param source: Specify the source of this field. :py:class:`.Field` may specify
-            a seperate name of the property or key to its `name`.
+        :param source: Specify the source of this field. :py:class:`.Field`
+            may specify a seperate name of the property or key to its `name`.
             When serializing kim will use the source attribute to perform a
             lookup on the data passed to field. e.g::
 
@@ -77,6 +87,15 @@ class Field(object):
 
         :param extra_validators: specify an iterable of callable validators
             that will be run along with `field_types` defined validate method.
+            eg::
+
+                def my_validator(value):
+                    if value != 'kim':
+                        raise ValidationError('not Kim bro')
+
+                    return True
+
+                Field('my_name', String(), extra_validators=[my_validator, ])
 
             .. seealso::
                 * :py:meth:`kim.fields.Field.is_valid`.
@@ -145,18 +164,18 @@ class Field(object):
         return self._field_id or self.name
 
     def marshal(self, value):
-        """Call the :meth:`marshal_value` method of `type` providing the
+        """Call the ``marshal_value`` method of ``field_type`` providing the
         ``field_type`` validates.
 
-        :returns: value returned from :meth:`marshal_value`
+        :returns: value returned from ``marshal_value``
         """
         if self.is_valid(value):
             return self.field_type.marshal_value(value)
 
     def serialize(self, value):
-        """Call the :meth:`serialize_value` method of `type`.
+        """Call the ``serialize_value`` method of ``field_type``.
 
-        :returns: value returned from :meth:`serialize_value`
+        :returns: value returned from ``serialize_value``
         """
         return self.field_type.serialize_value(value)
 
@@ -174,7 +193,7 @@ class Field(object):
         :returns: True if all validators run without error.
         """
 
-        # if read only is True, not further validation is needed.
+        # if read only is True, no further validation is needed.
         if self.read_only:
             return True
 

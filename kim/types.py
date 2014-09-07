@@ -1,5 +1,10 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+# kim/types.py
+# Copyright (C) 2014 the kim authors and contributors
+# <see AUTHORS file>
+#
+# This module is part of Kim and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 from collections import defaultdict
 from datetime import date, datetime
@@ -16,6 +21,14 @@ from kim.utils import is_valid_type
 
 
 def iskimtype(type_):
+    """Return a boolean indicating if the ``type_`` argument passed is a
+    a valid kim type interface.
+
+    :param type_: an object that requires checking.
+
+    :rtype: boolean
+    :returns: True when ``type_`` is a Kim type, False otherwise
+    """
     return isinstance(type_, BaseType)
 
 
@@ -82,7 +95,7 @@ class BaseType(object):
 
 class TypedType(BaseType):
     """This type provides the base functionality for types that expect a
-    specific python type e.g and :py:class:`.Integer` or :py:class:`.String`.
+    specific python type e.g and :py:class:``Integer`` or :py:class:``String``.
     """
 
     type_ = None
@@ -102,9 +115,10 @@ class TypedType(BaseType):
         for k in kwargs:
             if k in ('name', 'field_type', 'source', 'field_id', 'default',
                      'required', 'read_only', 'allow_none'):
-                raise ConfigurationError('Type %s was not expecting argument %s. ' \
-                        'Did you mean to pass this to Field instead?' % (
-                        self.__class__.__name__, k))
+                raise ConfigurationError(
+                    'Type %s was not expecting argument %s. '
+                    'Did you mean to pass this to Field instead?' % (
+                    self.__class__.__name__, k))
         super(TypedType, self).__init__(*args, **kwargs)
 
     def validate(self, value):
@@ -114,7 +128,7 @@ class TypedType(BaseType):
             * :py:meth:`kim.types.BaseType.validate`
 
         :raises: :class:`kim.exceptions.ValidationError`
-        :returns: None
+        :returns: True when the type is valid.
         """
 
         if value is not None:
@@ -208,9 +222,9 @@ class PositiveInteger(Integer):
 
 
 class Nested(BaseType):
-    """Create a :py:class:`.Nested` mapping from a
-    :py:class:`kim.mapping.BaseMapping` or from a mapped
-    :py:class:`kim.serializers.Serializer` that allows users to create complex
+    """Create a :py:class:``.Nested`` mapping from a
+    :py:class:``kim.mapping.BaseMapping`` or from a mapped
+    :py:class:``kim.serializers.Serializer`` that allows users to create complex
     re-usable data structures in kim e.g::
 
         food = Mapping(Field('type', String()),
@@ -219,20 +233,47 @@ class Nested(BaseType):
         user_mapping = Mapping(Field('name', String()),
                                Field('foods', Nested(food_mapping))
 
-    a :py:class:`.Nested` type may also specify a role to allow flexibly
+        or using the declarative Serializer api.
+
+        class FoodSerializer(Serializer):
+
+            type = Field(t.String())
+            name = Field(t.String())
+
+        class UserSerializer(Serializer):
+
+            name = Field(t.String())
+            foods = Field(t.Nested(FoodSerializer))
+
+        >>>{'name': 'mike', 'foods': {'name': 'apples', 'type': 'fruit'}}
+
+    a :py:class:``.Nested`` type may also specify a role to allow flexibly
     changing the types returned from a nested mapping.
     This further increases the flexibilty and reusability of mappings.
     For example, in certain cases when we want to re-use our food mapping
     in another mapping, we might not always want to return the
     'type' field. e.g::
 
-        public_food_role = Role('public', 'name')
+        name_only = whitelist('name')
         user_mapping = Mapping(Field('name', String()),
                                Field('foods', Nested(food_mapping,
-                                      role=public_food_role))
+                                      role=name_only))
 
-    In this example only the `name` field from the food mapping would be
-    included in the returned data.
+        or using the declarative Serializer api.
+
+        name_only = whitelist('name')
+
+        class FoodSerializer(Serializer):
+
+            type = Field(t.String())
+            name = Field(t.String())
+
+        class UserSerializer(Serializer):
+
+            name = Field(t.String())
+            foods = Field(t.Nested(FoodSerializer, role=name_only))
+
+        >>>{'name': 'mike', 'foods': {'name': 'apples'}}
 
     .. seealso::
 
@@ -242,7 +283,6 @@ class Nested(BaseType):
     """
 
     __visit_name__ = 'nested'
-
 
     def __init__(self, mapped=None, role=None, *args, **kwargs):
         """:class:`Nested`
@@ -299,7 +339,6 @@ class Nested(BaseType):
         :raises: TypeError
         """
         # Allow mappings to be passed as a string if they don't exist yet
-        # see http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python
         # We store the module it came from here, but we don't actually resolve
         # the path until we need to access the mapping, because it won't be
         # in scope until then.
@@ -313,7 +352,8 @@ class Nested(BaseType):
                 # Only a relative name has been passed, assume it's in
                 # the same module who called us
                 constructor_called_from = inspect.stack()[2]
-                called_from_module = inspect.getmodule(constructor_called_from[0])
+                called_from_module = inspect.getmodule(
+                    constructor_called_from[0])
                 self._mapping_module = called_from_module
 
         self._mapping = mapped
@@ -376,12 +416,37 @@ class Nested(BaseType):
 
 
 class Collection(TypedType):
+    """:py:class:``Collection`` is used when users wish to map a field
+    that has more contains multiple items. e.g::
 
+        class FoodSerializer(Serializer):
+
+            type = Field(t.String())
+            name = Field(t.String())
+
+        class Userserializer(Serializer):
+
+            name = Field(t.String())
+            foods = Field(t.Collection(t.Nested(FoodSerializer)))
+
+        >>>{'name': 'mike', 'foods': [{'name': 'apples', 'type': 'fruit'}]}
+
+    """
     type_ = list
 
     __visit_name__ = 'collection'
 
     def __init__(self, inner_type, *args, **kwargs):
+        """instantiate a new :py:class:`.Collection`.
+
+        :param inner_type: The kim type each itme in this collection maps to
+        :param serialize_member: Provide a callable function that will be
+            called when serializing members of a collection
+        :param marshal_member: Provide a callable function that will be
+            called when marshaling members of a collection
+
+        :raises: TypeError
+        """
         self.inner_type = inner_type
         self.serialize_member = kwargs.pop('serialize_member', None)
         self.marshal_member = kwargs.pop('marshal_member', None)
@@ -391,6 +456,13 @@ class Collection(TypedType):
         super(Collection, self).__init__(*args, **kwargs)
 
     def serialize_members(self, source_value):
+        """Serialize each member of the collection.
+
+        :param source_value: a collection of items to serialize
+
+        :rtype: list
+        :returns: list of serialized members
+        """
         if self.serialize_member:
             return [self.serialize_member(member) for member in source_value]
         else:
@@ -400,6 +472,13 @@ class Collection(TypedType):
                 return source_value
 
     def marshal_members(self, source_value):
+        """Marshal each member of the collection.
+
+        :param source_value: a collection of items to marshal
+
+        :rtype: list
+        :returns: list of marshaled members
+        """
         if self.marshal_member:
             return [self.marshal_member(member) for member in source_value]
         else:
@@ -409,18 +488,38 @@ class Collection(TypedType):
                 return source_value
 
     def marshal_value(self, source_value):
+        """Iterate over each member of a collection found in ``source_value``
+        and marshal each member.
+
+        :param source_value: a collection of items to marshal
+
+        :rtype: list
+        :returns: list of marshaled members
+        """
 
         return [self.inner_type.marshal_value(member)
                 for member in self.marshal_members(source_value)]
 
     def serialize_value(self, source_value):
+        """Iterate over each member of a collection found in ``source_value``
+        and serialize each member.
+
+        :param source_value: a collection of items to serialize
+
+        :rtype: list
+        :returns: list of serialized members
+        """
 
         return [self.inner_type.serialize_value(member)
                 for member in self.serialize_members(source_value)]
 
     def validate(self, source_value):
-        """Call :meth:`validate` on `type`.
+        """Iterate over each member of a collection found in ``source_value``
+        and call the :meth:``.validate`` on each item found.
 
+        :param source_value: a collection of items to validate
+
+        :returns: None
         """
         super(Collection, self).validate(source_value)
         if source_value is not None:
