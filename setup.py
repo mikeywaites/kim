@@ -80,13 +80,17 @@ def read(name):
     return open(name).read()
 
 
+with open('VERSION') as fh:
+    VERSION = fh.read().strip()
+
+
 setup(
     name='py-kim',
-    version=open('VERSION').read().strip(),
+    version=VERSION,
     author='Mikey Waites, Jack Saunders',
     author_email='code@bruv.io',
     url='https://github.com/mikeywaites/kim',
-    download_url='https://github.com/mikeywaites/kim/releases/tag/0.0.16',
+    download_url='https://github.com/mikeywaites/kim/releases/tag/%s' % VERSION,
     description='A framework agnostic serialization and marshaling '
                 'library written in python.',
     long_description=read('README.rst'),
