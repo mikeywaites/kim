@@ -12,11 +12,10 @@ test:
   override:
     - docker run -it -v $(pwd):/opt/kim kim python setup.py test
 
-
-
 deployment:
   pypi:
     branch: release_0.1.0
     commands:
+      - sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - sed "s/PYPI_USERNAME/$PYPI_USERNAME/;s/PYPI_PASSWORD/$PYPI_PASSWORD/" < pypirc.template > ~/.pypirc
       - python setup.py sdist upload -r pypi
