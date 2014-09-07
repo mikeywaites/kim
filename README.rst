@@ -14,6 +14,8 @@ your database.
 Kim can work with basic Python objects and dicts, and has an adapter for
 seamless intergration with SQLAlchemy. Django integration is coming soon.
 
+For more info head over to http://kim.readthedocs.org
+
 Example
 -------
 .. code-block:: python
@@ -39,6 +41,11 @@ Example
     >>> person2.age
     28
 
+Installation
+------------
+.. code-block:: shell
+
+    pip install py-kim
 
 Features
 --------
@@ -53,22 +60,18 @@ Features
 * Designed for extensibility - Serializers are syntactic sugar on top of an
   easy to understand low level API
 
+Contributing to ``kim``
+------------------------
+The ``kim`` source is shipped with a Vagrant distribution and docker file that will install everything you need to start developing with kim.
 
-Installation
-------------
+Checkout the repository to your prefered location and then run the following commands.
+
 .. code-block:: shell
 
-    pip install kim
+    vagrant up --provider=virtualbox``
+    vagrant ssh
+    cd /opt/kim
+    sudo docker build -t kim .
+    sudo docker run -it -v $(pwd):/opt/kim kim python setup.py test
 
-
-.. Contributing to ``kim``
-.. ------------------------
-.. The ``kim`` source is shipped with a Vagrant distribution that will install python and create a virtualenv you can use for development.
-
-.. Checkout the repository to your prefered location and then run ``vgarant up``.  Salt will be used to provision the new vm.  Once the provisioner
-.. has run and the vm has booted run ``vagrant ssh``.  Change into the directory ``~/www/kim/``.  Before installing kim you should switch the the python
-.. virtualenv by running ``workon kim``.  Now run ``pip install -e .[develop]``.  This will put kim
-.. on your python path and install all the dev dependencies.
-
-.. Once everything has been installed simply run ``py.test`` to run the tests and start hacking.
-
+It's as simple as that.  Once your fixes/features are done, just open a pull request and we will review the changes.
