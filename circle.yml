@@ -2,6 +2,10 @@ machine:
   services:
     - docker
 
+general:
+  branches:
+    only:
+      - master # list of branches to build
 
 dependencies:
   override:
@@ -14,7 +18,7 @@ test:
 
 deployment:
   pypi:
-    branch: release_0.1.0
+    branch: master
     commands:
       - sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - sed "s/PYPI_USERNAME/$PYPI_USERNAME/;s/PYPI_PASSWORD/$PYPI_PASSWORD/" < pypirc.template > ~/.pypirc
