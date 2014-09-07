@@ -1,0 +1,2 @@
+include setup.py README.rst MANIFEST.in CHANGELOG.rst dependencies/dev.txt dependencies/install.txt dependencies/test.txt VERSION setup.cfg
+global-exclude *~
