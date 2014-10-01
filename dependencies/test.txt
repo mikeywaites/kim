@@ -1,0 +1,3 @@
+pytest==2.5.2
+pytest-cov==1.6
+pytest_spec==0.2.22

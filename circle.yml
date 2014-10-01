@@ -1,0 +1,26 @@
+machine:
+  services:
+    - docker
+
+general:
+  branches:
+    only:
+      - master # list of branches to build
+
+dependencies:
+  override:
+    - docker info
+    - docker build -t kim .
+
+test:
+  override:
+    - docker run -it -v $(pwd):/opt/kim kim python setup.py test
+
+deployment:
+  pypi:
+    branch: master
+    commands:
+      - sudo chown -R ubuntu:ubuntu py_kim.egg-info
+      - sed "s/PYPI_USERNAME/$PYPI_USERNAME/;s/PYPI_PASSWORD/$PYPI_PASSWORD/" < pypirc.template > ~/.pypirc
+      - python setup.py sdist upload -r pypi
+      - curl -X POST http://readthedocs.org/build/kim

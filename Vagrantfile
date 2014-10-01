@@ -1,41 +1,38 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Requires Vagrant 1.4+
-Vagrant.require_version ">= 1.5.0"
-
-Vagrant.configure("2") do |config|
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
 
 
-  ## Choose your base box
-  # VirtualBox Configuration
-  config.vm.provider :virtualbox do |provider, override|
-    override.vm.box = "precise64_vbox"
-    override.vm.box_url = "http://files.vagrantup.com/precise64.box"
+$docker = <<SCRIPT
+sudo apt-get -y update
+sudo apt-get install -y docker.io
+sudo ln -sf /usr/bin/docker.io /usr/local/bin/docker
+sudo sed -i '$acomplete -F _docker docker' /etc/bash_completion.d/docker.io
+SCRIPT
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = "phusion_ubuntu_14.04_vbox"
+  config.vm.box_url = "https://vagrantcloud.com/phusion/ubuntu-14.04-amd64/version/2/provider/virtualbox.box"
+
+  config.vm.network "forwarded_port", guest: 5000, host: 8888
+
+  config.ssh.forward_agent = true
+  config.vm.synced_folder ".", "/opt/kim"
+
+  config.vm.provider "virtualbox" do |vb|
+    # Don't boot with headless mode
+    vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
+    vb.memory = 1024
+    vb.cpus = 2
   end
 
-  # VMWare Fusion Configuration
-  config.vm.provider :vmware_fusion do |provider, override|
-    override.vm.box = "precise64_fusion"
-    override.vm.box_url = "http://files.vagrantup.com/precise64_vmware_fusion.box"
-  end
-
-  config.vm.hostname = "kim.osl-dev.com"
-
-  config.vm.network :private_network, ip: "172.16.1.11"
-
-  config.vm.provider :virtualbox do |v|
-    v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
-  end
-
-  config.vm.synced_folder "./salt", "/srv/salt"
-  config.vm.synced_folder ".", "/home/vagrant/www/kim"
-
-  config.vm.provision :salt do |s|
-    s.verbose = true
-    s.run_highstate = true                           # Always run the Salt provisioning system
-    s.minion_config = "salt/config/minion.conf"      # Where the minion config lives
-    s.install_type = "stable"
-  end
+  config.vm.provision "shell", inline: $docker
 
 end

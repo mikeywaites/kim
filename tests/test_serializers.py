@@ -7,11 +7,12 @@ import mock
 from kim.exceptions import RoleNotFound, ValidationError, MappingErrors
 from kim.serializers import Field, Serializer
 from kim.types import String, Integer, Nested
-from kim.type_mapper import TypeMapper
+from kim.fields import Field
 from kim.roles import whitelist
 
 
 class SerializerTests(unittest.TestCase):
+
     def test_serializer(self):
         class ASerializer(Serializer):
             a = Field(String())
@@ -22,14 +23,14 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 2)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.type, String))
+        self.assertTrue(isinstance(first_field, Field))
+        self.assertTrue(isinstance(first_field.field_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.type, Integer))
+        self.assertTrue(isinstance(second_field, Field))
+        self.assertTrue(isinstance(second_field.field_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
 
@@ -46,20 +47,20 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 3)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.type, String))
+        self.assertTrue(isinstance(first_field, Field))
+        self.assertTrue(isinstance(first_field.field_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.type, Integer))
+        self.assertTrue(isinstance(second_field, Field))
+        self.assertTrue(isinstance(second_field.field_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'c')
 
         third_field = mapping.fields[2]
-        self.assertTrue(isinstance(third_field, TypeMapper))
-        self.assertTrue(isinstance(third_field.type, String))
+        self.assertTrue(isinstance(third_field, Field))
+        self.assertTrue(isinstance(third_field.field_type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
 
@@ -77,20 +78,20 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(mapping.fields), 3)
 
         first_field = mapping.fields[0]
-        self.assertTrue(isinstance(first_field, TypeMapper))
-        self.assertTrue(isinstance(first_field.type, String))
+        self.assertTrue(isinstance(first_field, Field))
+        self.assertTrue(isinstance(first_field.field_type, String))
         self.assertEqual(first_field.name, 'a')
         self.assertEqual(first_field.source, 'a')
 
         second_field = mapping.fields[1]
-        self.assertTrue(isinstance(second_field, TypeMapper))
-        self.assertTrue(isinstance(second_field.type, Integer))
+        self.assertTrue(isinstance(second_field, Field))
+        self.assertTrue(isinstance(second_field.field_type, Integer))
         self.assertEqual(second_field.name, 'b')
         self.assertEqual(second_field.source, 'e')
 
         third_field = mapping.fields[2]
-        self.assertTrue(isinstance(third_field, TypeMapper))
-        self.assertTrue(isinstance(third_field.type, String))
+        self.assertTrue(isinstance(third_field, Field))
+        self.assertTrue(isinstance(third_field.field_type, String))
         self.assertEqual(third_field.name, 'd')
         self.assertEqual(third_field.source, 'd')
 
@@ -143,7 +144,7 @@ class SerializerTests(unittest.TestCase):
         }
         self.assertEqual(serializer.opts.roles, exp)
 
-    def test__get_mapping_with_no_role_specified(self):
+    def test_get_mapping_with_no_role_specified(self):
 
         name = Field(String())
         email = Field(String())
@@ -157,8 +158,8 @@ class SerializerTests(unittest.TestCase):
 
         mapped = serializer.get_mapping()
         field1, field2 = mapped.fields[0], mapped.fields[1]
-        self.assertEqual(name.field_type, field1.type)
-        self.assertEqual(email.field_type, field2.type)
+        self.assertEqual(name.field_type, field1.field_type)
+        self.assertEqual(email.field_type, field2.field_type)
 
     def test_get_mapping_with_role_name(self):
 
@@ -237,7 +238,7 @@ class SerializerTests(unittest.TestCase):
         mapped = serializer.get_mapping(role='public')
         self.assertEqual(len(mapped.fields), 1)
         self.assertEqual(mapped.fields[0].name, 'email')
-        self.assertEqual(mapped.fields[0].attr_name, 'email2')
+        self.assertEqual(mapped.fields[0].field_id, 'email2')
 
     def test_serialize_with_role(self):
 
@@ -319,8 +320,8 @@ class SerializerTests(unittest.TestCase):
 
         fields = MySerializer().fields
 
-        self.assertEqual(fields['name'].type, name_type)
-        self.assertEqual(fields['email'].type, email_type)
+        self.assertEqual(fields['name'].field_type, name_type)
+        self.assertEqual(fields['email'].field_type, email_type)
 
     def test_top_level_validate_method_called(self):
         mocked = mock.MagicMock()
@@ -337,7 +338,6 @@ class SerializerTests(unittest.TestCase):
         serializer.marshal({'email': 'foo', 'name': 'bar'})
 
         mocked.assert_called_with({'email': 'foo', 'name': 'bar'})
-
 
     def test_top_level_validate_method_failure(self):
         class MySerializer(Serializer):
@@ -358,7 +358,7 @@ class SerializerTests(unittest.TestCase):
 
         class MySerializer(Serializer):
 
-            name = Field(String(required=False), default='this is a default')
+            name = Field(String(), required=False, default='this is a default')
             email = Field(String())
 
             validate = mocked
@@ -394,9 +394,9 @@ class SerializerTests(unittest.TestCase):
 
             name = Field(String())
             email = Field(String())
-            supplier = Field(Nested(CompanySerialzer,
-                                    read_only=True,
-                                    required=False))
+            supplier = Field(Nested(CompanySerialzer),
+                             required=False,
+                             read_only=True)
 
         serializer = MySerializer()
         res = serializer.marshal({'email': 'foo', 'name': 'bar', 'supplier': 1})

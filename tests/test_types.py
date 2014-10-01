@@ -14,7 +14,7 @@ from kim.types import (Nested, String, Collection, Integer, BaseType,
                        TypedType, Date, DateTime, Regexp,
                        Email, Float, Decimal, PositiveInteger,
                        NumericType)
-from kim.type_mapper import TypeMapper
+from kim.fields import Field
 
 
 ImportByStringMapping = Mapping()
@@ -37,61 +37,10 @@ class BaseTypeTests(unittest.TestCase):
         my_type = BaseType()
         self.assertTrue(my_type.validate('foo'), True)
 
-    def test_validate_raises_error_when_required_and_value_null(self):
-
-        my_type = String(required=True)
-        with self.assertRaises(ValidationError):
-            my_type.validate(None)
-
-    def test_validate_not_allow_none(self):
-        my_type = String(allow_none=False, required=False)
-
-        with self.assertRaises(ValidationError):
-            my_type.validate(None)
-
-    def test_validate_required_value_falsey(self):
-
-        my_type = Integer(required=True)
-        self.assertTrue(my_type.validate(0))
-
-    def test_validate_allow_none(self):
-
-        my_type = String(required=False, allow_none=True)
-
-        self.assertTrue(my_type.validate(None))
-
     def test_validate_mapped_type(self):
-        my_type = String(required=True, allow_none=False)
+        my_type = String()
 
         self.assertTrue(my_type.validate('foo'))
-
-    def test_set_allow_none(self):
-        my_type = String(allow_none=False)
-        self.assertEqual(my_type.allow_none, False)
-
-    def test_include_in_serialize(self):
-        my_type = String()
-        self.assertTrue(my_type.include_in_serialize())
-
-    def test_include_in_marshal_not_read_only(self):
-        my_type = String(read_only=False)
-        self.assertTrue(my_type.include_in_marshal())
-
-    def test_include_in_marshal_read_only(self):
-        my_type = String(read_only=True)
-        self.assertFalse(my_type.include_in_marshal())
-
-    def test_validate_read_only_not_none(self):
-        my_type = String(read_only=True)
-        self.assertTrue(my_type.validate('bla'))
-
-    def test_validate_read_only_none(self):
-        my_type = String(read_only=True)
-        self.assertTrue(my_type.validate(None))
-
-    def test_validate_not_read_only(self):
-        my_type = String(read_only=False)
-        self.assertTrue(my_type.validate('bla'))
 
 
 class TypedTypeTests(unittest.TestCase):
@@ -223,6 +172,16 @@ class CollectionTypeTests(unittest.TestCase):
         c = Collection(Integer())
         self.assertEqual(c.serialize_value([1, 2, 3]), [1, 2, 3])
 
+    def test_serialize_value_when_none(self):
+
+        c = Collection(Integer())
+        self.assertEqual(c.serialize_value(None), [])
+
+    def test_marshal_value_when_none(self):
+
+        c = Collection(Integer())
+        self.assertEqual(c.marshal_value(None), [])
+
     def test_validate_iterates_type(self):
 
         c = Collection(Integer())
@@ -287,7 +246,7 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_get_mapping_with_role_set(self):
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
 
         role = Role('foo', 'name')
         mapping = Mapping(name, email)
@@ -303,7 +262,7 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -321,7 +280,7 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name, email = TypeMapper('email', String()), TypeMapper('name', String())
+        name, email = Field('email', String()), Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -339,8 +298,8 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name = TypeMapper('email', String())
-        email = TypeMapper('name', String())
+        name = Field('email', String())
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
@@ -357,8 +316,8 @@ class NestedTypeTests(unittest.TestCase):
             name = 'foo'
             email = 'bar@bar.com'
 
-        name = TypeMapper('email', String())
-        email = TypeMapper('name', String())
+        name = Field('email', String())
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
@@ -370,8 +329,8 @@ class NestedTypeTests(unittest.TestCase):
 
     def test_nested_validation_validates_mapped_fields_marshal(self):
 
-        name = TypeMapper('email', String(), 'email_source')
-        email = TypeMapper('name', String())
+        name = Field('email', String(), 'email_source')
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping)
@@ -393,8 +352,8 @@ class NestedTypeTests(unittest.TestCase):
         role passed to a nested type, the field should be ignored
         """
 
-        name = TypeMapper('email', String(), 'email_source')
-        email = TypeMapper('name', String())
+        name = Field('email', String(), 'email_source')
+        email = Field('name', String())
         mapping = Mapping(name, email)
 
         nested = Nested(mapped=mapping, role=Role('email_only', 'email'))
@@ -411,7 +370,7 @@ class NestedTypeTests(unittest.TestCase):
         self.assertEqual(nested.mapping, ImportByStringMapping)
 
     def test_import_by_string_absolute(self):
-        nested = Nested(mapped='kim.tests.test_types.ImportByStringMapping')
+        nested = Nested(mapped='tests.test_types.ImportByStringMapping')
 
         self.assertEqual(nested.mapping, ImportByStringMapping)
 
@@ -470,11 +429,6 @@ class DateTimeTypeTests(unittest.TestCase):
         my_type = DateTime()
         self.assertTrue(my_type.validate('2014-04-07T05:06:05+00:00'))
 
-    def test_validate_when_none(self):
-
-        my_type = DateTime(required=False)
-        self.assertTrue(my_type.validate(None))
-
     def test_serialize(self):
         value = datetime(2014, 4, 7, 5, 6, 5, tzinfo=Utc())
         my_type = DateTime()
@@ -502,11 +456,6 @@ class RegexpTypeTests(unittest.TestCase):
 
         my_type = Regexp(pattern=re.compile('[0-9]+'))
         self.assertTrue(my_type.validate('1234'))
-
-    def test_validate_when_none(self):
-
-        my_type = Regexp(required=False)
-        self.assertTrue(my_type.validate(None))
 
 
 class EmailTypeTests(unittest.TestCase):
@@ -563,11 +512,6 @@ class FloatTypeTests(unittest.TestCase):
         my_type = Float(as_string=True)
         self.assertTrue(my_type.validate("1.343"))
 
-    def test_validate_when_none(self):
-
-        my_type = Float(required=False)
-        self.assertTrue(my_type.validate(None))
-
     def test_serialize_as_string(self):
         my_type = Float(as_string=True)
         result = my_type.serialize_value(1.343)
@@ -579,6 +523,7 @@ class FloatTypeTests(unittest.TestCase):
         result = my_type.marshal_value("1.343")
 
         self.assertEqual(result, 1.343)
+
 
 class DecimalTypeTests(unittest.TestCase):
 
@@ -616,8 +561,3 @@ class DecimalTypeTests(unittest.TestCase):
         result = my_type.serialize_value(decimal.Decimal("1.347"))
 
         self.assertEqual(result, "1.35")
-
-    def test_validate_when_none(self):
-
-        my_type = Decimal(required=False)
-        self.assertTrue(my_type.validate(None))
