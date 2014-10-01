@@ -30,18 +30,18 @@ class NestedForeignKey(Nested):
             raise ConfigurationError('allow_create and allow_updates_in_place may not be used together')
         super(NestedForeignKey, self).__init__(*args, **kwargs)
 
-    def valid_id(self, val):
-        return any([isinstance(val, int),
-                    isinstance(val, basestring) and val.isdigit()])
+    def parse_id(self, val):
+        if isinstance(val, int) or \
+           (isinstance(val, basestring) and val.isdigit()):
+            return int(val)
 
     def get_object(self, source_value):
         if self.allow_updates_in_place:
             return
         if type(source_value) != dict:
             raise ValidationError('invalid type')
-        id = source_value.get(self.id_field_name)
-        if self.valid_id(id):
-            id = int(id)
+        id = self.parse_id(source_value.get(self.id_field_name))
+        if id:
             try:
                 obj = self.getter(id)
             except NoResultFound:
@@ -56,6 +56,12 @@ class NestedForeignKey(Nested):
                 return True
             else:
                 super(NestedForeignKey, self).validate(source_value)
+
+
+class NestedForeignKeyStr(NestedForeignKey):
+    def parse_id(self, val):
+        if isinstance(val, basestring):
+            return val
 
 
 class IntegerForeignKey(NumericType):
@@ -167,6 +173,7 @@ class SQAMarshalVisitor(MarshalVisitor):
             elif type.allow_create:
                 return self.Cls(type.get_mapping(), data, model=model)._run()
             else:
+                resolved = type.get_object(data)
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
     def visit_field_nested_foreign_key(self, field, data):

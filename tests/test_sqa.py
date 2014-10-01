@@ -3,11 +3,14 @@
 
 import unittest
 from iso8601.iso8601 import Utc
+import uuid
 
 from kim.serializers import Field
 from kim.roles import whitelist
 from kim import types
-from kim.contrib.sqa import SQASerializer, NestedForeignKey, IntegerForeignKey, RelationshipCollection
+from kim.contrib.sqa import (
+    SQASerializer, NestedForeignKey, NestedForeignKeyStr, IntegerForeignKey,
+    RelationshipCollection)
 from kim.exceptions import MappingErrors, ConfigurationError
 
 from sqlalchemy import create_engine
@@ -63,6 +66,25 @@ class Address(Base):
     postcode = Column(String, nullable=False)
     city = Column(String, nullable=True)
     country = Column(String, nullable=False)
+
+
+class UUIDParent(Base):
+
+    __tablename__ = 'uuid_parent'
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
+
+    child_id = Column(String, ForeignKey('uuid_child.id'), nullable=True)
+    child = relationship("UUIDChild")
+
+
+class UUIDChild(Base):
+
+    __tablename__ = "uuid_child"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
 
 
 class SQAAcceptanceTests(unittest.TestCase):
@@ -1207,3 +1229,40 @@ class SQAAcceptanceTests(unittest.TestCase):
             'signup_date': '2014-04-11T04:06:02'
         }
         self.assertDictEqual(result, exp)
+
+    def test_nested_foreignkey_str(self):
+        """With default options, when a nested object is passed with an id,
+        we expect that id to be resolved and the foreign key set to the
+        resolved object"""
+        def getter(id):
+            return self.session.query(UUIDChild).get(id)
+
+        class ChildSerializer(SQASerializer):
+            __model__ = UUIDChild
+
+            id = Field(types.String, read_only=True)
+            name = Field(types.String, required=False)
+
+        class ParentSerializer(SQASerializer):
+            __model__ = UUIDParent
+
+            id = Field(types.String, read_only=True)
+            name = Field(types.String, required=False)
+            child = Field(NestedForeignKeyStr(mapped=ChildSerializer,
+                          getter=getter))
+
+        child = UUIDChild(name='fred')
+        self.session.add(child)
+        self.session.flush()
+
+        data = {
+            'name': 'bob',
+            'child': {
+                'id': child.id,
+            }
+        }
+
+        serializer = ParentSerializer()
+        result = serializer.marshal(data)
+
+        self.assertEqual(result.child.id, child.id)
