@@ -265,7 +265,8 @@ class MarshalVisitor(Visitor):
 
     def _run(self):
         output = super(MarshalVisitor, self)._run()
-        self.post_process()
+        if not self.errors:
+            self.post_process()
         if self.errors:
             raise MappingErrors(self.errors)
         else:
