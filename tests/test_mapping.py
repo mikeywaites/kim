@@ -215,6 +215,18 @@ class MarshalTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             marshal(mapping, {})
 
+    def test_post_process_validator_not_called_if_other_errors(self):
+        name = Field('company_name', types.String(), required=True)
+        my_validator = mock.MagicMock()
+        mapping = Mapping(name, validator=my_validator)
+
+        try:
+            marshal(mapping, {})
+        except MappingErrors:
+            pass
+
+        self.assertFalse(my_validator.called)
+
     def test_reraise(self):
         class MyType(types.BaseType):
             def validate(self, source_value):
