@@ -150,6 +150,8 @@ class Visitor(object):
                     self.update_output(field, result)
             except ValidationError as e:
                 self.errors[field.name].append(e.message)
+            except MappingErrors as e:
+                raise e
             except Exception as e:
                 # If we catch anything else something's genuinely gone wrong,
                 # but the stacktrace will be indecipherable. Append the actual

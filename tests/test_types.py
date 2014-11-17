@@ -533,11 +533,10 @@ class DecimalTypeTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             my_type.validate('')
 
-    def test_validate_requires_valid_decimal_type(self):
+    def test_validate_with_integer(self):
 
         my_type = Decimal()
-        with self.assertRaises(ValidationError):
-            my_type.validate(1)
+        self.assertTrue(my_type.validate(1))
 
     def test_validate_decimal_type(self):
 
