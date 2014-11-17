@@ -591,15 +591,11 @@ class Decimal(BaseType):
 
     def validate(self, source_value):
         super(Decimal, self).validate(source_value)
-        if source_value is not None:
-            if not isinstance(source_value, str):
-                raise ValidationError(self.get_error_message(source_value))
-
-            # Now just check we can cast it to a Decimal
-            try:
-                self._cast(source_value)
-            except decimal.InvalidOperation:
-                raise ValidationError('Not a valid decimal')
+        # Now just check we can cast it to a Decimal
+        try:
+            self._cast(source_value)
+        except decimal.InvalidOperation:
+            raise ValidationError('Not a valid decimal')
 
         return True
 
