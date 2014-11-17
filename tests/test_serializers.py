@@ -353,6 +353,23 @@ class SerializerTests(unittest.TestCase):
         with self.assertRaises(MappingErrors):
             serializer.marshal({'email': 'foo', 'name': 'bar'})
 
+    def test_top_level_validate_method_failure_when_nested(self):
+        class MyNestedSerializer(Serializer):
+
+            name = Field(String())
+            email = Field(String())
+
+            def validate(self, data):
+                raise MappingErrors({'email': ['bla']})
+
+        class MySerializer(Serializer):
+            nesting = Field(Nested(MyNestedSerializer))
+
+        serializer = MySerializer()
+
+        with self.assertRaises(MappingErrors):
+            serializer.marshal({'nesting': {'email': 'foo', 'name': 'bar'}})
+
     def test_field_default_used(self):
         mocked = mock.MagicMock()
 
