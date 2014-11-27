@@ -1,6 +1,10 @@
 Changelog
 =======================
 
+v0.1.4
+-----------------------
+* fix issue with decimal type when None
+
 v0.1.3
 -----------------------
 * allow integers to be passed to decimal type
