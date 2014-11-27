@@ -600,7 +600,8 @@ class Decimal(BaseType):
         return True
 
     def serialize_value(self, source_value):
-        return str(self._cast(source_value))
+        if source_value is not None:
+            return str(self._cast(source_value))
 
     def marshal_value(self, source_value):
         return self._cast(source_value)
