@@ -587,7 +587,8 @@ class Decimal(BaseType):
         super(Decimal, self).__init__(*args, **kwargs)
 
     def _cast(self, value):
-        return decimal.Decimal(value).quantize(self.precision)
+        if value is not None and value != '':
+            return decimal.Decimal(value).quantize(self.precision)
 
     def validate(self, source_value):
         super(Decimal, self).validate(source_value)
@@ -600,8 +601,9 @@ class Decimal(BaseType):
         return True
 
     def serialize_value(self, source_value):
-        if source_value is not None:
-            return str(self._cast(source_value))
+        result = self._cast(source_value)
+        if result is not None:
+            return str(result)
 
     def marshal_value(self, source_value):
         return self._cast(source_value)
