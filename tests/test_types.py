@@ -531,7 +531,7 @@ class DecimalTypeTests(unittest.TestCase):
 
         my_type = Decimal()
         with self.assertRaises(ValidationError):
-            my_type.validate('')
+            my_type.validate('abc')
 
     def test_validate_with_integer(self):
 
