@@ -390,6 +390,39 @@ class SQAAcceptanceTests(unittest.TestCase):
         self.assertTrue(isinstance(remote, MyRemoteClass))
         self.assertEqual(remote.phone, '082345234')
 
+    def test_nested_marshal_with_none_list(self):
+        class MyRemoteClass(object):
+            phone = None
+
+        class MyRemoteSerializer(SQASerializer):
+            __model__ = MyRemoteClass
+
+            phone = Field(types.String)
+
+        class UserSerializer(SQASerializer):
+            __model__ = User
+
+            id = Field(types.Integer, read_only=True)
+            my_list = Field(RelationshipCollection(
+                NestedForeignKey(
+                    mapped=MyRemoteSerializer, allow_create=True),
+                remote_class=MyRemoteClass))
+
+        data = {
+            'my_list': [{
+                'phone': '082345234',
+            }],
+        }
+
+        user = User()
+        user.my_list = None
+
+        serializer = UserSerializer()
+        result = serializer.marshal(data, instance=user)
+
+        result = user.my_list
+        self.assertEqual(len(result), 1)
+
     def test_nested_marshal_allow_updates_in_place(self):
         """When allow_updates_in_place is True and we pass a nested object without an id,
         and there is already an object associated with this foreign key,
