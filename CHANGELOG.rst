@@ -1,6 +1,10 @@
 Changelog
 =======================
 
+v0.1.6
+-----------------------
+* fix issue with RelationshipCollection where source value is None
+
 v0.1.5
 -----------------------
 * fix another issue with decimal type when None
