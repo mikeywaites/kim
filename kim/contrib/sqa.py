@@ -190,10 +190,12 @@ class SQAMarshalVisitor(MarshalVisitor):
     def visit_type_relationship_collection(self, type, data, instance_list=None, model=None, **kwargs):
         result = []
         for i, value in enumerate(type.marshal_members(data)):
-            try:
-                instance = instance_list[i]
-            except IndexError:
-                instance = None
+            instance = None
+            if instance_list is not None:
+                try:
+                    instance = instance_list[i]
+                except IndexError:
+                    pass
             value = self.visit_type(type.inner_type, value, instance=instance, model=model)
             result.append(value)
         return result
