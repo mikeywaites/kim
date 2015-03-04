@@ -123,11 +123,15 @@ class SQAMarshalVisitor(MarshalVisitor):
 
     def update_output(self, field, value):
         if not field.read_only:
-            components = field.source.split('.')
-            output = self.output
-            for component in components[:-1]:
-                output = getattr(output, component)
-            setattr(output, components[-1], value)
+            if field.source == '__self__':
+                for k, v in value.items():
+                    setattr(self.output, k, v)
+            else:
+                components = field.source.split('.')
+                output = self.output
+                for component in components[:-1]:
+                    output = getattr(output, component)
+                setattr(output, components[-1], value)
 
     def initialise_output(self):
         if not self.instance:
@@ -177,6 +181,7 @@ class SQAMarshalVisitor(MarshalVisitor):
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
     def visit_field_nested_foreign_key(self, field, data):
+        import ipdb; ipdb.set_trace()
         if data is not None:
             existing = get_attribute(self.output, field.source)
             RemoteClass = self._get_relationship_model(field)
