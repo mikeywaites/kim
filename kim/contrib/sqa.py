@@ -181,7 +181,6 @@ class SQAMarshalVisitor(MarshalVisitor):
                 raise ValidationError('No id passed and creation or update in place not allowed')
 
     def visit_field_nested_foreign_key(self, field, data):
-        import ipdb; ipdb.set_trace()
         if data is not None:
             existing = get_attribute(self.output, field.source)
             RemoteClass = self._get_relationship_model(field)
