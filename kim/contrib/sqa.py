@@ -124,8 +124,9 @@ class SQAMarshalVisitor(MarshalVisitor):
     def update_output(self, field, value):
         if not field.read_only:
             if field.source == '__self__':
-                for k, v in value.items():
-                    setattr(self.output, k, v)
+                if value is not None:
+                    for k, v in value.items():
+                        setattr(self.output, k, v)
             else:
                 components = field.source.split('.')
                 output = self.output
