@@ -1,9 +1,9 @@
-FROM python:2
+FROM python
 
 
-ADD . /opt/kim
-VOLUME /opt/kim
-WORKDIR /opt/kim
+ADD . /opt/code
+VOLUME /opt/code
+WORKDIR /opt/code
 
 RUN pip install -e .[develop]
-CMD ["python"]
+CMD ["python", "setup.py", "test"]
