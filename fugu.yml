@@ -1,0 +1,17 @@
+python: &python
+  image: python
+  tty: true
+  interactive: true
+  workdir: /usr/src/app
+  volume:
+    - $(pwd):/usr/src/app
+
+py3:
+  <<: *python
+  image: python:3
+  command: python setup.py test
+
+py2:
+  <<: *python
+  image: python:2
+  command: python setup.py test
