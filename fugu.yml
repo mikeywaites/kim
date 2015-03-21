@@ -1,17 +1,18 @@
 python: &python
-  image: python
+  rm: true
   tty: true
+  image: mikeywaites/python
   interactive: true
-  workdir: /usr/src/app
   volume:
     - $(pwd):/usr/src/app
+  command: python setup.py test
 
 py3:
   <<: *python
-  image: python:3
-  command: python setup.py test
+  image: mikeywaites/kim:3
+  path: Dockerfile.py3
 
 py2:
   <<: *python
-  image: python:2
-  command: python setup.py test
+  path: Dockerfile.py2
+  image: mikeywaites/kim:2
