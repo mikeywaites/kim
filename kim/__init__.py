@@ -7,3 +7,4 @@
 
 
 from .mapper import Mapper
+from .fields import Field
