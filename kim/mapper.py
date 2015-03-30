@@ -39,6 +39,18 @@ class MapperMetaType(type):
         return new
 
 
+class MapperOpts(object):
+    """A simple configuration object used to store
+    declareded options on a :py:class:``.Mapper`` Meta object.
+
+    .. seealso::
+        :class:`.Mapper`
+    """
+
+    def __init__(self, meta):
+        self.roles = getattr(meta, 'roles', {})
+
+
 class Mapper(with_metaclass(MapperMetaType, object)):
     """Mappers are the building blocks of Kim - they define how JSON output
     should look and how input JSON should be expected to look.
@@ -61,6 +73,31 @@ class Mapper(with_metaclass(MapperMetaType, object)):
             company = fields.Nested('myapp.mappers.CompanyMapper')
 
     """
+
+    class Meta:
+        """Meta class for providing extra options for a :class:`.Mapper`
+
+        .. code-block:: python
+
+            from kim import Mapper, fields
+
+            class UserMapper(Mapper):
+                __type__ = User
+
+                id = fields.Integer(read_only=True)
+
+                class Meta:
+                    roles = {
+                        'public': blacklist('id')
+                    }
+
+        Roles
+        ~~~~~~~~~~~
+        Roles may be assigned to a mapper using the roles
+        meta option.  roles should be specified as a dict of
+        role name: Role() instances.
+
+        """
 
     def marshal(self, data, role=None):
         pass
