@@ -30,10 +30,13 @@ class MapperMetaType(type):
         new = (super(MapperMetaType, mcs).__new__(mcs, name, bases, attrs))
 
         # Traverse the MRO collecting fields from base classes.
-        declared_fields = OrderedDict(_fields)
+        declared_fields = OrderedDict()
         for base in reversed(new.__mro__):
             if hasattr(base, 'declared_fields'):
                 declared_fields.update(base.declared_fields)
+
+        # Finally update with our own fields
+        declared_fields.update(_fields)
 
         new.declared_fields = declared_fields
         return new
