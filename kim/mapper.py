@@ -5,25 +5,27 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from six import with_metaclass
+from six import with_metaclass, iteritems
 from collections import OrderedDict
 
 from .fields import Field
 
 
 class MapperMetaType(type):
-    """Intercept new and create new Mapper classes.
+    """Intercept and create new Mapper classes.
     """
 
     def __new__(mcs, name, bases, attrs):
 
         _fields = []
-        for attr_name, attr in list(attrs.items()):
+        for attr_name, attr in iteritems(attrs):
 
             # collect all declared field attributes.
             if isinstance(attr, Field):
                 _fields.append((attr_name, attr))
-                attrs.pop(attr_name)
+
+        for field_name, field in _fields:
+            attrs.pop(field_name)
 
         new = (super(MapperMetaType, mcs).__new__(mcs, name, bases, attrs))
 
