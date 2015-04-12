@@ -17,28 +17,24 @@ class MapperMetaType(type):
 
     def __new__(mcs, name, bases, attrs):
 
-        _fields = []
-        for attr_name, attr in iteritems(attrs):
-
-            # collect all declared field attributes.
-            if isinstance(attr, Field):
-                _fields.append((attr_name, attr))
-
-        for field_name, field in _fields:
-            attrs.pop(field_name)
-
         new = (super(MapperMetaType, mcs).__new__(mcs, name, bases, attrs))
 
         # Traverse the MRO collecting fields from base classes.
-        declared_fields = OrderedDict()
-        for base in reversed(new.__mro__):
-            if hasattr(base, 'declared_fields'):
-                declared_fields.update(base.declared_fields)
+        fields = {}
+        for base in new.__mro__:
 
-        # Finally update with our own fields
-        declared_fields.update(_fields)
+            for name, obj in vars(base).items():
 
-        new.declared_fields = declared_fields
+                if name == 'declared_fields':
+                    fields.update(obj)
+
+        for name, obj in attrs.items():
+            if isinstance(obj, Field):
+                fields[name] = obj
+
+        new.declared_fields = OrderedDict(
+            sorted(fields.items(), key=lambda o: o[1]._creation_order))
+
         return new
 
 
