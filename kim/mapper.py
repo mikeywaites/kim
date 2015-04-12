@@ -5,9 +5,10 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from six import with_metaclass, iteritems
+from six import with_metaclass
 from collections import OrderedDict
 
+from .exception import MapperError
 from .fields import Field
 
 
@@ -97,16 +98,26 @@ class Mapper(with_metaclass(MapperMetaType, object)):
                         'id': whitelist('id')
                     }
 
-        Roles
-        ~~~~~~~~~~~
-        Roles may be assigned to a mapper using the roles
-        meta option.  roles should be specified as a dict of
-        role name: Role() instances.
+        .. seealso::
+            :ref:`.kim.roles`
 
         """
 
-    def marshal(self, data, role=None):
-        pass
+    __type__ = None
 
-    def serialize(self, data, role=None):
-        pass
+    def __init__(self):
+        self.otps = MapperOpts(self.Meta)
+
+    def get_mapper_type(self):
+        """Return the spefified type for this Mapper.  If no ``__type__`` is
+        defined a :class:`.MapperError` is raised
+
+        :raises: :class:`.MapperError`
+        :returns: The specified ``__type__`` for the mapper.
+        """
+
+        if self.__type__ is None:
+            raise MapperError(
+                '%s must define a __type__' % self.__class__.__name__)
+
+        return self.__type__
