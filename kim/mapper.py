@@ -76,6 +76,12 @@ class Mapper(with_metaclass(MapperMetaType, object)):
     class Meta:
         """Meta class for providing extra options for a :class:`.Mapper`
 
+        Roles
+        ~~~~~~~~~~~
+        Roles may be assigned to a mapper using the roles
+        meta option.  roles should be specified as a dict of
+        role name: Role() instances.
+
         .. code-block:: python
 
             from kim import Mapper, fields
@@ -88,6 +94,7 @@ class Mapper(with_metaclass(MapperMetaType, object)):
                 class Meta:
                     roles = {
                         'public': blacklist('id')
+                        'id': whitelist('id')
                     }
 
         Roles
