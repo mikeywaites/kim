@@ -5,6 +5,11 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from .utils import set_creation_order
+
 
 class Field(object):
-    pass
+
+    def __init__(self):
+
+        set_creation_order(self)
