@@ -1,41 +1,20 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+# kim/util.py
+# Copyright (C) 2014-2015 the Kim authors and contributors
+# <see AUTHORS file>
+#
+# This module is part of Kim and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .roles import BaseRole
 
-from collections import defaultdict
+_creation_order = 1
 
 
-def is_valid_type(type_):
-    """Validate that `type_` is an instance or subclass of
-    :class:`kim.types.BaseType`.
-
-    :param type_: an instance or subclass of :class:`kim.types.BaseType`
-
-    :rtype: boolean
-    :returns: True or False
+def set_creation_order(instance):
+    """Assign a '_creation_order' sequence to the given instance.
+    This allows multiple instances to be sorted in order of creation
+    (typically within a single thread; the counter is not particularly
+    threadsafe).
     """
-    from kim.types import BaseType
-
-    return isinstance(type_, BaseType)
-
-
-def is_role(role):
-    """evaluate `role` and check wether its a valid role instance or
-    valid role subclass.
-
-    :rtype: boolean
-    :returns: True or False
-    """
-
-    return isinstance(role, BaseRole)
-
-
-def is_valid_field(field):
-    from .fields import Field
-
-    return isinstance(field, Field)
-
-
-def recursive_defaultdict():
-    return defaultdict(recursive_defaultdict)
+    global _creation_order
+    instance._creation_order = _creation_order
+    _creation_order += 1
