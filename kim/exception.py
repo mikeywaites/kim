@@ -1,4 +1,4 @@
-# kim
+# kim/exception.py
 # Copyright (C) 2014-2015 the Kim authors and contributors
 # <see AUTHORS file>
 #
@@ -6,5 +6,5 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 
-from .mapper import Mapper
-from .fields import Field
+class MapperError(Exception):
+    pass
