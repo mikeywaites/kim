@@ -78,6 +78,9 @@ def test_mapper_inheritance():
 
 
 def test_get_mapper_type():
+    """ensure the correct object is returned when acessing the Mapper.__type__
+    via :meth:``get_mapper_type``
+    """
 
     class MapperBase(Mapper):
 
@@ -90,6 +93,9 @@ def test_get_mapper_type():
 
 
 def test_order_of_fields():
+    """ensure fields set by mapper metaclass are set in order
+    using _creation_order
+    """
 
     class MapperBase(Mapper):
 
