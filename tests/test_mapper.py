@@ -29,6 +29,7 @@ def test_mapper_sets_declared_fields():
     assert 'name' in mapper_with_fields.declared_fields
     assert isinstance(mapper_with_fields.declared_fields['name'], TestField)
     assert 'other' not in mapper_with_fields.declared_fields
+    assert not getattr(mapper_with_fields, 'name', False)
 
 
 def test_mapper_must_define_mapper_type():
@@ -118,3 +119,57 @@ def test_order_of_fields():
 
     mapper = ThirdMapper()
     assert ['name', 'email', 'id'] == list(mapper.declared_fields.keys())
+
+
+def test_override_default_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = TestField()
+        name = TestField()
+
+        __roles__ = {
+            '__default__': ['id', ]
+        }
+
+    mapper = MapperBase()
+    assert mapper.__roles__ == {'__default__': ['id', ]}
+
+
+def test_new_mapper_sets_roles():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = TestField()
+        name = TestField()
+
+    class MyMapper(MapperBase):
+
+        email = TestField()
+
+        __roles__ = {
+            'overview': ['email', ]
+        }
+
+    class OtherMapper(MyMapper):
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    mapper = MapperBase()
+    assert mapper.__roles__ == {'__default__': ['id', 'name']}
+
+    mapper = MyMapper()
+    assert mapper.__roles__ == {'overview': ['email', ],
+                                '__default__': ['id', 'name', 'email']}
+
+    mapper = OtherMapper()
+    assert mapper.__roles__ == {
+        '__default__': ['id', 'name', 'email'],
+        'private': ['id', ]
+    }
