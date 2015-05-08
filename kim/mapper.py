@@ -28,6 +28,14 @@ class _MapperConfig(object):
             self._extract_fields(base)
             self._extract_roles(base)
 
+        self._remove_fields()
+
+    def _remove_fields(self):
+
+        for name in self.cls.declared_fields.keys():
+            if getattr(self.cls, name, None):
+                delattr(self.cls, name)
+
     def _extract_fields(self, base):
 
         cls = self.cls
@@ -37,7 +45,6 @@ class _MapperConfig(object):
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
-                #delattr(cls, name)
                 _fields.update({name: obj})
             elif name == 'declared_fields':
                 _fields.update(obj)
