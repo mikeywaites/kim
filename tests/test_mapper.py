@@ -138,6 +138,38 @@ def test_override_default_role():
     assert mapper.__roles__ == {'__default__': ['id', ]}
 
 
+def test_inherit_parent_roles():
+
+    class RoleMixin(object):
+
+        __roles__ = {
+            'id_only': ['id', ]
+        }
+
+    class Parent(Mapper, RoleMixin):
+
+        __type__ = TestType
+
+        id = TestField()
+        name = TestField()
+
+        __roles__ = {
+            'overview': ['id', 'name']
+        }
+
+    class Child(Parent):
+
+        __type__ = TestType
+
+        __roles__ = {
+            'overview': ['name', ]
+        }
+
+    mapper = Child()
+    import ipdb; ipdb.set_trace()
+    assert mapper.__roles__ == {}
+
+
 def test_new_mapper_sets_roles():
 
     class MapperBase(Mapper):
