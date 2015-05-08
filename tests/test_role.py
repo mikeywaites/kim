@@ -4,7 +4,6 @@ from kim.role import Role, whitelist, blacklist
 def test_whitelist_membership():
 
     role = whitelist('name', 'id')
-    import ipdb; ipdb.set_trace()
     assert 'name' in role
     assert 'id' in role
     assert 'email' not in role
