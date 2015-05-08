@@ -12,34 +12,64 @@ from .exception import MapperError
 from .fields import Field
 
 
-class MapperMetaType(type):
-    """Intercept and create new Mapper classes.
-    """
+class _MapperConfig(object):
 
-    def __new__(mcs, name, bases, attrs):
+    @classmethod
+    def setup_mapping(cls, cls_, classname, dict_):
+        cfg_cls = _MapperConfig
+        cfg_cls(cls_, classname, dict_)
 
-        new = (super(MapperMetaType, mcs).__new__(mcs, name, bases, attrs))
+    def __init__(self, cls_, classname, dict_):
 
-        # Traverse the MRO collecting fields from base classes.
-        fields = {}
-        for base in new.__mro__:
+        self.cls = cls_
+        self.dict = dict_
 
-            for name, obj in vars(base).items():
+        for base in reversed(self.cls.__mro__):
+            self._extract_fields(base)
+            self._extract_roles(base)
 
-                if name == 'declared_fields':
-                    fields.update(obj)
+    def _extract_fields(self, base):
 
-        for name, obj in attrs.items():
+        cls = self.cls
+        _fields = {}
+
+        for name, obj in vars(base).items():
+
+            # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
-                fields[name] = obj
+                delattr(cls, name)
+                _fields.update({name: obj})
+            elif name == 'declared_fields':
+                _fields.update(obj)
 
-        new.declared_fields = OrderedDict(
-            sorted(fields.items(), key=lambda o: o[1]._creation_order))
+        cls.declared_fields = OrderedDict(
+            sorted(_fields.items(), key=lambda o: o[1]._creation_order))
 
-        return new
+    def _extract_roles(self, base):
+
+        cls = self.cls
+
+        if base is cls:
+            cls.__roles__ = self.dict.get('__roles__') or {}
+            if (self.dict
+                and '__roles__' in self.dict
+                and self.dict['__roles__'] is not None
+                    and '__default__' in self.dict['__roles__']):
+
+                cls.__roles__['__default__'] = \
+                    self.dict['__roles__']['__default__']
+            else:
+                cls.__roles__['__default__'] = cls.declared_fields.keys()
 
 
-class Mapper(with_metaclass(MapperMetaType, object)):
+class MapperMeta(type):
+
+    def __init__(cls, classname, bases, dict_):
+        _MapperConfig.setup_mapping(cls, classname, dict_)
+        type.__init__(cls, classname, bases, dict_)
+
+
+class Mapper(with_metaclass(MapperMeta, object)):
     """Mappers are the building blocks of Kim - they define how JSON output
     should look and how input JSON should be expected to look.
 
