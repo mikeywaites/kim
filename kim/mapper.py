@@ -37,7 +37,7 @@ class _MapperConfig(object):
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
-                delattr(cls, name)
+                #delattr(cls, name)
                 _fields.update({name: obj})
             elif name == 'declared_fields':
                 _fields.update(obj)
@@ -59,7 +59,7 @@ class _MapperConfig(object):
                 cls.__roles__['__default__'] = \
                     self.dict['__roles__']['__default__']
             else:
-                cls.__roles__['__default__'] = cls.declared_fields.keys()
+                cls.__roles__['__default__'] = list(cls.declared_fields.keys())
 
 
 class MapperMeta(type):
