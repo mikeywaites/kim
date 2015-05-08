@@ -59,30 +59,22 @@ class _MapperConfig(object):
         if cls.__roles__ is None:
             cls.__roles__ = {}
 
-        _roles.update(getattr(base, 'declared_roles', {}))
+        _roles.update(getattr(cls, 'declared_roles', {}))
         _roles.update(getattr(base, '__roles__', {}))
+        _roles.update(getattr(cls, '__roles__', {}))
         _roles.update(self.dict.get('__roles__') or {})
-        _roles['__default__'] = list(cls.declared_fields.keys())
+
+        if (self.dict
+            and '__roles__' in self.dict
+            and self.dict['__roles__'] is not None
+                and '__default__' in self.dict['__roles__']):
+
+            _roles['__default__'] = self.dict['__roles__']['__default__']
+        else:
+            _roles['__default__'] = list(cls.declared_fields.keys())
 
         cls.declared_roles = _roles
-        if 'id_only' in _roles:
-            import ipdb; ipdb.set_trace()
-            True
         cls.__roles__ = _roles
-
-        #cls.__roles__.update(roles)
-        #if 'id_only' in cls.__roles__:
-        #    import ipdb; ipdb.set_trace()
-        #    True
-        #if (self.dict
-        #    and '__roles__' in self.dict
-        #    and self.dict['__roles__'] is not None
-        #        and '__default__' in self.dict['__roles__']):
-
-        #    cls.__roles__['__default__'] = \
-        #        self.dict['__roles__']['__default__']
-        #else:
-        #    cls.__roles__['__default__'] = list(cls.declared_fields.keys())
 
 
 class MapperMeta(type):

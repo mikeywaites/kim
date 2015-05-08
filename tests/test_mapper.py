@@ -154,6 +154,7 @@ def test_inherit_parent_roles():
         name = TestField()
 
         __roles__ = {
+            'parent': ['name'],
             'overview': ['id', 'name']
         }
 
@@ -166,8 +167,12 @@ def test_inherit_parent_roles():
         }
 
     mapper = Child()
-    import ipdb; ipdb.set_trace()
-    assert mapper.__roles__ == {}
+    assert mapper.__roles__ == {
+        '__default__': ['id', 'name'],
+        'overview': ['name', ],
+        'parent': ['name', ],
+        'id_only': ['id', ],
+    }
 
 
 def test_new_mapper_sets_roles():
@@ -203,5 +208,6 @@ def test_new_mapper_sets_roles():
     mapper = OtherMapper()
     assert mapper.__roles__ == {
         '__default__': ['id', 'name', 'email'],
+        'overview': ['email'],
         'private': ['id', ]
     }
