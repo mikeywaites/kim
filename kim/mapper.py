@@ -41,13 +41,12 @@ class _MapperConfig(object):
         cls = self.cls
         _fields = {}
 
+        _fields.update(getattr(base, 'declared_fields', {}))
         for name, obj in vars(base).items():
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
                 _fields.update({name: obj})
-            elif name == 'declared_fields':
-                _fields.update(obj)
 
         cls.declared_fields = OrderedDict(
             sorted(_fields.items(), key=lambda o: o[1]._creation_order))
