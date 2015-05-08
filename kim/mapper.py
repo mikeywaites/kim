@@ -56,13 +56,11 @@ class _MapperConfig(object):
         cls = self.cls
 
         _roles = {}
-        if cls.__roles__ is None:
-            cls.__roles__ = {}
 
-        _roles.update(getattr(cls, 'declared_roles', {}))
-        _roles.update(getattr(base, '__roles__', {}))
-        _roles.update(getattr(cls, '__roles__', {}))
-        _roles.update(self.dict.get('__roles__') or {})
+        _roles.update(getattr(cls, 'declared_roles', None) or {})
+        _roles.update(getattr(base, '__roles__', None) or {})
+        _roles.update(getattr(cls, '__roles__', None) or {})
+        _roles.update(self.dict.get('__roles__', None) or {})
 
         if (self.dict
             and '__roles__' in self.dict
