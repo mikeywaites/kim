@@ -135,7 +135,7 @@ def test_override_default_role():
         }
 
     mapper = MapperBase()
-    assert mapper.__roles__ == {'__default__': ['id', ]}
+    assert mapper.declared_roles == {'__default__': ['id', ]}
 
 
 def test_inherit_parent_roles():
@@ -167,7 +167,7 @@ def test_inherit_parent_roles():
         }
 
     mapper = Child()
-    assert mapper.__roles__ == {
+    assert mapper.declared_roles == {
         '__default__': ['id', 'name'],
         'overview': ['name', ],
         'parent': ['name', ],
@@ -199,14 +199,15 @@ def test_new_mapper_sets_roles():
         }
 
     mapper = MapperBase()
-    assert mapper.__roles__ == {'__default__': ['id', 'name']}
+    assert mapper.declared_roles == {'__default__': ['id', 'name']}
 
     mapper = MyMapper()
-    assert mapper.__roles__ == {'overview': ['email', ],
-                                '__default__': ['id', 'name', 'email']}
+    assert mapper.declared_roles == {
+        'overview': ['email', ],
+        '__default__': ['id', 'name', 'email']}
 
     mapper = OtherMapper()
-    assert mapper.__roles__ == {
+    assert mapper.declared_roles == {
         '__default__': ['id', 'name', 'email'],
         'overview': ['email'],
         'private': ['id', ]

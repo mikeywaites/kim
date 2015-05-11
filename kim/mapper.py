@@ -21,12 +21,18 @@ class _MapperConfig(object):
 
     def __init__(self, cls_, classname, dict_):
 
-        self.cls = cls_
         self.dict = dict_
+        self.cls = cls_
+        if self.cls.__roles__ is None:
+            self.cls.__roles__ = {}
 
         for base in reversed(self.cls.__mro__):
             self._extract_fields(base)
             self._extract_roles(base)
+
+        if '__default__' not in self.cls.__roles__:
+            self.cls.declared_roles['__default__'] = \
+                list(self.cls.declared_fields.keys())
 
         self._remove_fields()
 
@@ -56,23 +62,10 @@ class _MapperConfig(object):
         cls = self.cls
 
         _roles = {}
-
         _roles.update(getattr(cls, 'declared_roles', None) or {})
         _roles.update(getattr(base, '__roles__', None) or {})
-        _roles.update(getattr(cls, '__roles__', None) or {})
-        _roles.update(self.dict.get('__roles__', None) or {})
-
-        if (self.dict
-            and '__roles__' in self.dict
-            and self.dict['__roles__'] is not None
-                and '__default__' in self.dict['__roles__']):
-
-            _roles['__default__'] = self.dict['__roles__']['__default__']
-        else:
-            _roles['__default__'] = list(cls.declared_fields.keys())
 
         cls.declared_roles = _roles
-        cls.__roles__ = _roles
 
 
 class MapperMeta(type):
