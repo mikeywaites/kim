@@ -23,13 +23,14 @@ class _MapperConfig(object):
 
         self.dict = dict_
         self.cls = cls_
-        if self.cls.__roles__ is None:
-            self.cls.__roles__ = {}
 
         for base in reversed(self.cls.__mro__):
             self._extract_fields(base)
             self._extract_roles(base)
 
+        # If a __default__ role is found in the cls.__roles__ property, assume
+        # the user is looking to override the default role and dont create one
+        # here.
         if '__default__' not in self.cls.__roles__:
             self.cls.declared_roles['__default__'] = \
                 list(self.cls.declared_fields.keys())
@@ -37,12 +38,24 @@ class _MapperConfig(object):
         self._remove_fields()
 
     def _remove_fields(self):
+        """Cycle through the list of ``declared_fields`` and remove those
+        fields as attrs from the new cls being generated
+
+        :returns: None
+        """
 
         for name in self.cls.declared_fields.keys():
             if getattr(self.cls, name, None):
                 delattr(self.cls, name)
 
     def _extract_fields(self, base):
+        """Cycle over attrs declared on ``base`` searching for a types that
+        inherit from :py:class:``.Field``.  If a field type is found, store
+        it inside ``declared_fields``.
+
+        :param base: Current class from the MRO.
+        :returns: None
+        """
 
         cls = self.cls
         _fields = {}
@@ -58,6 +71,17 @@ class _MapperConfig(object):
             sorted(_fields.items(), key=lambda o: o[1]._creation_order))
 
     def _extract_roles(self, base):
+        """update ``decalred_roles`` with any roles defined previously in
+        the MRO and add any roles defined on the current
+        ``base`` being iterated.
+
+        Each base iterated in the MRO overwrites ``declared_roles`` allowing
+        users to inherit and override roles all the way up the inheritance
+        chain.
+
+        :param base: Current class from the MRO.
+        :returns: None
+        """
 
         cls = self.cls
 
@@ -99,7 +123,7 @@ class Mapper(with_metaclass(MapperMeta, object)):
     """
 
     __type__ = None
-    __roles__ = None
+    __roles__ = {}
 
     def get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
