@@ -63,7 +63,7 @@ class Role(set):
 
         elif not self.whitelist and other.whitelist:
             # Same as above, except we are keeping the fields from other
-            result = other - self
+            result = other.__sub__(self)
 
         else:  # both roles are blacklist, union them and set whitelist=False
             whitelist = False
