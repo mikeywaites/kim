@@ -5,6 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from kim.exception import RoleError
+
 
 class Role(set):
 
