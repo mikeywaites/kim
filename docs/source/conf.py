@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# kim documentation build configuration file, created by
-# sphinx-quickstart on Sat Mar 21 11:32:55 2015.
+# Kim documentation build configuration file, created by
+# sphinx-quickstart on Fri May 15 15:12:15 2015.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -32,7 +32,6 @@ import sphinx_bootstrap_theme
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.ifconfig',
 ]
@@ -52,9 +51,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'kim'
-copyright = '2015, Mike Waites, Jack Saunders'
-author = 'Mike Waites, Jack Saunders'
+project = 'Kim'
+copyright = '2015, Mike Waites Jack Saunders'
+author = 'Mike Waites Jack Saunders'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -115,7 +114,6 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -125,7 +123,7 @@ html_theme_options = {
     'navbar_title': "Kim",
 
     # Tab name for entire site. (Default: "Site")
-    'navbar_site_name': "Kim",
+    'navbar_site_name': "docs",
 
     # A list of tuples containing pages or urls to link to.
     # Valid tuples should be in the following forms:
@@ -134,23 +132,20 @@ html_theme_options = {
     #    (name, "http://example.com", True) # arbitrary absolute url
     # Note the "1" or "True" value above as the third argument to indicate
     # an arbitrary url.
-    'navbar_links': [
-        ("Examples", "examples"),
-        ("Link", "http://example.com", True),
-    ],
+    'navbar_links': [],
 
     # Render the next and previous page links in navbar. (Default: true)
-    'navbar_sidebarrel': True,
+    'navbar_sidebarrel': False,
 
     # Render the current pages TOC in the navbar. (Default: true)
-    'navbar_pagenav': True,
+    'navbar_pagenav': False,
 
     # Tab name for the current pages TOC. (Default: "Page")
     'navbar_pagenav_name': "Page",
 
     # Global TOC depth for "site" navbar tab. (Default: 1)
     # Switching to -1 shows all levels.
-    'globaltoc_depth': 2,
+    'globaltoc_depth': 1,
 
     # Include hidden TOCs in Site navbar?
     #
@@ -163,7 +158,7 @@ html_theme_options = {
 
     # HTML navbar class (Default: "navbar") to attach to <div> element.
     # For black navbar, do "navbar navbar-inverse"
-    'navbar_class': "navbar navbar-inverse",
+    'navbar_class': "navbar",
 
     # Fix navigation bar to top of page?
     # Values: "true" (default) or "false"
@@ -171,18 +166,22 @@ html_theme_options = {
 
     # Location of link to source.
     # Options are "nav" (default), "footer" or anything else to exclude.
-    'source_link_position': "nav",
+    'source_link_position': "",
 
     # Bootswatch (http://bootswatch.com/) theme.
     #
     # Options are nothing (default) or the name of a valid theme
     # such as "amelia" or "cosmo".
-    'bootswatch_theme': "united",
+    'bootswatch_theme': "flatly",
 
     # Choose Bootstrap version.
     # Values: "3" (default) or "2" (in quotes)
     'bootstrap_version': "3",
 }
+
+# Add any paths that contain custom themes here, relative to this directory.
+html_theme_path = ['_templates']
+html_theme_path.append(sphinx_bootstrap_theme.get_html_theme_path()[0])
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -220,6 +219,7 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
+html_sidebars = {'**': ['sidebar.html']}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -266,7 +266,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'kimdoc'
+htmlhelp_basename = 'Kimdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -288,8 +288,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'kim.tex', 'kim Documentation',
-   'Mike Waites, Jack Saunders', 'manual'),
+  (master_doc, 'Kim.tex', 'Kim Documentation',
+   'Mike Waites Jack Saunders', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -318,7 +318,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'kim', 'kim Documentation',
+    (master_doc, 'kim', 'Kim Documentation',
      [author], 1)
 ]
 
@@ -332,8 +332,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'kim', 'kim Documentation',
-   author, 'kim', 'One line description of project.',
+  (master_doc, 'Kim', 'Kim Documentation',
+   author, 'Kim', 'One line description of project.',
    'Miscellaneous'),
 ]
 

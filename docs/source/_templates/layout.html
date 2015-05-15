@@ -1,0 +1,12 @@
+{# Import the theme's layout. #}
+{% extends "!layout.html" %}
+{% set bootswatch_css_custom = ['_static/kim.css'] %}
+
+
+{% block content %}
+<div class="alert alert-dismissible alert-warning">
+  <button type="button" class="close" data-dismiss="alert">×</button>
+  <p class="text-center"><strong>This Package is undder development</strong>It is currently used in production but the API is currently subject to changes so users should use this package with caution.</p>
+</div>
+{{ super() }}
+{% endblock %}
