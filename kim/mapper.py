@@ -32,26 +32,26 @@ class _MapperConfig(object):
         # the user is looking to override the default role and dont create one
         # here.
         if '__default__' not in self.cls.__roles__:
-            self.cls.declared_roles['__default__'] = \
-                list(self.cls.declared_fields.keys())
+            self.cls.roles['__default__'] = \
+                list(self.cls.fields.keys())
 
         self._remove_fields()
 
     def _remove_fields(self):
-        """Cycle through the list of ``declared_fields`` and remove those
+        """Cycle through the list of ``fields`` and remove those
         fields as attrs from the new cls being generated
 
         :returns: None
         """
 
-        for name in self.cls.declared_fields.keys():
+        for name in self.cls.fields.keys():
             if getattr(self.cls, name, None):
                 delattr(self.cls, name)
 
     def _extract_fields(self, base):
         """Cycle over attrs declared on ``base`` searching for a types that
         inherit from :py:class:``.Field``.  If a field type is found, store
-        it inside ``declared_fields``.
+        it inside ``fields``.
 
         :param base: Current class from the MRO.
         :returns: None
@@ -60,22 +60,22 @@ class _MapperConfig(object):
         cls = self.cls
         _fields = {}
 
-        _fields.update(getattr(base, 'declared_fields', {}))
+        _fields.update(getattr(base, 'fields', {}))
         for name, obj in vars(base).items():
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
                 _fields.update({name: obj})
 
-        cls.declared_fields = OrderedDict(
+        cls.fields = OrderedDict(
             sorted(_fields.items(), key=lambda o: o[1]._creation_order))
 
     def _extract_roles(self, base):
-        """update ``decalred_roles`` with any roles defined previously in
+        """update ``roles`` with any roles defined previously in
         the MRO and add any roles defined on the current
         ``base`` being iterated.
 
-        Each base iterated in the MRO overwrites ``declared_roles`` allowing
+        Each base iterated in the MRO overwrites ``roles`` allowing
         users to inherit and override roles all the way up the inheritance
         chain.
 
@@ -86,10 +86,10 @@ class _MapperConfig(object):
         cls = self.cls
 
         _roles = {}
-        _roles.update(getattr(cls, 'declared_roles', None) or {})
+        _roles.update(getattr(cls, 'roles', None) or {})
         _roles.update(getattr(base, '__roles__', None) or {})
 
-        cls.declared_roles = _roles
+        cls.roles = _roles
 
 
 class MapperMeta(type):

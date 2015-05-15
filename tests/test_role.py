@@ -1,4 +1,4 @@
-from kim.role import Role, whitelist, blacklist
+from kim.role import whitelist, blacklist
 
 
 def test_whitelist_membership():

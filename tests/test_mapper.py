@@ -13,7 +13,7 @@ class TestField(Field):
     pass
 
 
-def test_mapper_sets_declared_fields():
+def test_mapper_sets_fields():
     """Ensure that on attributes inheriting from :class:`kim.fields.Field`
     are set in a mappers fields.
     """
@@ -26,9 +26,9 @@ def test_mapper_sets_declared_fields():
         other = 'not a field'
 
     mapper_with_fields = MyTestMapper()
-    assert 'name' in mapper_with_fields.declared_fields
-    assert isinstance(mapper_with_fields.declared_fields['name'], TestField)
-    assert 'other' not in mapper_with_fields.declared_fields
+    assert 'name' in mapper_with_fields.fields
+    assert isinstance(mapper_with_fields.fields['name'], TestField)
+    assert 'other' not in mapper_with_fields.fields
     assert not getattr(mapper_with_fields, 'name', False)
 
 
@@ -66,16 +66,16 @@ def test_mapper_inheritance():
     mapper = MapperBase()
     other_mapper = NewMapper()
 
-    assert len(mapper.declared_fields.keys()) == 2
-    assert 'id' in mapper.declared_fields
-    assert 'name' in mapper.declared_fields
+    assert len(mapper.fields.keys()) == 2
+    assert 'id' in mapper.fields
+    assert 'name' in mapper.fields
 
-    assert len(other_mapper.declared_fields.keys()) == 3
-    assert 'id' in other_mapper.declared_fields
-    assert 'name' in other_mapper.declared_fields
-    assert 'additional_field' in other_mapper.declared_fields
+    assert len(other_mapper.fields.keys()) == 3
+    assert 'id' in other_mapper.fields
+    assert 'name' in other_mapper.fields
+    assert 'additional_field' in other_mapper.fields
 
-    assert isinstance(other_mapper.declared_fields['id'], OtherField)
+    assert isinstance(other_mapper.fields['id'], OtherField)
 
 
 def test_get_mapper_type():
@@ -115,10 +115,10 @@ def test_order_of_fields():
         id._creation_order = 999
 
     mapper = MyMapper()
-    assert ['id', 'name', 'email'] == list(mapper.declared_fields.keys())
+    assert ['id', 'name', 'email'] == list(mapper.fields.keys())
 
     mapper = ThirdMapper()
-    assert ['name', 'email', 'id'] == list(mapper.declared_fields.keys())
+    assert ['name', 'email', 'id'] == list(mapper.fields.keys())
 
 
 def test_override_default_role():
@@ -135,7 +135,7 @@ def test_override_default_role():
         }
 
     mapper = MapperBase()
-    assert mapper.declared_roles == {'__default__': ['id', ]}
+    assert mapper.roles == {'__default__': ['id', ]}
 
 
 def test_inherit_parent_roles():
@@ -167,7 +167,7 @@ def test_inherit_parent_roles():
         }
 
     mapper = Child()
-    assert mapper.declared_roles == {
+    assert mapper.roles == {
         '__default__': ['id', 'name'],
         'overview': ['name', ],
         'parent': ['name', ],
@@ -199,15 +199,15 @@ def test_new_mapper_sets_roles():
         }
 
     mapper = MapperBase()
-    assert mapper.declared_roles == {'__default__': ['id', 'name']}
+    assert mapper.roles == {'__default__': ['id', 'name']}
 
     mapper = MyMapper()
-    assert mapper.declared_roles == {
+    assert mapper.roles == {
         'overview': ['email', ],
         '__default__': ['id', 'name', 'email']}
 
     mapper = OtherMapper()
-    assert mapper.declared_roles == {
+    assert mapper.roles == {
         '__default__': ['id', 'name', 'email'],
         'overview': ['email'],
         'private': ['id', ]
