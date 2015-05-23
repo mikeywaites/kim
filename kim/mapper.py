@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 from .exception import MapperError
 from .fields import Field
+from .role import whitelist
 
 
 class _MapperConfig(object):
@@ -33,7 +34,7 @@ class _MapperConfig(object):
         # here.
         if '__default__' not in self.cls.__roles__:
             self.cls.roles['__default__'] = \
-                list(self.cls.fields.keys())
+                whitelist(*self.cls.fields.keys())
 
         self._remove_fields()
 

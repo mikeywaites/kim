@@ -3,6 +3,7 @@ import pytest
 from kim.exception import MapperError
 from kim.mapper import Mapper
 from kim.fields import Field
+from kim.role import whitelist
 
 
 class TestType(object):
@@ -131,11 +132,11 @@ def test_override_default_role():
         name = TestField()
 
         __roles__ = {
-            '__default__': ['id', ]
+            '__default__': whitelist('id', )
         }
 
     mapper = MapperBase()
-    assert mapper.roles == {'__default__': ['id', ]}
+    assert mapper.roles == {'__default__': whitelist('id', )}
 
 
 def test_inherit_parent_roles():
@@ -168,7 +169,7 @@ def test_inherit_parent_roles():
 
     mapper = Child()
     assert mapper.roles == {
-        '__default__': ['id', 'name'],
+        '__default__': whitelist('id', 'name'),
         'overview': ['name', ],
         'parent': ['name', ],
         'id_only': ['id', ],
@@ -199,16 +200,16 @@ def test_new_mapper_sets_roles():
         }
 
     mapper = MapperBase()
-    assert mapper.roles == {'__default__': ['id', 'name']}
+    assert mapper.roles == {'__default__': whitelist('id', 'name')}
 
     mapper = MyMapper()
     assert mapper.roles == {
         'overview': ['email', ],
-        '__default__': ['id', 'name', 'email']}
+        '__default__': whitelist('id', 'name', 'email')}
 
     mapper = OtherMapper()
     assert mapper.roles == {
-        '__default__': ['id', 'name', 'email'],
+        '__default__': whitelist('id', 'name', 'email'),
         'overview': ['email'],
         'private': ['id', ]
     }
