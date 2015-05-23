@@ -8,7 +8,11 @@
    :maxdepth: 1
 
    installation
+   mapper
    roles
+
+
+Kim is a framework for orchestrating the structure and flow of JSON data in to and out of your REST API.
 
 
 **1** :ref:`Install kim <installation>` via pip
