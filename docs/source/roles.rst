@@ -1,5 +1,6 @@
 .. _roles:
 
+=========
 Roles
 =========
 
@@ -8,7 +9,7 @@ to shape their data at runtime in in a simple yet powerfuly flexible manor.
 
 
 Defining roles
-~~~~~~~~~~~~~~~
+------------------
 
 ``Roles`` are added to to your :py:class:`~.Mapper` declarations using the ``__roles__`` attribute.
 
@@ -30,9 +31,9 @@ Defining roles
 
 As you can see from the example above, __roles__ is simply defined as a dict of role name and ``Role`` key value pairs.
 There are two types of roles available. :ref:`whitelists <whitelist>` define a role that allows any of the fields specified to be inlcuded when marshaling or serializing.
-:ref:`blacklists <blacklist>` define a role of fields that should that excluded when marshaling or serializing.
+:ref:`blacklists <blacklist>` define a role of fields that should be excluded when marshaling or serializing.
 
-roles can be defined using any iterable that supports membership tests ie, lists or tuples.  The base implementation of the Role class is recommened as it provides access to more
+Roles can be defined using any iterable that supports membership tests ie, lists or tuples.  The base implementation of the Role class is recommened as it provides access to more
 advanced features such as merging roles together.
 
 .. note:: :py:class:`.Role` is actually a subclass of set which provides us with the api required to union roles together.
@@ -41,7 +42,7 @@ advanced features such as merging roles together.
 .. _default_role:
 
 Default roles
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 Mappers also create a special default role that by default generates a :ref:`whitelists <whitelist>` role that contains all the declared fields from the mapper.
 The default role will be used when serializing or marshaling and a role has not been explicitly provided.
 
@@ -93,19 +94,62 @@ Users may override the __default__ role for a mapper by specifying __default__ i
 .. _whitelist:
 
 Whitelists
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
+
+Whitelists are roles that define a list of fields that are permitted for inclusion when marhsaling or serializing.
+For example, a whitelist role called ``id_only`` that contains the field name ``id`` instructs kim that whenever
+the ``id_only`` role is used **only** the ``id`` field should be considered in the input/output data.
+
+.. code-block:: python
+
+    from kim import whitelist
+
+    id_only_role = whitelist('id')
+
+    class IdMixin(object):
+
+        id = fields.Integer(read_only=True)
+
+        __roles__ = {
+            'id_only': id_only
+        }
+
+
+    class UserMapper(Mapper, IdMixin):
+        pass
 
 
 .. _blacklist:
 
 Blacklists
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
+
+Blacklists are role that act in the opposite manner to whitelists.  They define a list of fields that should not be used when marshaling and serializing data.  A blacklist role named ``id_less``
+that contained the field name ``id`` would instruct kim that every field defined on the mapper should be considered except ``id``.
+
+
+.. code-block:: python
+
+    from kim import whitelist
+
+    class UserMapper(Mapper):
+
+        id_less_role = blacklist('id')
+
+        __roles__ = {
+            'id_less': blacklist('id')
+        }
+
+
+.. note:: Internally kim overloads the built-in method __contains__ of set and reverses the statement for a blacklist.
+
+          ``email in blacklist('email')`` would return false in this case as email should be excluded.
 
 
 .. _parent:
 
 Roles and inheritance.
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Roles automatically inherit all roles defined in parent classes and even from mixins.
 
@@ -143,7 +187,7 @@ defined as normal.
 .. _merge:
 
 Merging and combining roles.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Roles can be combined together using the union bitwise operator similar to producing the union of sets in python.  The key difference with roles is that :ref:`whitelist <whitelist>` and :ref:`blacklist <blacklist>`, when combined, act as you might expect.
 
@@ -156,3 +200,19 @@ Roles can be combined together using the union bitwise operator similar to produ
     # Combine a whitelist and blacklist role together
     >>> whitelist('id', 'name') | blacklist('name')
     Role('id')
+
+
+Using roles
+------------------
+
+We have covered how roles are declared against mappers, the following examples explain how roles are used.
+
+
+Marshalling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TODO
+
+
+Serializing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TODO
