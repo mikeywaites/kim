@@ -5,13 +5,13 @@ Roles
 =========
 
 Roles are a fundamental feature of Kim.  Its very common to need to provide a different view of the data or to require a selection of fields when accepting data.  ``Roles`` in Kim allow users
-to shape their data at runtime in in a simple yet powerfuly flexible manor.
+to shape their data at runtime in a simple yet powerfuly flexible manor.
 
 
 Defining roles
 ------------------
 
-``Roles`` are added to to your :py:class:`~.Mapper` declarations using the ``__roles__`` attribute.
+``Roles`` are added to your :py:class:`~.Mapper` declarations using the ``__roles__`` attribute.
 
 .. code-block:: python
 
@@ -34,7 +34,7 @@ There are two types of roles available. :ref:`whitelists <whitelist>` define a r
 :ref:`blacklists <blacklist>` define a role of fields that should be excluded when marshaling or serializing.
 
 Roles can be defined using any iterable that supports membership tests ie, lists or tuples.  The base implementation of the Role class is recommened as it provides access to more
-advanced features such as merging roles together.
+advanced features such as intuitively merging roles together.
 
 .. note:: :py:class:`.Role` is actually a subclass of set which provides us with the api required to union roles together.
 
@@ -151,7 +151,7 @@ that contained the field name ``id`` would instruct kim that every field defined
 Roles and inheritance.
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Roles automatically inherit all roles defined in parent classes and even from mixins.
+Mappers automatically inherit all roles defined in parent classes and even from mixins.
 
 .. code-block:: python
 
@@ -200,6 +200,9 @@ Roles can be combined together using the union bitwise operator similar to produ
     # Combine a whitelist and blacklist role together
     >>> whitelist('id', 'name') | blacklist('name')
     Role('id')
+
+
+Consider the following real world example.  We have a set of Mappers used to serialize 3 different types of entity exposed by our rest api.
 
 
 Using roles
