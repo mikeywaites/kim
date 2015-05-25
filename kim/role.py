@@ -9,21 +9,79 @@ from kim.exception import RoleError
 
 
 class Role(set):
+    """Roles are a fundamental feature of Kim.  Its very common to need
+    to provide a different view of your data or to only require a selection of
+    fields when marshaling data.  ``Roles`` in Kim allow users
+    to shape their data at runtime in a simple yet powerfuly flexible manor.
+
+    ``Roles`` are added to your :py:class:`~.Mapper` declarations
+    using the ``__roles__`` attribute.
+
+    .. code-block:: python
+
+        from kim import Mapper, whitelist
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = fields.Integer(read_only=True)
+            name = fields.String(required=True)
+            company = fields.Nested('myapp.mappers.CompanyMapper')
+
+            __roles__ = {
+                'id_only': whitelist('id')
+            }
+
+    """
 
     def __init__(self, *args, **kwargs):
+        """initialise a new ``Role``.
+
+        :param whitelist:  pass a boolean indicating wether this
+            role is a whitelist
+
+        """
         self.whitelist = kwargs.pop('whitelist', True)
         super(Role, self).__init__(args)
 
     @property
     def fields(self):
+        """return an iterable containing all the field names defined in this
+        role.
+
+        :rtype: list
+        :returns: iterable of field names
+        """
 
         return [k for k in self]
 
-    def __contains__(self, key):
+    def __contains__(self, field_name):
+        """overloaded membership test that inverts the check depending on
+        wether the role is a whitelist or blacklist.
+
+        If the role is defined as whitelist=True the normal membership test
+        is applied ie::
+
+            >>>'name' in whitelist('name')
+            True
+
+        For blacklist the test is flipped as we are aiming to ensure the field
+        name is not present in the role::
+
+            >>>'other_name' in blacklist('name')
+            True
+            >>>'name' in blacklist('name')
+            False
+
+        :param str field_name: name of a field to test for membership
+
+        :rtype: boolean
+        :returns: boolean indicating wether field_name is found in the role
+        """
         if self.whitelist:
-            return super(Role, self).__contains__(key)
+            return super(Role, self).__contains__(field_name)
         else:
-            return not super(Role, self).__contains__(key)
+            return not super(Role, self).__contains__(field_name)
 
     def __or__(self, other):
         """Override handling of producing the union of two Roles to provide
@@ -73,6 +131,27 @@ class Role(set):
 
 
 class whitelist(Role):
+    """ Whitelists are roles that define a list of fields that are
+    permitted for inclusion when marhsaling or serializing.
+    For example, a whitelist role called ``id_only`` that contains
+    the field name ``id`` instructs kim that whenever
+    the ``id_only`` role is used **only** the ``id`` field should be
+    considered in the input/output data.
+
+    .. code-block:: python
+
+        from kim import whitelist
+
+        id_only_role = whitelist('id')
+
+        class IdMixin(object):
+
+            id = fields.Integer(read_only=True)
+
+            __roles__ = {
+                'id_only': id_only
+            }
+    """
 
     def __init__(self, *args, **kwargs):
         self.whitelist = True
@@ -81,6 +160,24 @@ class whitelist(Role):
 
 
 class blacklist(Role):
+    """ Blacklists are role that act in the opposite manner to whitelists.
+    They define a list of fields that should not be used
+    when marshaling and serializing data.  A blacklist role named ``id_less``
+    that contained the field name ``id`` would instruct kim that every
+    field defined on the mapper should be considered except ``id``.
+
+    .. code-block:: python
+
+        from kim import whitelist
+
+        class UserMapper(Mapper):
+
+            id_less_role = blacklist('id')
+
+            __roles__ = {
+                'id_less': blacklist('id')
+            }
+    """
 
     def __init__(self, *args, **kwargs):
         kwargs['whitelist'] = False
