@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 from .exception import MapperError
 from .fields import Field
+from .role import whitelist
 
 
 class _MapperConfig(object):
@@ -21,51 +22,75 @@ class _MapperConfig(object):
 
     def __init__(self, cls_, classname, dict_):
 
-        self.cls = cls_
         self.dict = dict_
+        self.cls = cls_
 
         for base in reversed(self.cls.__mro__):
             self._extract_fields(base)
             self._extract_roles(base)
 
+        # If a __default__ role is found in the cls.__roles__ property, assume
+        # the user is looking to override the default role and dont create one
+        # here.
+        if '__default__' not in self.cls.__roles__:
+            self.cls.roles['__default__'] = \
+                whitelist(*self.cls.fields.keys())
+
         self._remove_fields()
 
     def _remove_fields(self):
+        """Cycle through the list of ``fields`` and remove those
+        fields as attrs from the new cls being generated
 
-        for name in self.cls.declared_fields.keys():
+        :returns: None
+        """
+
+        for name in self.cls.fields.keys():
             if getattr(self.cls, name, None):
                 delattr(self.cls, name)
 
     def _extract_fields(self, base):
+        """Cycle over attrs declared on ``base`` searching for a types that
+        inherit from :py:class:``.Field``.  If a field type is found, store
+        it inside ``fields``.
+
+        :param base: Current class from the MRO.
+        :returns: None
+        """
 
         cls = self.cls
         _fields = {}
 
-        _fields.update(getattr(base, 'declared_fields', {}))
+        _fields.update(getattr(base, 'fields', {}))
         for name, obj in vars(base).items():
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
                 _fields.update({name: obj})
 
-        cls.declared_fields = OrderedDict(
+        cls.fields = OrderedDict(
             sorted(_fields.items(), key=lambda o: o[1]._creation_order))
 
     def _extract_roles(self, base):
+        """update ``roles`` with any roles defined previously in
+        the MRO and add any roles defined on the current
+        ``base`` being iterated.
+
+        Each base iterated in the MRO overwrites ``roles`` allowing
+        users to inherit and override roles all the way up the inheritance
+        chain.
+
+        :param base: Current class from the MRO.
+        :returns: None
+        """
 
         cls = self.cls
 
-        if base is cls:
-            cls.__roles__ = self.dict.get('__roles__') or {}
-            if (self.dict
-                and '__roles__' in self.dict
-                and self.dict['__roles__'] is not None
-                    and '__default__' in self.dict['__roles__']):
+        _roles = {}
+        _roles.update(getattr(cls, 'roles', None) or {})
+        _roles.update(getattr(base, '__roles__', None) or {})
 
-                cls.__roles__['__default__'] = \
-                    self.dict['__roles__']['__default__']
-            else:
-                cls.__roles__['__default__'] = list(cls.declared_fields.keys())
+        cls.roles = _roles
 
 
 class MapperMeta(type):
@@ -99,7 +124,7 @@ class Mapper(with_metaclass(MapperMeta, object)):
     """
 
     __type__ = None
-    __roles__ = None
+    __roles__ = {}
 
     def get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is

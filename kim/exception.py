@@ -6,5 +6,13 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 
-class MapperError(Exception):
+class KimException(Exception):
+    pass
+
+
+class MapperError(KimException):
+    pass
+
+
+class RoleError(KimException):
     pass
