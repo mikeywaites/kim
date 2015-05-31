@@ -9,7 +9,7 @@ from six import with_metaclass
 from collections import OrderedDict
 
 from .exception import MapperError
-from .fields import Field
+from .field import Field
 from .role import whitelist
 
 
@@ -112,14 +112,14 @@ class Mapper(with_metaclass(MapperMeta, object)):
     maybe be any object that supports setter and getter functionality.
 
     .. code-block:: python
-        from kim import Mapper, fields
+        from kim import Mapper, field
 
         class UserMapper(Mapper):
             __type__ = User
 
-            id = fields.Integer(read_only=True)
-            name = fields.String(required=True)
-            company = fields.Nested('myapp.mappers.CompanyMapper')
+            id = field.Integer(read_only=True)
+            name = field.String(required=True)
+            company = field.Nested('myapp.mappers.CompanyMapper')
 
     """
 

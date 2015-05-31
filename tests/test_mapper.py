@@ -2,7 +2,7 @@ import pytest
 
 from kim.exception import MapperError
 from kim.mapper import Mapper
-from kim.fields import Field
+from kim.field import Field
 from kim.role import whitelist
 
 

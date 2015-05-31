@@ -1,4 +1,4 @@
-# kim/fields.py
+# kim/field.py
 # Copyright (C) 2014-2015 the Kim authors and contributors
 # <see AUTHORS file>
 #
