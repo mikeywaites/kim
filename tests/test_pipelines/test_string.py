@@ -27,3 +27,13 @@ def test_string_input():
     field = String(name='name', required=True)
     result = field.marshal({'name': 'foo', 'email': 'mike@mike.com'})
     assert result == 'foo'
+
+
+def test_string_output():
+
+    class Foo(object):
+        name = 'value'
+
+    field = String(name='name', required=True)
+    result = field.serialize(Foo())
+    assert result == 'value'
