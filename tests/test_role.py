@@ -1,4 +1,6 @@
-from kim.role import whitelist, blacklist
+import pytest
+
+from kim.role import whitelist, blacklist, RoleError
 
 
 def test_whitelist_membership():
@@ -52,3 +54,9 @@ def test_union_blacklist_and_blacklist():
     assert 'id' in role.fields
     assert 'email' in role.fields
     assert role.whitelist is False
+
+
+def test_union_of_built_in_types_not_supported():
+
+    with pytest.raises(RoleError):
+        blacklist('name', 'id') | set('name')
