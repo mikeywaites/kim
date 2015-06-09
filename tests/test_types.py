@@ -524,6 +524,13 @@ class FloatTypeTests(unittest.TestCase):
 
         self.assertEqual(result, 1.343)
 
+    def test_coerce_float(self):
+        my_type = Float()
+        result = my_type.serialize_value(int(5))
+
+        self.assertIsInstance(result, float)
+        self.assertEqual(result, 5.0)
+
 
 class DecimalTypeTests(unittest.TestCase):
 

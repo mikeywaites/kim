@@ -572,7 +572,7 @@ class Float(BaseType):
         if self.as_string:
             return str(source_value)
         else:
-            return source_value
+            return float(source_value)
 
     def marshal_value(self, source_value):
         return float(source_value)
