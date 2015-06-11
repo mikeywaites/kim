@@ -213,3 +213,19 @@ def test_new_mapper_sets_roles():
         'overview': ['email'],
         'private': ['id', ]
     }
+
+
+def test_mapper_sets_field_names():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = TestField()
+        named = TestField(name='other_name')
+        name = TestField(attribute_name='my_name')
+
+    mapper = MapperBase()
+    assert mapper.fields['id'].opts.name == 'id'
+    assert mapper.fields['name'].opts.name == 'my_name'
+    assert mapper.fields['named'].opts.name == 'other_name'

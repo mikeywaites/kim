@@ -9,7 +9,7 @@ from six import with_metaclass
 from collections import OrderedDict
 
 from .exception import MapperError
-from .field import Field
+from .field import Field, FieldError
 from .role import whitelist
 
 
@@ -66,6 +66,10 @@ class _MapperConfig(object):
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
+                try:
+                    obj.get_name()
+                except FieldError:
+                    obj.set_name(name)
                 _fields.update({name: obj})
 
         cls.fields = OrderedDict(

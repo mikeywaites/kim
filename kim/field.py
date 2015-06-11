@@ -90,6 +90,15 @@ class Field(object):
 
         return name
 
+    def set_name(self, name):
+        """Set the name of this field by setting ``Field.opts.name``.
+
+        :rtype: str
+        :returns: the name of the field to be used in input/output
+        """
+
+        self.opts.name = name
+
     def marshal(self, data):
 
         return self.input_pipe().run(self, data)
