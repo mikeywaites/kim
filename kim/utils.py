@@ -26,7 +26,7 @@ def attr_or_key(obj, name):
 
     """
 
-    try:
-        return getattr(obj, name)
-    except AttributeError:
+    if isinstance(obj, dict):
         return obj.get(name)
+    else:
+        return getattr(obj, name, None)
