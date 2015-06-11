@@ -22,7 +22,8 @@ class FieldOpts(object):
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
         self.source = opts.pop('source', None)
-        self.name = opts.pop('name', self.source)
+        self.attribute_name = opts.pop('attribute_name', None)
+        self.name = opts.pop('name', self.attribute_name)
         self.allow_none = opts.pop('allow_none', True)
 
 
@@ -73,7 +74,7 @@ class Field(object):
 
     def get_name(self):
         """Get the name of this field from ``Field.opts``.  If no valid
-        source or name is set, raise an error.
+        attribute_name or name is set, raise an error.
 
         :raises: :py:class:``~.FieldError``
         :rtype: str
@@ -84,8 +85,8 @@ class Field(object):
         if not name:
             cn = self.__class__.__name__
             raise FieldError('{0} requires {0}.name or '
-                             '{0}.source.  Please provide a `name` '
-                             'or `source` param to {0}'.format(cn))
+                             '{0}.attribute_name.  Please provide a `name` '
+                             'or `attribute_name` param to {0}'.format(cn))
 
         return name
 

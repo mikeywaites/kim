@@ -17,13 +17,13 @@ def test_field_opts_correctly_set_for_field():
     assert new_field.opts.name == 'other_field'
 
 
-def test_field_source_defaults_to_name():
+def test_field_name_defaults_to_attribute_name():
     new_field = Field(
         required=True,
         default='bar',
-        source='other_field')
+        attribute_name='other_field')
 
-    assert new_field.opts.source == 'other_field'
+    assert new_field.opts.attribute_name == 'other_field'
     assert new_field.opts.name == 'other_field'
 
 
@@ -37,16 +37,16 @@ def test_get_field_name():
         default='bar',
         name='other_field')
 
-    source_field = Field(
+    attr_field = Field(
         required=True,
         default='bar',
-        source='other_field')
+        attribute_name='other_field')
 
     with pytest.raises(FieldError):
         assert invalid_field.get_name()
 
     assert name_field.get_name() == 'other_field'
-    assert source_field.get_name() == 'other_field'
+    assert attr_field.get_name() == 'other_field'
 
 
 def test_field_invalid():
