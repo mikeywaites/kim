@@ -23,6 +23,7 @@ def test_is_valid_string_pipe():
 
 
 def test_string_input():
+    # TODO this requires fleshing out some more..
 
     field = String(name='name', required=True)
     result = field.marshal({'name': 'foo', 'email': 'mike@mike.com'})
@@ -30,6 +31,7 @@ def test_string_input():
 
 
 def test_string_output():
+    # TODO this requires fleshing out some more..
 
     class Foo(object):
         name = 'value'

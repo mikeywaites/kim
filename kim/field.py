@@ -6,7 +6,11 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 from .utils import set_creation_order
-from .pipelines import Input, Output, StringInput, StringOutput
+from .pipelines import (
+    Input, Output,
+    StringInput, StringOutput,
+    IntegerInput, IntegerOutput
+)
 
 
 class FieldError(Exception):
@@ -112,3 +116,9 @@ class String(Field):
 
     input_pipe = StringInput
     output_pipe = StringOutput
+
+
+class Integer(Field):
+
+    input_pipe = IntegerInput
+    output_pipe = IntegerOutput
