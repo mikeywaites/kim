@@ -27,7 +27,7 @@ def test_string_input():
 
     field = String(name='name', required=True)
     result = field.marshal({'name': 'foo', 'email': 'mike@mike.com'})
-    assert result == 'foo'
+    assert result == {'name': 'foo'}
 
 
 def test_string_output():
@@ -38,4 +38,4 @@ def test_string_output():
 
     field = String(name='name', required=True)
     result = field.serialize(Foo())
-    assert result == 'value'
+    assert result == {'name': 'value'}

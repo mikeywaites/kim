@@ -105,11 +105,13 @@ class Field(object):
 
     def marshal(self, data):
 
-        return self.input_pipe().run(self, data)
+        output = {}
+        return self.input_pipe().run(self, data, output)
 
     def serialize(self, obj):
 
-        return self.output_pipe().run(self, obj)
+        output = {}
+        return self.output_pipe().run(self, obj, output)
 
 
 class String(Field):

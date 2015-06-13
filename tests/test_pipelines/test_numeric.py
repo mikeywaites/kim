@@ -29,14 +29,14 @@ def test_integer_input():
         field.marshal({'name': 'foo', 'email': 'mike@mike.com'})
 
     result = field.marshal({'name': 2, 'email': 'mike@mike.com'})
-    assert result == 2
+    assert result == {'name': 2}
 
 
 def test_integer_output():
 
     class Foo(object):
-        name = 'value'
+        name = 2
 
     field = Integer(name='name', required=True)
     result = field.serialize(Foo())
-    assert result == 'value'
+    assert result == {'name': 2}

@@ -5,7 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import Input, Output, get_data_from_source
+from .base import Input, Output, get_data_from_source, update_output
 
 
 def is_valid_integer(field, data):
@@ -23,14 +23,22 @@ def is_valid_integer(field, data):
 
 class IntegerInput(Input):
 
-    pipes = [
+    input_pipes = [
         get_data_from_source,
+    ]
+    validation_pipes = [
         is_valid_integer
+    ]
+    output_pipes = [
+        update_output,
     ]
 
 
 class IntegerOutput(Output):
 
-    pipes = [
+    input_pipes = [
         get_data_from_source,
+    ]
+    output_pipes = [
+        update_output,
     ]

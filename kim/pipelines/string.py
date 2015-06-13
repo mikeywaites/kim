@@ -5,7 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import Input, Output, get_data_from_source
+from .base import Input, Output, get_data_from_source, update_output
 
 
 def is_valid_string(field, data):
@@ -23,14 +23,22 @@ def is_valid_string(field, data):
 
 class StringInput(Input):
 
-    pipes = [
+    input_pipes = [
         get_data_from_source,
-        is_valid_string
+    ]
+    validation_pipes = [
+        is_valid_string,
+    ]
+    output_pipes = [
+        update_output,
     ]
 
 
 class StringOutput(Output):
 
-    pipes = [
+    input_pipes = [
         get_data_from_source,
+    ]
+    output_pipes = [
+        update_output,
     ]
