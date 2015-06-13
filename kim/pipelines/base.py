@@ -8,15 +8,6 @@
 from kim.utils import attr_or_key
 
 
-def _run_pipeline(pipes, field, data):
-    _data = data
-    for func in pipes:
-
-        _data = func(field, _data)
-
-    return _data
-
-
 class Pipeline(object):
     """Pipelines provide a simple, extensible way of processing data.  Each
     pipeline provides 4 input groups, ``input_pipes``, ``validation_pipes``,
