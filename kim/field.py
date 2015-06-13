@@ -103,15 +103,13 @@ class Field(object):
 
         self.opts.name = name
 
-    def marshal(self, data):
+    def marshal(self, data, output):
 
-        output = {}
-        return self.input_pipe().run(self, data, output)
+        self.input_pipe().run(self, data, output)
 
-    def serialize(self, obj):
+    def serialize(self, obj, output):
 
-        output = {}
-        return self.output_pipe().run(self, obj, output)
+        self.output_pipe().run(self, obj, output)
 
 
 class String(Field):
