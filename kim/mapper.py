@@ -5,7 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from six import with_metaclass
+from six import with_metaclass, iteritems
 from collections import OrderedDict
 
 from .exception import MapperError
@@ -130,7 +130,26 @@ class Mapper(with_metaclass(MapperMeta, object)):
     __type__ = None
     __roles__ = {}
 
-    def get_mapper_type(self):
+    def __init__(self, obj=None, data=None):
+        """Initialise a Mapper with the object and/or the data to be
+        serialzed/marshaled. Mappers must be instantiated once per object/data.
+        At least one of obj or data must be passed.
+
+        :param obj: the object to be serialized, or updated by marshaling
+        :param data: input data to be used for marshaling
+        :raises: :class:`.MapperError`
+        :returns: None
+        """
+
+        if obj is None and data is None:
+            raise MapperError(
+                'At least one of obj or data must be passed to %s()'
+                % self.__class__.__name__)
+
+        self.obj = obj
+        self.data = data
+
+    def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
         defined a :class:`.MapperError` is raised
 
@@ -143,3 +162,41 @@ class Mapper(with_metaclass(MapperMeta, object)):
                 '%s must define a __type__' % self.__class__.__name__)
 
         return self.__type__
+
+    def _get_obj(self):
+        """Return ``self.obj`` or create a new instance of ``self.__type__``
+
+        :returns: ``self.obj`` or new instance of ``self.__type__``
+        """
+        if self.obj is not None:
+            return self.obj
+        else:
+            return self._get_mapper_type()()
+
+    def serialize(self):
+        """Serialize ``self.obj`` into a dict according to the fields
+        defined on this Mapper.
+
+        :returns: dict containing serialized object
+        """
+
+        output = {}  # Should this be user definable?
+
+        for _, field in iteritems(self.fields):
+            field.serialize(self.obj, output)
+
+        return output
+
+    def marshal(self):
+        """Marshal ``self.data`` into ``self.obj`` according to the fields
+        defined on this Mapper.
+
+        :returns: Object of ``__type__`` populated with data
+        """
+
+        output = self._get_obj()
+
+        for _, field in iteritems(self.fields):
+            field.marshal(self.data, output)
+
+        return output

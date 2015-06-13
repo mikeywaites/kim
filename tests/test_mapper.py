@@ -2,12 +2,14 @@ import pytest
 
 from kim.exception import MapperError
 from kim.mapper import Mapper
-from kim.field import Field
+from kim.field import Field, String, Integer
 from kim.role import whitelist
 
 
 class TestType(object):
-    pass
+    def __init__(self, *args, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class TestField(Field):
@@ -26,7 +28,7 @@ def test_mapper_sets_fields():
         name = TestField()
         other = 'not a field'
 
-    mapper_with_fields = MyTestMapper()
+    mapper_with_fields = MyTestMapper(data={})
     assert 'name' in mapper_with_fields.fields
     assert isinstance(mapper_with_fields.fields['name'], TestField)
     assert 'other' not in mapper_with_fields.fields
@@ -38,9 +40,9 @@ def test_mapper_must_define_mapper_type():
     fails to set its __type__ attr.
     """
 
-    mapper = Mapper()
+    mapper = Mapper(data={})
     with pytest.raises(MapperError):
-        mapper.get_mapper_type()
+        mapper._get_mapper_type()
 
 
 def test_mapper_inheritance():
@@ -64,8 +66,8 @@ def test_mapper_inheritance():
         id = OtherField()
         additional_field = TestField()
 
-    mapper = MapperBase()
-    other_mapper = NewMapper()
+    mapper = MapperBase(data={})
+    other_mapper = NewMapper(data={})
 
     assert len(mapper.fields.keys()) == 2
     assert 'id' in mapper.fields
@@ -81,7 +83,7 @@ def test_mapper_inheritance():
 
 def test_get_mapper_type():
     """ensure the correct object is returned when acessing the Mapper.__type__
-    via :meth:``get_mapper_type``
+    via :meth:``_get_mapper_type``
     """
 
     class MapperBase(Mapper):
@@ -90,8 +92,8 @@ def test_get_mapper_type():
 
         id = TestField()
 
-    mapper = MapperBase()
-    assert mapper.get_mapper_type() == TestType
+    mapper = MapperBase(data={})
+    assert mapper._get_mapper_type() == TestType
 
 
 def test_order_of_fields():
@@ -115,10 +117,10 @@ def test_order_of_fields():
         id = TestField()
         id._creation_order = 999
 
-    mapper = MyMapper()
+    mapper = MyMapper(data={})
     assert ['id', 'name', 'email'] == list(mapper.fields.keys())
 
-    mapper = ThirdMapper()
+    mapper = ThirdMapper(data={})
     assert ['name', 'email', 'id'] == list(mapper.fields.keys())
 
 
@@ -135,7 +137,7 @@ def test_override_default_role():
             '__default__': whitelist('id', )
         }
 
-    mapper = MapperBase()
+    mapper = MapperBase(data={})
     assert mapper.roles == {'__default__': whitelist('id', )}
 
 
@@ -167,7 +169,7 @@ def test_inherit_parent_roles():
             'overview': ['name', ]
         }
 
-    mapper = Child()
+    mapper = Child(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name'),
         'overview': ['name', ],
@@ -199,15 +201,15 @@ def test_new_mapper_sets_roles():
             'private': ['id', ]
         }
 
-    mapper = MapperBase()
+    mapper = MapperBase(data={})
     assert mapper.roles == {'__default__': whitelist('id', 'name')}
 
-    mapper = MyMapper()
+    mapper = MyMapper(data={})
     assert mapper.roles == {
         'overview': ['email', ],
         '__default__': whitelist('id', 'name', 'email')}
 
-    mapper = OtherMapper()
+    mapper = OtherMapper(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name', 'email'),
         'overview': ['email'],
@@ -225,7 +227,69 @@ def test_mapper_sets_field_names():
         named = TestField(name='other_name')
         name = TestField(attribute_name='my_name')
 
-    mapper = MapperBase()
+    mapper = MapperBase(data={})
     assert mapper.fields['id'].opts.name == 'id'
     assert mapper.fields['name'].opts.name == 'my_name'
     assert mapper.fields['named'].opts.name == 'other_name'
+
+
+def test_mapper_must_pass_obj_or_data():
+    with pytest.raises(MapperError):
+        Mapper()
+
+
+def test_mapper_serialize():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize()
+
+    assert result == {'id': 2, 'name': 'bob'}
+
+
+def test_mapper_marshal():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'id': 2, 'name': 'bob'}
+
+    mapper = MapperBase(data=data)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+
+
+def test_mapper_marshal_update():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'id': 2, 'name': 'bob'}
+    obj = TestType(unrelated_attribute='test')
+
+    mapper = MapperBase(obj=obj, data=data)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.unrelated_attribute == 'test'
