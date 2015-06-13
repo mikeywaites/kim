@@ -88,7 +88,7 @@ def get_data_from_source(field, data):
 def update_output(field, data, output):
 
     try:
-        setattr(output, field.get_field_name(), data)
+        setattr(output, field.get_name(), data)
     except AttributeError:
         try:
             output[field.get_name()] = data
