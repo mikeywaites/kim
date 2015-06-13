@@ -105,23 +105,23 @@ class Field(object):
 
     def marshal(self, data, output):
         """Run the input pipeline for this field for the given `data` and
-           update `output` in place.
+        update `output` in place.
 
-           :param data: the full data object the field should be run against
-           :param output: the full object the field should output to, in place
-           :returns: None
-       """
+        :param data: the full data object the field should be run against
+        :param output: the full object the field should output to, in place
+        :returns: None
+        """
 
         self.input_pipe().run(self, data, output)
 
     def serialize(self, obj, output):
         """Run the output pipeline for this field for the given `data` and
-           update `output` in place.
+        update `output` in place.
 
-           :param data: the full data object the field should be run against
-           :param output: the full object the field should output to, in place
-           :returns: None
-       """
+        :param data: the full data object the field should be run against
+        :param output: the full object the field should output to, in place
+        :returns: None
+        """
 
         self.output_pipe().run(self, obj, output)
 
