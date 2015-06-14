@@ -38,6 +38,12 @@ class FieldOpts(object):
 
     def set_name(self, name=None, attribute_name=None, source=None):
         """pragmatically set the name properties for a field.
+
+        :param name: value of name property
+        :param attribute_name: value of attribute_name property
+        :param source: value of source property
+
+        :returns: None
         """
         self.attribute_name = attribute_name
         self.name = name or self.attribute_name
