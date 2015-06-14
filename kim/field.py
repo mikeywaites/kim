@@ -21,9 +21,8 @@ class FieldOpts(object):
     """TODO document all the available options here
     """
 
-    def __init__(self, _field=None, **opts):
+    def __init__(self, **opts):
 
-        self._field = _field
         self._opts = opts
 
         # set attribute_name, name and source options.
@@ -84,7 +83,7 @@ class Field(object):
         defined ``opts_class``.
         """
 
-        self.opts = self.opts_class(_field=self, **field_opts)
+        self.opts = self.opts_class(**field_opts)
 
         set_creation_order(self)
 
