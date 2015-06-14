@@ -19,16 +19,46 @@ class FieldError(Exception):
 
 class FieldOpts(object):
 
-    def __init__(self, **opts):
+    def __init__(self, _field=None, **opts):
 
+        self._field = _field
         self._opts = opts
+
+        # set attribute_name, name and source options.
+        name = opts.pop('name', None)
+        attribute_name = opts.pop('attribute_name', None)
+        source = opts.pop('source', None)
+        self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
-        self.attribute_name = opts.pop('attribute_name', None)
-        self.name = opts.pop('name', self.attribute_name)
-        self.source = opts.pop('source', self.name)
+
         self.allow_none = opts.pop('allow_none', True)
+
+    def set_name(self, name=None, attribute_name=None, source=None):
+        """pragmatically set the name properties for a field.
+        """
+        self.attribute_name = attribute_name
+        self.name = name or self.attribute_name
+        self.source = source or self.name
+
+    def get_name(self):
+        """Get the name of this field from ``Field.opts``.  If no valid
+        attribute_name or name is set, raise an error.
+
+        :raises: :py:class:``~.FieldError``
+        :rtype: str
+        :returns: the name of the field to be used in input/output
+        """
+
+        name = self.name
+        if not name:
+            cn = str(self._field)
+            raise FieldError('{0} requires {0}.name or '
+                             '{0}.attribute_name.  Please provide a `name` '
+                             'or `attribute_name` param to {0}'.format(cn))
+
+        return name
 
 
 class Field(object):
@@ -61,7 +91,7 @@ class Field(object):
         defined ``opts_class``.
         """
 
-        self.opts = self.opts_class(**field_opts)
+        self.opts = self.opts_class(_field=self, **field_opts)
 
         set_creation_order(self)
 
@@ -76,32 +106,25 @@ class Field(object):
 
         raise FieldError(message)
 
-    def get_name(self):
-        """Get the name of this field from ``Field.opts``.  If no valid
-        attribute_name or name is set, raise an error.
+    @property
+    def name(self):
+        """proxy access to the :py:class:`.FieldOpts` defined for this field.
 
-        :raises: :py:class:``~.FieldError``
-        :rtype: str
-        :returns: the name of the field to be used in input/output
+        .. seealso::
+            :meth:`.FieldOpts.get_name`
         """
 
-        name = self.opts.name
-        if not name:
-            cn = self.__class__.__name__
-            raise FieldError('{0} requires {0}.name or '
-                             '{0}.attribute_name.  Please provide a `name` '
-                             'or `attribute_name` param to {0}'.format(cn))
+        return self.opts.get_name()
 
-        return name
+    @name.setter
+    def name(self, name):
+        """proxy setting the name property via :meth:`.FieldOpts.set_name`
 
-    def set_name(self, name):
-        """Set the name of this field by setting ``Field.opts.name``.
-
-        :rtype: str
-        :returns: the name of the field to be used in input/output
+        .. seealso::
+            :meth:`.FieldOpts.set_name`
         """
 
-        self.opts.name = name
+        return self.opts.set_name(name)
 
     def marshal(self, data, output):
         """Run the input pipeline for this field for the given `data` and

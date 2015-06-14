@@ -53,10 +53,10 @@ def test_get_field_name():
         attribute_name='other_field')
 
     with pytest.raises(FieldError):
-        assert invalid_field.get_name()
+        assert invalid_field.name
 
-    assert name_field.get_name() == 'other_field'
-    assert attr_field.get_name() == 'other_field'
+    assert name_field.name == 'other_field'
+    assert attr_field.name == 'other_field'
 
 
 def test_field_invalid():

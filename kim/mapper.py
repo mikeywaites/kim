@@ -67,9 +67,9 @@ class _MapperConfig(object):
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
                 try:
-                    obj.get_name()
+                    obj.opts.get_name()
                 except FieldError:
-                    obj.set_name(name)
+                    obj.name = name
                 _fields.update({name: obj})
 
         cls.fields = OrderedDict(

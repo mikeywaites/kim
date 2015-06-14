@@ -74,7 +74,7 @@ def get_data_from_source(field, data):
 
     """
 
-    value = attr_or_key(data, field.get_name())
+    value = attr_or_key(data, field.name)
     if value:
         return value
     elif field.opts.required and not value:
@@ -88,10 +88,10 @@ def get_data_from_source(field, data):
 def update_output(field, data, output):
 
     try:
-        setattr(output, field.get_name(), data)
+        setattr(output, field.name, data)
     except AttributeError:
         try:
-            output[field.get_name()] = data
+            output[field.name] = data
         except TypeError:
             raise field.invalid('output does not support attribute or '
                                 'key based set operations')
