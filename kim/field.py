@@ -25,9 +25,9 @@ class FieldOpts(object):
 
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
-        self.source = opts.pop('source', None)
         self.attribute_name = opts.pop('attribute_name', None)
         self.name = opts.pop('name', self.attribute_name)
+        self.source = opts.pop('source', self.name)
         self.allow_none = opts.pop('allow_none', True)
 
 

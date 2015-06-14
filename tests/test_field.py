@@ -27,6 +27,16 @@ def test_field_name_defaults_to_attribute_name():
     assert new_field.opts.name == 'other_field'
 
 
+def test_field_source_defaults_to_name():
+    new_field = Field(
+        required=True,
+        default='bar',
+        name='other_field')
+
+    assert new_field.opts.source == 'other_field'
+    assert new_field.opts.name == 'other_field'
+
+
 def test_get_field_name():
     invalid_field = Field(
         required=True,
