@@ -1,6 +1,8 @@
 import pytest
 
-from kim.field import Field, FieldError, FieldInvalid, Input, Output
+from kim.field import (
+    Field, FieldError, FieldInvalid, FieldOptsError, FieldOpts,
+    Input, Output)
 
 
 def test_field_opts_correctly_set_for_field():
@@ -80,3 +82,20 @@ def test_get_field_output_pipe():
     field = Field(name='foo')
 
     assert field.output_pipe == Output
+
+
+def test_field_invalid_opts_class():
+
+    class CustomOpts(FieldOpts):
+
+        def __init__(self, *args, **kwargs):
+
+            raise FieldOptsError('sorry this is invalid')
+
+    class PhoneNumber(Field):
+
+        opts_class = CustomOpts
+
+    with pytest.raises(FieldError):
+
+        PhoneNumber()

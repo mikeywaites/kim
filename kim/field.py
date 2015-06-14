@@ -5,7 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .exception import FieldError, FieldInvalid
+from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
     Input, Output,
@@ -86,7 +86,12 @@ class Field(object):
         defined ``opts_class``.
         """
 
-        self.opts = self.opts_class(**field_opts)
+        try:
+            self.opts = self.opts_class(**field_opts)
+        except FieldOptsError as e:
+            msg = '{0} field has invalid options: {1}' \
+                .format(self.__class__.__name__, e.message)
+            raise FieldError(msg)
 
         set_creation_order(self)
 
