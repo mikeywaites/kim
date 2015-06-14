@@ -1,6 +1,6 @@
 import pytest
 
-from kim.field import Field, FieldError
+from kim.field import Field, FieldInvalid
 from kim.pipelines.base import get_data_from_source
 
 
@@ -17,10 +17,10 @@ def test_get_data_from_source_pipe():
     field2 = Field(name='foo', default=default, required=False)
     field3 = Field(name='foo', allow_none=False, required=False)
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         get_data_from_source(field, data)
 
     assert get_data_from_source(field2, data) == default
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         get_data_from_source(field3, data)

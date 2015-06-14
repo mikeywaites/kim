@@ -5,16 +5,13 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from .exception import FieldError, FieldInvalid
 from .utils import set_creation_order
 from .pipelines import (
     Input, Output,
     StringInput, StringOutput,
     IntegerInput, IntegerOutput
 )
-
-
-class FieldError(Exception):
-    pass
 
 
 class FieldOpts(object):
@@ -99,10 +96,10 @@ class Field(object):
         how its errors are handled.
 
         :param message: A string message used when outputting field errors
-        :raises: FieldError
+        :raises: FieldInvalid
         """
 
-        raise FieldError(message)
+        raise FieldInvalid(message)
 
     @property
     def name(self):

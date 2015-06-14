@@ -16,3 +16,11 @@ class MapperError(KimException):
 
 class RoleError(KimException):
     pass
+
+
+class FieldError(KimException):
+    pass
+
+
+class FieldInvalid(KimException):
+    pass

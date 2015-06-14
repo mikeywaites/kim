@@ -1,6 +1,6 @@
 import pytest
 
-from kim.field import FieldError, String
+from kim.field import FieldInvalid, String
 from kim.pipelines.string import is_valid_string
 
 
@@ -16,7 +16,7 @@ def test_is_valid_string_pipe():
     field = String()
     invalid_string = InvalidString()
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         is_valid_string(field, invalid_string)
 
     assert is_valid_string(field, 'yes') == 'yes'

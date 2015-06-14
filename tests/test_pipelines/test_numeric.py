@@ -1,6 +1,6 @@
 import pytest
 
-from kim.field import FieldError, Integer
+from kim.field import FieldInvalid, Integer
 from kim.pipelines.numeric import is_valid_integer
 
 
@@ -10,7 +10,7 @@ def test_is_valid_integer_pipe():
 
     field = Integer()
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         is_valid_integer(field, 'foo')
 
     assert is_valid_integer(field, '2') == 2
@@ -22,10 +22,10 @@ def test_integer_input():
 
     field = Integer(name='name', required=True)
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         field.marshal({'email': 'mike@mike.com'}, {})
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
         field.marshal({'name': 'foo', 'email': 'mike@mike.com'}, {})
 
     output = {}

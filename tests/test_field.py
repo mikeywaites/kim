@@ -1,6 +1,6 @@
 import pytest
 
-from kim.field import Field, FieldError, Input, Output
+from kim.field import Field, FieldError, FieldInvalid, Input, Output
 
 
 def test_field_opts_correctly_set_for_field():
@@ -63,7 +63,7 @@ def test_field_invalid():
 
     field = Field(name='foo')
 
-    with pytest.raises(FieldError):
+    with pytest.raises(FieldInvalid):
 
         field.invalid('not valid')
 
