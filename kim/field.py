@@ -18,6 +18,8 @@ class FieldError(Exception):
 
 
 class FieldOpts(object):
+    """TODO document all the available options here
+    """
 
     def __init__(self, _field=None, **opts):
 
@@ -43,22 +45,13 @@ class FieldOpts(object):
         self.source = source or self.name
 
     def get_name(self):
-        """Get the name of this field from ``Field.opts``.  If no valid
-        attribute_name or name is set, raise an error.
+        """return the name property set by :meth:`set_name`
 
-        :raises: :py:class:``~.FieldError``
         :rtype: str
         :returns: the name of the field to be used in input/output
         """
 
-        name = self.name
-        if not name:
-            cn = str(self._field)
-            raise FieldError('{0} requires {0}.name or '
-                             '{0}.attribute_name.  Please provide a `name` '
-                             'or `attribute_name` param to {0}'.format(cn))
-
-        return name
+        return self.name
 
 
 class Field(object):
@@ -110,21 +103,34 @@ class Field(object):
     def name(self):
         """proxy access to the :py:class:`.FieldOpts` defined for this field.
 
+        :rtype: str
+        :returns: The value of get_name from FieldOpts
+        :raises: :py:class:`.FieldError`
+
         .. seealso::
             :meth:`.FieldOpts.get_name`
         """
 
-        return self.opts.get_name()
+        field_name = self.opts.get_name()
+        if not field_name:
+            cn = self.__class__.__name__
+            raise FieldError('{0} requires {0}.name or '
+                             '{0}.attribute_name.  Please provide a `name` '
+                             'or `attribute_name` param to {0}'.format(cn))
+
+        return field_name
 
     @name.setter
     def name(self, name):
         """proxy setting the name property via :meth:`.FieldOpts.set_name`
 
+        :param name: the value to set against FieldOpts.name
+        :returns: None
+
         .. seealso::
             :meth:`.FieldOpts.set_name`
         """
-
-        return self.opts.set_name(name)
+        self.opts.set_name(name)
 
     def marshal(self, data, output):
         """Run the input pipeline for this field for the given `data` and
