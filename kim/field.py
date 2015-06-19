@@ -263,9 +263,9 @@ class Integer(Field):
             name = field.Integer(required=True)
 
     .. seealso::
-        :class:`.IntegerInput`
-        :class:`.IntegerOutput`
-        :class:`.FieldOpts`
+        :class:`kim.pipelines.numeric.IntegerInput`
+        :class:`kim.pipelines.numeric.IntegerOutput`
+        :class:`kim.field.FieldOpts`
     """
 
     input_pipe = IntegerInput

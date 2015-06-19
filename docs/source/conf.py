@@ -34,6 +34,7 @@ import sphinx_bootstrap_theme
 extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.ifconfig',
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
