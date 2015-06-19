@@ -15,10 +15,41 @@ from .pipelines import (
 
 
 class FieldOpts(object):
-    """TODO document all the available options here
+    """FieldOpts are used to provide configuration options to :class:`.Field`.
+    They are designed to allow users to easily provide custom configuration
+    options to :class:`.Field` classes.
+
+    Custom :class:`.FieldOpts` classes are set on :class:`.Field` using the
+    ``opts_class`` property.
+
+    .. code-block:: python
+
+        class MyFieldOpts(FieldOpts):
+
+            def __init__(self, **opts):
+
+                self.some_property = opts.get('some_property', None)
+                super(MyFieldOpts, self).__init__(**opts)
+
+    .. seealso::
+        :class:`.Field`
     """
 
     def __init__(self, **opts):
+        """ Construct a new instance of :class:`FieldOpts`
+        and set config options
+
+        :param name: Specify the name of the field for data output
+        :param required: This field must be present when marshaling
+        :param attribute_name: Specify an alternative attr name for data output
+        :param source: Specify the name of the attr to use when accessing data
+        :param default: Specify a default value for this field
+        :param allow_none: Speficy if this fields value can be None
+        :param read_only: Speficy if this field should be ignored when marshaling
+
+        :raises: :class:`.FieldOptsError`
+        :returns: None
+        """
 
         self._opts = opts
 
@@ -32,6 +63,32 @@ class FieldOpts(object):
         self.default = opts.pop('default', None)
 
         self.allow_none = opts.pop('allow_none', True)
+        self.read_only = opts.pop('read_only', False)
+
+        self.validate()
+
+    def validate(self):
+        """Allow users to perform checks for required config options.  Concrete
+        classes should raise :class:`.FieldError` when invalid configuration
+        is encountered.
+
+        A slightly contrived example might be requiring all fields to be
+        ``read_only=True``
+
+            from kim.field import FieldOpts
+
+            class MyOpts(FieldOpts):
+
+                def validate(self):
+
+                    if self.read_only is True:
+                        raise FieldOptsError('Field cannot be read only')
+
+
+        :raises: `.FieldOptsError`
+        :returns: None
+        """
+        pass
 
     def set_name(self, name=None, attribute_name=None, source=None):
         """pragmatically set the name properties for a field.
@@ -57,13 +114,18 @@ class FieldOpts(object):
 
 
 class Field(object):
-    """Field, as its name suggests, represents a single field or 'key' inside
-    your mapping.  They instruct kim on how it should pass data in and push
-    data out of your objects.
+    """Field, as it's name suggests, represents a single key or 'field'
+    inside of your mappings.  Much like columns in a database or a csv,
+    they provide a way to represent different data types when pusing data
+    into and out of your Mappers.
 
-    Fields are somewhat dumb in that they simply act as a wrapper around an
-    Input pipeline and an Output pipeline by defining the configuration options
-    for each.
+    A core concept of Kims architecture is that of Pipelines.
+    Every Field makes use both an Input and Output pipeline which afford users
+    a great level of flexibility when it comes to handling data.
+
+    Kim provides a collection of default Field implementations,
+    for more complex cases extending Field to create new field types
+    couldn't be easier.
 
     .. code-block:: python
 
@@ -163,12 +225,48 @@ class Field(object):
 
 
 class String(Field):
+    """:class:`.String` represents a value that must be valid
+    when passed to str()
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            name = field.String(required=True)
+
+    .. seealso::
+        :class:`.StringInput`
+        :class:`.StringOutput`
+        :class:`.FieldOpts`
+    """
 
     input_pipe = StringInput
     output_pipe = StringOutput
 
 
 class Integer(Field):
+    """:class:`.Integer` represents a value that must be valid
+    when passed to int()
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            name = field.Integer(required=True)
+
+    .. seealso::
+        :class:`.IntegerInput`
+        :class:`.IntegerOutput`
+        :class:`.FieldOpts`
+    """
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput

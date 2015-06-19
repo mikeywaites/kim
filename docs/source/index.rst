@@ -9,6 +9,7 @@
 
    installation
    mapper
+   fields
    roles
 
 

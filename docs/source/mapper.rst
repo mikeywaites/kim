@@ -26,9 +26,9 @@ attributes to define the shape of the data when using the ``Mapper``.
     class UserMapper(Mapper):
         __type__ = User
 
-        id = fields.Integer(read_only=True)
-        name = fields.String(required=True)
-        company = fields.Nested('myapp.mappers.CompanyMapper')
+        id = field.Integer(read_only=True)
+        name = field.String(required=True)
+        company = field.Nested('myapp.mappers.CompanyMapper')
 
 
 Mapper __type__
@@ -50,9 +50,9 @@ A ``Mapper`` must define a ``__type__`` property.  A python type that supports t
     class UserMapper(Mapper):
         __type__ = MyUser
 
-        id = fields.Integer(read_only=True)
-        name = fields.String(required=True)
-        company = fields.Nested('myapp.mappers.CompanyMapper')
+        id = field.Integer(read_only=True)
+        name = field.String(required=True)
+        company = field.Nested('myapp.mappers.CompanyMapper')
 
 
 Mapper __roles__
@@ -67,9 +67,9 @@ A ``Mapper`` may also define a ``__roles__`` property.  Usage of roles is covere
     class UserMapper(Mapper):
         __type__ = MyUser
 
-        id = fields.Integer(read_only=True)
-        name = fields.String(required=True)
-        company = fields.Nested('myapp.mappers.CompanyMapper')
+        id = field.Integer(read_only=True)
+        name = field.String(required=True)
+        company = field.Nested('myapp.mappers.CompanyMapper')
 
         __roles__ = {
             'public' whitelist('name'),

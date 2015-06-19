@@ -88,7 +88,7 @@ def test_field_invalid_opts_class():
 
     class CustomOpts(FieldOpts):
 
-        def __init__(self, *args, **kwargs):
+        def validate(self, *args, **kwargs):
 
             raise FieldOptsError('sorry this is invalid')
 
