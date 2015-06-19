@@ -18,3 +18,15 @@ def set_creation_order(instance):
     global _creation_order
     instance._creation_order = _creation_order
     _creation_order += 1
+
+
+def attr_or_key(obj, name):
+    """attempt to use getattr to access an attribute of obj, if that fails
+    assume obj support key based look ups like a dict.
+
+    """
+
+    if isinstance(obj, dict):
+        return obj.get(name)
+    else:
+        return getattr(obj, name, None)

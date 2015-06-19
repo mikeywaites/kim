@@ -7,7 +7,11 @@
 
 
 class KimException(Exception):
-    pass
+
+    def __init__(self, message, *args, **kwargs):
+
+        self.message = message
+        super(KimException, self).__init__(message, *args, **kwargs)
 
 
 class MapperError(KimException):
@@ -15,4 +19,16 @@ class MapperError(KimException):
 
 
 class RoleError(KimException):
+    pass
+
+
+class FieldOptsError(KimException):
+    pass
+
+
+class FieldError(KimException):
+    pass
+
+
+class FieldInvalid(KimException):
     pass

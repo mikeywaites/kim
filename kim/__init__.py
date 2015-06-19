@@ -7,4 +7,4 @@
 
 
 from .mapper import Mapper
-from .fields import Field
+from .field import Field

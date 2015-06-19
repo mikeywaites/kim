@@ -19,14 +19,14 @@ class Role(set):
 
     .. code-block:: python
 
-        from kim import Mapper, whitelist
+        from kim import Mapper, whitelist, field
 
         class UserMapper(Mapper):
             __type__ = User
 
-            id = fields.Integer(read_only=True)
-            name = fields.String(required=True)
-            company = fields.Nested('myapp.mappers.CompanyMapper')
+            id = field.Integer(read_only=True)
+            name = field.String(required=True)
+            company = field.Nested('myapp.mappers.CompanyMapper')
 
             __roles__ = {
                 'id_only': whitelist('id')
