@@ -24,7 +24,6 @@ class Pipeline(object):
     that's been populated from the database, and produce an output
     at the other.
 
-
     """
 
     input_pipes = []
@@ -86,6 +85,16 @@ def get_data_from_source(field, data):
 
 
 def update_output(field, data, output):
+    """Store ``data`` at the given key or attribute for a ``field`` inside
+    of ``output``
+
+    :param field: and instance of :class:`kim.field.Field`
+    :param data: the desired value to store in output for the field.
+    :param output: and object that supports setattr or key based ops
+
+    :raises: FieldError
+    :returns: None
+    """
 
     try:
         setattr(output, field.name, data)

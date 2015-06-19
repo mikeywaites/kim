@@ -238,10 +238,6 @@ class String(Field):
 
             name = field.String(required=True)
 
-    .. seealso::
-        :class:`.StringInput`
-        :class:`.StringOutput`
-        :class:`.FieldOpts`
     """
 
     input_pipe = StringInput
@@ -260,12 +256,8 @@ class Integer(Field):
         class UserMapper(Mapper):
             __type__ = User
 
-            name = field.Integer(required=True)
+            id = field.Integer(required=True)
 
-    .. seealso::
-        :class:`kim.pipelines.numeric.IntegerInput`
-        :class:`kim.pipelines.numeric.IntegerOutput`
-        :class:`kim.field.FieldOpts`
     """
 
     input_pipe = IntegerInput
