@@ -5,6 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+import weakref
+
 from six import with_metaclass, iteritems
 from collections import OrderedDict
 
@@ -13,7 +15,27 @@ from .field import Field, FieldError
 from .role import whitelist
 
 
+def add_class_to_registry(classname, cls):
+    """Register ``cls`` inside if the registry using ``classname``.  If a cls
+    for this name already exists inside the registry an error will be raised.
+
+    :param classname: the name of the class used as the key inside the registry
+    :param cls: the class being stored
+
+    :raises :class:`kim.exception.MapperError`
+    :returns: None
+    """
+
+    if classname in _MapperConfig.MAPPER_REGISTRY:
+        msg = '%s is already a registered Mapper' % classname
+        raise MapperError(msg)
+    else:
+        _MapperConfig.MAPPER_REGISTRY[classname] = cls
+
+
 class _MapperConfig(object):
+
+    MAPPER_REGISTRY = weakref.WeakValueDictionary()
 
     @classmethod
     def setup_mapping(cls, cls_, classname, dict_):
@@ -37,6 +59,7 @@ class _MapperConfig(object):
                 whitelist(*self.cls.fields.keys())
 
         self._remove_fields()
+        add_class_to_registry(classname, self.cls)
 
     def _remove_fields(self):
         """Cycle through the list of ``fields`` and remove those
@@ -51,7 +74,7 @@ class _MapperConfig(object):
 
     def _extract_fields(self, base):
         """Cycle over attrs declared on ``base`` searching for a types that
-        inherit from :py:class:``.Field``.  If a field type is found, store
+        inherit from :class:`kim.field.Field`.  If a field type is found, store
         it inside ``fields``.
 
         :param base: Current class from the MRO.
