@@ -1,7 +1,7 @@
 import pytest
 
 from kim.exception import MapperError
-from kim.mapper import Mapper
+from kim.mapper import Mapper, _MapperConfig
 from kim.field import Field, String, Integer
 from kim.role import whitelist
 
@@ -14,6 +14,14 @@ class TestType(object):
 
 class TestField(Field):
     pass
+
+
+
+
+@pytest.fixture(scope='function', autouse=True)
+def empty_registry():
+
+    _MapperConfig.MAPPER_REGISTRY.clear()
 
 
 def test_mapper_sets_fields():
@@ -293,3 +301,33 @@ def test_mapper_marshal_update():
     assert result.id == 2
     assert result.name == 'bob'
     assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_registered_in_class_registry():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+        id = Integer()
+        name = String()
+
+    assert 'MapperBase' in _MapperConfig.MAPPER_REGISTRY
+
+
+def test_mapper_already_registered():
+
+    class MapperOne(Mapper):
+
+        __type__ = TestType
+        id = Integer()
+        name = String()
+
+    def create_mapper():
+        class MapperOne(Mapper):
+
+            __type__ = TestType
+            id = Integer()
+            name = String()
+
+    with pytest.raises(MapperError):
+        create_mapper()
