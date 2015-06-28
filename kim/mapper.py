@@ -5,6 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+import weakref
+
 from six import with_metaclass, iteritems
 from collections import OrderedDict
 
@@ -33,7 +35,7 @@ def add_class_to_registry(classname, cls):
 
 class _MapperConfig(object):
 
-    MAPPER_REGISTRY = {}
+    MAPPER_REGISTRY = weakref.WeakValueDictionary()
 
     @classmethod
     def setup_mapping(cls, cls_, classname, dict_):
