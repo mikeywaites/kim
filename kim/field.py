@@ -5,12 +5,15 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+import six
+
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
     Input, Output,
     StringInput, StringOutput,
-    IntegerInput, IntegerOutput
+    IntegerInput, IntegerOutput,
+    NestedInput, NestedOutput
 )
 
 
@@ -113,6 +116,8 @@ class FieldOpts(object):
         return self.name
 
 
+
+
 class Field(object):
     """Field, as it's name suggests, represents a single key or 'field'
     inside of your mappings.  Much like columns in a database or a csv,
@@ -142,14 +147,14 @@ class Field(object):
     input_pipe = Input
     output_pipe = Output
 
-    def __init__(self, **field_opts):
+    def __init__(self, *args, **field_opts):
         """Construct a new instance of field.  Each field accepts a set of
         kwargs that will be passed directly to the fields
         defined ``opts_class``.
         """
 
         try:
-            self.opts = self.opts_class(**field_opts)
+            self.opts = self.opts_class(*args, **field_opts)
         except FieldOptsError as e:
             msg = '{0} field has invalid options: {1}' \
                 .format(self.__class__.__name__, e.message)
@@ -262,3 +267,67 @@ class Integer(Field):
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput
+
+
+class NestedFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.NestedField`.
+
+    """
+
+    def __init__(self, mapper_or_mapper_name, **kwargs):
+        """Construct a new instance of :class:`.NestedFieldOpts`
+
+        :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
+            or a valid mapper name
+
+        """
+        self.mapper = mapper_or_mapper_name
+        super(NestedFieldOpts, self).__init__(**kwargs)
+
+
+class Nested(Field):
+    """:class:`.Nested` represents an object that is represented by another
+    mapper.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.String()
+            user = field.Nested('OtherMapper', required=True)
+
+    """
+
+    opts_class = NestedFieldOpts
+    input_pipe = NestedInput
+    output_pipe = NestedOutput
+
+    def get_mapper(self, data):
+        """
+        """
+
+        from .mapper import Mapper, mapper_is_defined, _MapperConfig
+
+        mapper_or_mapper_name = self.opts.mapper
+        if isinstance(mapper_or_mapper_name, six.string_types):
+
+            if not mapper_is_defined(mapper_or_mapper_name):
+                raise FieldError('%s is not a valid Mapper. '
+                                 'Is this Mapper defined?'
+                                 % mapper_or_mapper_name)
+        else:
+            if not issubclass(self.opts.mapper, Mapper):
+                raise FieldError('%s is not a valid Mapper. '
+                                 'Please provide nested with '
+                                 'a valid Mapper class'
+                                 % mapper_or_mapper_name)
+
+        try:
+            return _MapperConfig.MAPPER_REGISTRY[self.opts.mapper](data=data)
+        except KeyError:
+            return self.opts.mapper(data=data)

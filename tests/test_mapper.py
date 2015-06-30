@@ -16,14 +16,6 @@ class TestField(Field):
     pass
 
 
-
-
-@pytest.fixture(scope='function', autouse=True)
-def empty_registry():
-
-    _MapperConfig.MAPPER_REGISTRY.clear()
-
-
 def test_mapper_sets_fields():
     """Ensure that on attributes inheriting from :class:`kim.fields.Field`
     are set in a mappers fields.

@@ -15,6 +15,11 @@ from .field import Field, FieldError
 from .role import whitelist
 
 
+def mapper_is_defined(mapper_name):
+
+    return mapper_name in _MapperConfig.MAPPER_REGISTRY
+
+
 def add_class_to_registry(classname, cls):
     """Register ``cls`` inside if the registry using ``classname``.  If a cls
     for this name already exists inside the registry an error will be raised.
