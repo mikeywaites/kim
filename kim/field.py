@@ -116,8 +116,6 @@ class FieldOpts(object):
         return self.name
 
 
-
-
 class Field(object):
     """Field, as it's name suggests, represents a single key or 'field'
     inside of your mappings.  Much like columns in a database or a csv,
@@ -280,9 +278,11 @@ class NestedFieldOpts(FieldOpts):
 
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
+        :param role: specify the name of a role to use on the Nested mapper
 
         """
         self.mapper = mapper_or_mapper_name
+        self.role = kwargs.pop('role', '__default__')
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 
@@ -307,7 +307,7 @@ class Nested(Field):
     input_pipe = NestedInput
     output_pipe = NestedOutput
 
-    def get_mapper(self, data):
+    def get_mapper(self, **mapper_params):
         """
         """
 
@@ -327,7 +327,8 @@ class Nested(Field):
                                  'a valid Mapper class'
                                  % mapper_or_mapper_name)
 
+        reg = _MapperConfig.MAPPER_REGISTRY
         try:
-            return _MapperConfig.MAPPER_REGISTRY[self.opts.mapper](data=data)
+            return reg[self.opts.mapper](**mapper_params)
         except KeyError:
-            return self.opts.mapper(data=data)
+            return self.opts.mapper(**mapper_params)

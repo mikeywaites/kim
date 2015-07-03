@@ -6,8 +6,8 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 import weakref
+import six
 
-from six import with_metaclass, iteritems
 from collections import OrderedDict
 
 from .exception import MapperError
@@ -132,7 +132,7 @@ class MapperMeta(type):
         type.__init__(cls, classname, bases, dict_)
 
 
-class Mapper(with_metaclass(MapperMeta, object)):
+class Mapper(six.with_metaclass(MapperMeta, object)):
     """Mappers are the building blocks of Kim - they define how JSON output
     should look and how input JSON should be expected to look.
 
@@ -201,7 +201,26 @@ class Mapper(with_metaclass(MapperMeta, object)):
         else:
             return self._get_mapper_type()()
 
-    def serialize(self):
+    def _get_fields(self, role_name):
+        """Returns a list of :class:`.Field` instances providing they are
+        registered in the specified :class:`Role`.
+
+        If the provided role_name is not found in the Mappers role list an
+        error will be raised.
+
+        :raises: MapperError
+        :returns: list of :class:`.Field`
+        """
+
+        try:
+            role = self.roles[role_name]
+        except KeyError:
+            raise MapperError("role '%s' is not a registered "
+                              "role on this Mapper" % role_name)
+
+        return [f for name, f in six.iteritems(self.fields) if name in role]
+
+    def serialize(self, role='__default__'):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
 
@@ -210,12 +229,12 @@ class Mapper(with_metaclass(MapperMeta, object)):
 
         output = {}  # Should this be user definable?
 
-        for _, field in iteritems(self.fields):
-            field.serialize(self.obj, output)
+        for field in self._get_fields(role):
+            field.serialize(self._get_obj(), output)
 
         return output
 
-    def marshal(self):
+    def marshal(self, role='__default__'):
         """Marshal ``self.data`` into ``self.obj`` according to the fields
         defined on this Mapper.
 
@@ -224,7 +243,7 @@ class Mapper(with_metaclass(MapperMeta, object)):
 
         output = self._get_obj()
 
-        for _, field in iteritems(self.fields):
+        for field in self._get_fields(role):
             field.marshal(self.data, output)
 
         return output
