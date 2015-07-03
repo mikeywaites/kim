@@ -262,3 +262,7 @@ class Integer(Field):
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput
+
+
+class Collection(Field):
+    pass
