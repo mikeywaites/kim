@@ -223,3 +223,7 @@ class Mapper(with_metaclass(MapperMeta, object)):
             field.marshal(self.data, output)
 
         return output
+
+
+class PolymorphicMapper(Mapper):
+    pass
