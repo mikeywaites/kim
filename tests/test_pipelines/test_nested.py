@@ -1,8 +1,14 @@
 import pytest
 
-from kim.mapper import Mapper
+from kim.mapper import Mapper, MapperError
 from kim.exception import FieldError
 from kim import field
+
+
+class TestType(object):
+    def __init__(self, *args, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 def test_nested_defers_mapper_checks():
@@ -129,3 +135,7 @@ def test_marshal_nested_with_role():
     output = {}
     test_field.marshal(data, output)
     assert output == {'user': {'name': 'mike'}}
+
+
+
+

@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 from .exception import MapperError
 from .field import Field, FieldError
-from .role import whitelist
+from .role import whitelist, Role
 
 
 def mapper_is_defined(mapper_name):
@@ -122,6 +122,17 @@ class _MapperConfig(object):
         _roles.update(getattr(cls, 'roles', None) or {})
         _roles.update(getattr(base, '__roles__', None) or {})
 
+        # Roles may be passed as list, convert to whitelist
+        # objects in this case
+        for name, role in six.iteritems(_roles):
+            if isinstance(role, list):
+                _roles[name] = whitelist(*role)
+            elif not isinstance(role, Role):
+                msg = "role %s on %s must be list or Role " \
+                      "instance, got %s" % (name, self.__class__.__name__,
+                                            type(role))
+                raise MapperError(msg)
+
         cls.roles = _roles
 
 
@@ -201,7 +212,28 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         else:
             return self._get_mapper_type()()
 
-    def _get_fields(self, role_name):
+    def _get_role(self, name_or_role):
+        """Resolve a string to a role and check it exists, or check a
+        directly passed role is a Role instance and return it.
+
+        :param name_or_role: role name as a string or a Role instance
+
+        :raises: :class:`.MapperError`
+        :returns: Role instance
+        """
+        if isinstance(name_or_role, six.string_types):
+            try:
+                return self.roles[name_or_role]
+            except KeyError:
+                raise MapperError("Role '%s' not found on %s" % (
+                                  name_or_role, self.__class__.__name__))
+        elif isinstance(name_or_role, Role):
+            return name_or_role
+        else:
+            raise MapperError('role must be string or Role instance, got %s'
+                              % type(name_or_role))
+
+    def _get_fields(self, name_or_role):
         """Returns a list of :class:`.Field` instances providing they are
         registered in the specified :class:`Role`.
 
@@ -212,12 +244,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :returns: list of :class:`.Field`
         """
 
-        try:
-            role = self.roles[role_name]
-        except KeyError:
-            raise MapperError("role '%s' is not a registered "
-                              "role on this Mapper" % role_name)
-
+        role = self._get_role(name_or_role)
         return [f for name, f in six.iteritems(self.fields) if name in role]
 
     def serialize(self, role='__default__'):

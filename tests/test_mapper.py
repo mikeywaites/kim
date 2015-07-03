@@ -3,7 +3,7 @@ import pytest
 from kim.exception import MapperError
 from kim.mapper import Mapper, _MapperConfig
 from kim.field import Field, String, Integer
-from kim.role import whitelist
+from kim.role import whitelist, blacklist
 
 
 class TestType(object):
@@ -172,9 +172,9 @@ def test_inherit_parent_roles():
     mapper = Child(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name'),
-        'overview': ['name', ],
-        'parent': ['name', ],
-        'id_only': ['id', ],
+        'overview': whitelist('name', ),
+        'parent': whitelist('name', ),
+        'id_only': whitelist('id', ),
     }
 
 
@@ -206,14 +206,14 @@ def test_new_mapper_sets_roles():
 
     mapper = MyMapper(data={})
     assert mapper.roles == {
-        'overview': ['email', ],
+        'overview': whitelist('email', ),
         '__default__': whitelist('id', 'name', 'email')}
 
     mapper = OtherMapper(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name', 'email'),
-        'overview': ['email'],
-        'private': ['id', ]
+        'overview': whitelist('email'),
+        'private': whitelist('id', )
     }
 
 
@@ -255,7 +255,7 @@ def test_mapper_serialize():
     assert result == {'id': 2, 'name': 'bob'}
 
 
-def test_mapper_serialize_with_role():
+def test_mapper_serialize_with_role_str():
 
     class MapperBase(Mapper):
 
@@ -274,6 +274,100 @@ def test_mapper_serialize_with_role():
     result = mapper.serialize(role='private')
 
     assert result == {'id': 2}
+
+
+def test_mapper_marshal_with_role_str():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    result = mapper.marshal(role='private')
+
+    assert result.id == 3
+
+
+def test_mapper_serialize_with_role_as_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize(role=blacklist('id'))
+
+    assert result == {'name': 'bob'}
+
+
+def test_mapper_marshal_with_role_as_role():
+
+    class MyType(TestType):
+
+        def __init__(self, **params):
+            self.id = 2
+            super(MyType, self).__init__(**params)
+
+    class MapperBase(Mapper):
+
+        __type__ = MyType
+
+        id = Integer()
+        name = String()
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    obj = mapper.marshal(role=blacklist('id'))
+
+    assert obj.name == 'mike'
+    assert obj.id == 2
+
+
+def test_mapper_serialize_with_invalid_role_type():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+
+    with pytest.raises(MapperError):
+        mapper.serialize(role=object())
+
+
+def test_mapper_marshal_with_invalid_role_type():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+
+    with pytest.raises(MapperError):
+        mapper.marshal(role=object())
 
 
 def test_mapper_marshal():
@@ -295,32 +389,6 @@ def test_mapper_marshal():
     assert result.name == 'bob'
 
 
-def test_mapper_marshal_with_role():
-
-    class MyType(TestType):
-
-        def __init__(self, **params):
-            super(MyType, self).__init__(**params)
-            self.name = 'mike'
-
-    class MapperBase(Mapper):
-
-        __type__ = MyType
-
-        id = Integer()
-        name = String()
-
-        __roles__ = {
-            'private': ['id', ]
-        }
-
-    data = {'id': 2, 'name': 'bob'}
-
-    mapper = MapperBase(data=data)
-    result = mapper.marshal(role='private')
-
-    assert result.id == 2
-    assert result.name == 'mike'
 
 
 def test_get_fields_with_role():
@@ -355,6 +423,21 @@ def test_get_fields_with_invalid_role():
     mapper = MapperBase(data=data)
     with pytest.raises(MapperError):
         mapper._get_fields('invalid')
+
+
+def test_mapper_with_invalid_role_type():
+
+    with pytest.raises(MapperError):
+        class MapperBase(Mapper):
+
+            __type__ = TestType
+
+            id = Integer()
+            name = String()
+
+            __roles__ = {
+                'public': object()
+            }
 
 
 def test_mapper_marshal_update():
