@@ -33,6 +33,13 @@ def test_integer_input():
     assert output == {'name': 2}
 
 
+def test_integer_field_invalid_type():
+
+    field = Integer(name='name')
+    with pytest.raises(FieldInvalid):
+        field.marshal({'name': None, 'email': 'mike@mike.com'}, {})
+
+
 def test_integer_output():
 
     class Foo(object):
