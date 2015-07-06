@@ -311,24 +311,5 @@ class Nested(Field):
         """
         """
 
-        from .mapper import Mapper, mapper_is_defined, _MapperConfig
-
-        mapper_or_mapper_name = self.opts.mapper
-        if isinstance(mapper_or_mapper_name, six.string_types):
-
-            if not mapper_is_defined(mapper_or_mapper_name):
-                raise FieldError('%s is not a valid Mapper. '
-                                 'Is this Mapper defined?'
-                                 % mapper_or_mapper_name)
-        else:
-            if not issubclass(self.opts.mapper, Mapper):
-                raise FieldError('%s is not a valid Mapper. '
-                                 'Please provide nested with '
-                                 'a valid Mapper class'
-                                 % mapper_or_mapper_name)
-
-        reg = _MapperConfig.MAPPER_REGISTRY
-        try:
-            return reg[self.opts.mapper](**mapper_params)
-        except KeyError:
-            return self.opts.mapper(**mapper_params)
+        from .mapper import get_mapper_from_registry
+        return get_mapper_from_registry(self.opts.mapper, **mapper_params)
