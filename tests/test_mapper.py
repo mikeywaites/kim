@@ -471,8 +471,6 @@ def test_mapper_marshal():
     assert result.name == 'bob'
 
 
-
-
 def test_get_fields_with_role():
 
     class MapperBase(Mapper):
