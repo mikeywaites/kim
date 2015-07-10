@@ -11,13 +11,13 @@ from .base import Input, Output, get_data_from_source, update_output
 def marshal_nested(field, data):
 
     nested_mapper = field.get_mapper(data=data)
-    return nested_mapper.marshal(field.opts.role)
+    return nested_mapper.marshal(role=field.opts.role)
 
 
 def serialize_nested(field, data):
 
     nested_mapper = field.get_mapper(obj=data)
-    return nested_mapper.serialize(field.opts.role)
+    return nested_mapper.serialize(role=field.opts.role)
 
 
 class NestedInput(Input):
