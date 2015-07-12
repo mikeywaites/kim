@@ -80,7 +80,6 @@ def test_marshal_nested_mapper(db_session):
     mapper = PostMapper(data=data)
     obj = mapper.marshal()
 
-    assert isinstance(obj, User)
-    assert obj.name == 'bob'
-    assert obj.fullname == 'bob bob'
-    assert obj.id is None
+    assert isinstance(obj, Post)
+    assert obj.title == 'my post'
+    assert isinstance(obj.user, User)

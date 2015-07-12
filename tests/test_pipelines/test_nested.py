@@ -1,7 +1,6 @@
 import pytest
 
 from kim.mapper import Mapper, MapperError
-from kim.exception import FieldError
 from kim import field
 
 
@@ -78,6 +77,30 @@ def test_marshal_nested():
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
 
+def test_marshal_many_nested():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+    data = {
+        'id': 2,
+        'name': 'bob',
+        'users': [
+            {'id': '1', 'name': 'mike'},
+            {'id': '2', 'name': 'bob'}
+        ]
+    }
+    test_field = field.Nested('UserMapper', name='users', many=True)
+
+    output = {}
+    test_field.marshal(data, output)
+    assert output == {'users': data['users']}
+
+
 def test_serialise_nested():
 
     class UserMapper(Mapper):
@@ -93,6 +116,30 @@ def test_serialise_nested():
     output = {}
     test_field.serialize(data, output)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
+
+
+def test_serialize_many_nested():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+    data = {
+        'id': 2,
+        'name': 'bob',
+        'users': [
+            {'id': '1', 'name': 'mike'},
+            {'id': '2', 'name': 'bob'}
+        ]
+    }
+    test_field = field.Nested('UserMapper', name='users', many=True)
+
+    output = {}
+    test_field.serialize(data, output)
+    assert output == {'users': data['users']}
 
 
 def test_serialise_nested_with_role():
@@ -116,6 +163,34 @@ def test_serialise_nested_with_role():
     assert output == {'user': {'name': 'mike'}}
 
 
+def test_serialise_many_nested_with_role():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+        __roles__ = {
+            'public': ['name', ]
+        }
+
+    data = {
+        'id': 2,
+        'name': 'bob',
+        'users': [
+            {'id': '1', 'name': 'mike'},
+            {'id': '2', 'name': 'bob'}
+        ]
+    }
+    test_field = field.Nested('UserMapper', many=True, name='users', role='public')
+
+    output = {}
+    test_field.serialize(data, output)
+    assert output == {'users': [{'name': 'mike'}, {'name': 'bob'}]}
+
+
 def test_marshal_nested_with_role():
 
     class UserMapper(Mapper):
@@ -137,5 +212,29 @@ def test_marshal_nested_with_role():
     assert output == {'user': {'name': 'mike'}}
 
 
+def test_marshal_many_nested_with_role():
 
+    class UserMapper(Mapper):
 
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+        __roles__ = {
+            'public': ['name', ]
+        }
+
+    data = {
+        'id': 2,
+        'name': 'bob',
+        'users': [
+            {'id': '1', 'name': 'mike'},
+            {'id': '2', 'name': 'bob'}
+        ]
+    }
+    test_field = field.Nested('UserMapper', many=True, name='users', role='public')
+
+    output = {}
+    test_field.marshal(data, output)
+    assert output == {'users': [{'name': 'mike'}, {'name': 'bob'}]}

@@ -8,16 +8,25 @@
 from .base import Input, Output, get_data_from_source, update_output
 
 
+def _handle_nested(field, method, data):
+
+    if field.opts.many:
+        nested_mapper = field.get_mapper(as_class=True).many()
+        return getattr(nested_mapper, method)(data, role=field.opts.role)
+    else:
+        params = {'data': data} if method == 'marshal' else {'obj': data}
+        nested_mapper = field.get_mapper(**params)
+        return getattr(nested_mapper, method)(role=field.opts.role)
+
+
 def marshal_nested(field, data):
 
-    nested_mapper = field.get_mapper(data=data)
-    return nested_mapper.marshal(role=field.opts.role)
+    return _handle_nested(field, 'marshal', data)
 
 
 def serialize_nested(field, data):
 
-    nested_mapper = field.get_mapper(obj=data)
-    return nested_mapper.serialize(role=field.opts.role)
+    return _handle_nested(field, 'serialize', data)
 
 
 class NestedInput(Input):

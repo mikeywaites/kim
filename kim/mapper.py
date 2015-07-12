@@ -21,7 +21,26 @@ def mapper_is_defined(mapper_name):
     return mapper_name in _MapperConfig.MAPPER_REGISTRY
 
 
-def get_mapper_from_registry(mapper_or_name, **mapper_params):
+def get_mapper_from_registry(mapper_or_name):
+    """Serarch for a defined mapper by name inside of the mapper registry.
+
+    User may pass either a mapper class object or the name of a defined mapper
+    as a str:
+
+        >>>mapper = get_mapper_from_registry('UserMapper')
+        >>>mapper
+        UserMapper
+
+        mapper = get_mapper_from_registry(UserMapper)
+        >>>mapper
+        UserMapper
+
+    :param mapper_or_name: a mapper class or name of a mapper
+
+    :raises: MapperError
+    :rtype: :py:class:`.Mapper`
+    :returns: A Mapper class
+    """
 
     from .mapper import Mapper, mapper_is_defined, _MapperConfig
 
@@ -36,7 +55,7 @@ def get_mapper_from_registry(mapper_or_name, **mapper_params):
                           % mapper_or_name)
 
     reg = _MapperConfig.MAPPER_REGISTRY
-    return reg[name](**mapper_params)
+    return reg[name]
 
 
 def add_class_to_registry(classname, cls):

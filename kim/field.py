@@ -279,10 +279,16 @@ class NestedFieldOpts(FieldOpts):
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
         :param role: specify the name of a role to use on the Nested mapper
+        :param many: many=True will instruct nested to map many objects inside
+            of an iterable.
+        :param collection_class: provide a custom type to be used when
+            mapping many nested objects
 
         """
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
+        self.many = kwargs.pop('many', False)
+        self.collection_class = kwargs.pop('collection_class', list)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 
@@ -301,15 +307,33 @@ class Nested(Field):
             id = field.String()
             user = field.Nested('OtherMapper', required=True)
 
+    .. seealso::
+
+        :py:class:`.NestedFieldOpts`
+
     """
 
     opts_class = NestedFieldOpts
     input_pipe = NestedInput
     output_pipe = NestedOutput
 
-    def get_mapper(self, **mapper_params):
-        """
+    def get_mapper(self, as_class=False, **mapper_params):
+        """Retrieve the specified mapper from the Mapper registry.
+
+        :param mapper_params: A dict of kwarg's to pass to the specified
+            mappers constructor
+        :param as_class: Return the Mapper class object without
+            calling the constructor.  This is typically used when nested
+            is mapping many objects.
+
+        :rtype: :py:class:`.Mapper`
+        :returns: a new instance of the specified mapper
         """
 
         from .mapper import get_mapper_from_registry
-        return get_mapper_from_registry(self.opts.mapper, **mapper_params)
+
+        mapper = get_mapper_from_registry(self.opts.mapper)
+        if as_class:
+            return mapper
+
+        return mapper(**mapper_params)

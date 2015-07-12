@@ -579,8 +579,8 @@ def test_get_mapper_from_registry_str_name():
         id = String(required=True, read_only=True)
         name = String()
 
-    mapper = get_mapper_from_registry('UserMapper', data={'foo': 'bar'})
-    assert isinstance(mapper, UserMapper)
+    mapper = get_mapper_from_registry('UserMapper')
+    assert mapper == UserMapper
 
 
 def test_get_mapper_from_registry_mapper_type():
@@ -592,11 +592,11 @@ def test_get_mapper_from_registry_mapper_type():
         id = String(required=True, read_only=True)
         name = String()
 
-    mapper = get_mapper_from_registry(UserMapper, data={'foo': 'bar'})
-    assert isinstance(mapper, UserMapper)
+    mapper = get_mapper_from_registry(UserMapper)
+    assert mapper == UserMapper
 
 
 def test_get_mapper_from_registry_mapper_does_not_exist():
 
     with pytest.raises(MapperError):
-        get_mapper_from_registry('OtherMapper', data={'foo': 'bar'})
+        get_mapper_from_registry('OtherMapper')
