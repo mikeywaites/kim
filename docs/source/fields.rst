@@ -35,12 +35,31 @@ level attributes on ``Mapper`` classes.
 Field Types
 --------------------
 
+Field
+^^^^^^^^^^^^
+.. autoclass:: kim.field.Field
+  :members:
+
+  .. automethod:: __init__
+
 String
 ^^^^^^^^^^^^
 .. autoclass:: kim.field.String
   :members:
 
+  .. automethod:: __init__
+
 Integer
 ^^^^^^^^^^^^
 .. autoclass:: kim.field.Integer
   :members:
+
+
+Nested
+^^^^^^^^^^^^
+.. autoclass:: kim.field.Nested
+  :members:
+
+.. autoclass:: kim.field.NestedFieldOpts
+  :members:
+  :special-members:

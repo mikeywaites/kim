@@ -6,13 +6,56 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 import weakref
+import six
+import inspect
 
-from six import with_metaclass, iteritems
 from collections import OrderedDict
 
 from .exception import MapperError
 from .field import Field, FieldError
-from .role import whitelist
+from .role import whitelist, Role
+
+
+def mapper_is_defined(mapper_name):
+
+    return mapper_name in _MapperConfig.MAPPER_REGISTRY
+
+
+def get_mapper_from_registry(mapper_or_name):
+    """Serarch for a defined mapper by name inside of the mapper registry.
+
+    User may pass either a mapper class object or the name of a defined mapper
+    as a str:
+
+        >>>mapper = get_mapper_from_registry('UserMapper')
+        >>>mapper
+        UserMapper
+
+        mapper = get_mapper_from_registry(UserMapper)
+        >>>mapper
+        UserMapper
+
+    :param mapper_or_name: a mapper class or name of a mapper
+
+    :raises: MapperError
+    :rtype: :py:class:`.Mapper`
+    :returns: A Mapper class
+    """
+
+    from .mapper import Mapper, mapper_is_defined, _MapperConfig
+
+    if inspect.isclass(mapper_or_name) and issubclass(mapper_or_name, Mapper):
+        name = mapper_or_name.__name__
+    else:
+        name = mapper_or_name
+
+    if not mapper_is_defined(name):
+        raise MapperError('%s is not a valid Mapper. '
+                          'Is this Mapper defined?'
+                          % mapper_or_name)
+
+    reg = _MapperConfig.MAPPER_REGISTRY
+    return reg[name]
 
 
 def add_class_to_registry(classname, cls):
@@ -117,6 +160,17 @@ class _MapperConfig(object):
         _roles.update(getattr(cls, 'roles', None) or {})
         _roles.update(getattr(base, '__roles__', None) or {})
 
+        # Roles may be passed as list, convert to whitelist
+        # objects in this case
+        for name, role in six.iteritems(_roles):
+            if isinstance(role, list):
+                _roles[name] = whitelist(*role)
+            elif not isinstance(role, Role):
+                msg = "role %s on %s must be list or Role " \
+                      "instance, got %s" % (name, self.__class__.__name__,
+                                            type(role))
+                raise MapperError(msg)
+
         cls.roles = _roles
 
 
@@ -127,7 +181,7 @@ class MapperMeta(type):
         type.__init__(cls, classname, bases, dict_)
 
 
-class Mapper(with_metaclass(MapperMeta, object)):
+class Mapper(six.with_metaclass(MapperMeta, object)):
     """Mappers are the building blocks of Kim - they define how JSON output
     should look and how input JSON should be expected to look.
 
@@ -152,6 +206,16 @@ class Mapper(with_metaclass(MapperMeta, object)):
 
     __type__ = None
     __roles__ = {}
+
+    @classmethod
+    def many(cls, **mapper_params):
+        """Provide access to a :class:`.MapperIterator` to allow multiple
+        items to be mapped by a mapper.
+
+        :returns: an instance of :class`.MapperIterator`
+        """
+
+        return MapperIterator(cls, **mapper_params)
 
     def __init__(self, obj=None, data=None):
         """Initialise a Mapper with the object and/or the data to be
@@ -196,7 +260,42 @@ class Mapper(with_metaclass(MapperMeta, object)):
         else:
             return self._get_mapper_type()()
 
-    def serialize(self):
+    def _get_role(self, name_or_role):
+        """Resolve a string to a role and check it exists, or check a
+        directly passed role is a Role instance and return it.
+
+        :param name_or_role: role name as a string or a Role instance
+
+        :raises: :class:`.MapperError`
+        :returns: Role instance
+        """
+        if isinstance(name_or_role, six.string_types):
+            try:
+                return self.roles[name_or_role]
+            except KeyError:
+                raise MapperError("Role '%s' not found on %s" % (
+                                  name_or_role, self.__class__.__name__))
+        elif isinstance(name_or_role, Role):
+            return name_or_role
+        else:
+            raise MapperError('role must be string or Role instance, got %s'
+                              % type(name_or_role))
+
+    def _get_fields(self, name_or_role):
+        """Returns a list of :class:`.Field` instances providing they are
+        registered in the specified :class:`Role`.
+
+        If the provided role_name is not found in the Mappers role list an
+        error will be raised.
+
+        :raises: MapperError
+        :returns: list of :class:`.Field`
+        """
+
+        role = self._get_role(name_or_role)
+        return [f for name, f in six.iteritems(self.fields) if name in role]
+
+    def serialize(self, role='__default__'):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
 
@@ -205,12 +304,12 @@ class Mapper(with_metaclass(MapperMeta, object)):
 
         output = {}  # Should this be user definable?
 
-        for _, field in iteritems(self.fields):
-            field.serialize(self.obj, output)
+        for field in self._get_fields(role):
+            field.serialize(self._get_obj(), output)
 
         return output
 
-    def marshal(self):
+    def marshal(self, role='__default__'):
         """Marshal ``self.data`` into ``self.obj`` according to the fields
         defined on this Mapper.
 
@@ -219,7 +318,84 @@ class Mapper(with_metaclass(MapperMeta, object)):
 
         output = self._get_obj()
 
-        for _, field in iteritems(self.fields):
+        for field in self._get_fields(role):
             field.marshal(self.data, output)
+
+        return output
+
+
+class MapperIterator(object):
+    """Provides a symetric interface for Mapping many objects in one batch.
+
+    A simple example would be seriaizing a list of User objects from a database
+    query or other source.
+
+    .. code-block:: python
+        from kim import Mapper, field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.Integer(read_only=True)
+            name = field.String(required=True)
+            company = field.Nested('myapp.mappers.CompanyMapper')
+
+        objs = User.query.all()
+        results = UserMapper.many().serialize(objs)
+    """
+
+    def __init__(self, mapper, **mapper_params):
+        """Constructs a new instance of a MapperIterator.
+
+        :param mapper: a :class:`.Mapper` to map each item too.
+        :param mapper_params: a dict of kwargs passed to each mapper
+        """
+
+        self.mapper = mapper
+        self.mapper_params = mapper_params
+
+    def get_mapper(self, data=None, obj=None):
+        """return a new instance of the provided mapper.
+
+        :param data: provide the new mapper with data when marshaling
+        :param obj: provide the new mapper with data when serializing
+
+        :rtype: :class:`.Mapper`
+        :returns: a new :class:`.Mapper`
+        """
+
+        self.mapper_params.update({
+            'data': data,
+            'obj': obj
+        })
+        return self.mapper(**self.mapper_params)
+
+    def serialize(self, objs, role='__default__'):
+        """Serializes each item in ``objs`` creating a new mapper each time.
+
+        :param objs: iterable of objects to serialize
+        :param role: name of a role to use when serializing
+
+        :returns: list of serialized objects
+        """
+
+        output = []  # TODO should this be user defined?
+        for obj in objs:
+            output.append(self.get_mapper(obj=obj).serialize(role=role))
+
+        return output
+
+    def marshal(self, data, role='__default__'):
+        """Marshals each item in ``data`` creating a new mapper each time.
+
+        :param objs: iterable of objects to marshal
+        :param role: name of a role to use when marshaling
+
+        :returns: list of marshaled objects
+        """
+
+        output = []  # TODO should this be user defined?
+        for datum in data:
+            output.append(self.get_mapper(data=datum).marshal(role=role))
 
         return output
