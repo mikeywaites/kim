@@ -5,8 +5,6 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-import six
-
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
@@ -279,15 +277,12 @@ class NestedFieldOpts(FieldOpts):
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
         :param role: specify the name of a role to use on the Nested mapper
-        :param many: many=True will instruct nested to map many objects inside
-            of an iterable.
         :param collection_class: provide a custom type to be used when
             mapping many nested objects
 
         """
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
-        self.many = kwargs.pop('many', False)
         self.collection_class = kwargs.pop('collection_class', list)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
