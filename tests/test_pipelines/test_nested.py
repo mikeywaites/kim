@@ -1,7 +1,6 @@
 import pytest
 
 from kim.mapper import Mapper, MapperError
-from kim.exception import FieldError
 from kim import field
 
 
@@ -47,7 +46,7 @@ def test_get_mapper_mapper_type():
 def test_get_mapper_not_registered():
 
     f = field.Nested('UserMapper', name='user')
-    with pytest.raises(FieldError):
+    with pytest.raises(MapperError):
         f.get_mapper(data={'foo': 'id'})
 
 
@@ -57,7 +56,7 @@ def test_get_mapper_not_a_valid_mapper():
         pass
 
     f = field.Nested(Foo, name='user')
-    with pytest.raises(FieldError):
+    with pytest.raises(MapperError):
         f.get_mapper(data={'foo': 'id'})
 
 
@@ -135,7 +134,3 @@ def test_marshal_nested_with_role():
     output = {}
     test_field.marshal(data, output)
     assert output == {'user': {'name': 'mike'}}
-
-
-
-

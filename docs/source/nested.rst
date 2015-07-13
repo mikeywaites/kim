@@ -4,7 +4,8 @@
 Nested Fields
 =============
 
-Nested fields allow :py:class:`~.Mapper`s to include other :py:class:`~.Mapper`s in a reusable and flexible way. This allows you to structure the flow of data through your application in a similar or identical way to your database models. There are several options you can use to control whether data in the Nested field can be updated, whether new instances of it can be created and the facility to load the nested object based on a single field, such as ``id``.
+Nested fields allow :py:class:`~.Mappers` to include other :py:class:`~.Mappers` in a reusable and flexible way. This allows you to structure the flow of data through your application in a similar or identical way to your database models.
+There are several options you can use to control whether data in the Nested field can be updated, whether new instances of it can be created and the facility to load the nested object based on a single field, such as ``id``.
 
 
 .. _serializing:

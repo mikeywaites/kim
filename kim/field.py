@@ -5,8 +5,6 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-import six
-
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
@@ -279,10 +277,13 @@ class NestedFieldOpts(FieldOpts):
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
         :param role: specify the name of a role to use on the Nested mapper
+        :param collection_class: provide a custom type to be used when
+            mapping many nested objects
 
         """
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
+        self.collection_class = kwargs.pop('collection_class', list)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 
@@ -301,34 +302,33 @@ class Nested(Field):
             id = field.String()
             user = field.Nested('OtherMapper', required=True)
 
+    .. seealso::
+
+        :py:class:`.NestedFieldOpts`
+
     """
 
     opts_class = NestedFieldOpts
     input_pipe = NestedInput
     output_pipe = NestedOutput
 
-    def get_mapper(self, **mapper_params):
+    def get_mapper(self, as_class=False, **mapper_params):
+        """Retrieve the specified mapper from the Mapper registry.
+
+        :param mapper_params: A dict of kwarg's to pass to the specified
+            mappers constructor
+        :param as_class: Return the Mapper class object without
+            calling the constructor.  This is typically used when nested
+            is mapping many objects.
+
+        :rtype: :py:class:`.Mapper`
+        :returns: a new instance of the specified mapper
         """
-        """
 
-        from .mapper import Mapper, mapper_is_defined, _MapperConfig
+        from .mapper import get_mapper_from_registry
 
-        mapper_or_mapper_name = self.opts.mapper
-        if isinstance(mapper_or_mapper_name, six.string_types):
+        mapper = get_mapper_from_registry(self.opts.mapper)
+        if as_class:
+            return mapper
 
-            if not mapper_is_defined(mapper_or_mapper_name):
-                raise FieldError('%s is not a valid Mapper. '
-                                 'Is this Mapper defined?'
-                                 % mapper_or_mapper_name)
-        else:
-            if not issubclass(self.opts.mapper, Mapper):
-                raise FieldError('%s is not a valid Mapper. '
-                                 'Please provide nested with '
-                                 'a valid Mapper class'
-                                 % mapper_or_mapper_name)
-
-        reg = _MapperConfig.MAPPER_REGISTRY
-        try:
-            return reg[self.opts.mapper](**mapper_params)
-        except KeyError:
-            return self.opts.mapper(**mapper_params)
+        return mapper(**mapper_params)
