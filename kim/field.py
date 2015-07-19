@@ -11,7 +11,8 @@ from .pipelines import (
     Input, Output,
     StringInput, StringOutput,
     IntegerInput, IntegerOutput,
-    NestedInput, NestedOutput
+    NestedInput, NestedOutput,
+    CollectionInput, CollectionOutput
 )
 
 
@@ -47,12 +48,11 @@ class FieldOpts(object):
         :param default: Specify a default value for this field
         :param allow_none: Speficy if this fields value can be None
         :param read_only: Speficy if this field should be ignored when marshaling
-
         :raises: :class:`.FieldOptsError`
         :returns: None
         """
 
-        self._opts = opts
+        self._opts = opts.copy()
 
         # set attribute_name, name and source options.
         name = opts.pop('name', None)
@@ -65,6 +65,9 @@ class FieldOpts(object):
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
+
+        # internal attrs
+        self._is_wrapped = opts.pop('_is_wrapped', False)
 
         self.validate()
 
@@ -267,7 +270,7 @@ class Integer(Field):
 
 class NestedFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.NestedField`.
+    :class:`.Nested`.
 
     """
 
@@ -334,5 +337,42 @@ class Nested(Field):
         return mapper(**mapper_params)
 
 
+class CollectionFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Collection`.
+
+    """
+
+    def __init__(self, field, **kwargs):
+        """Construct a new instance of :class:`.CollectionFieldOpts`
+
+        :param role: specify the name of a role to use on the Nested mapper
+
+        """
+        self.field = field
+        self.field.opts._is_wrapped = True
+        super(CollectionFieldOpts, self).__init__(**kwargs)
+
+    def get_name(self):
+        """proxy access to the :py:class:`.FieldOpts` defined for
+        this collection field.
+
+        :rtype: str
+        :returns: The value of get_name from FieldOpts
+
+        """
+
+        return self.field.name
+
+    def validate(self):
+
+        if not isinstance(self.field, Field):
+            raise FieldOptsError('Collection requires a valid Field '
+                                 'instance as its first argument')
+
+
 class Collection(Field):
-    pass
+
+    input_pipe = CollectionInput
+    output_pipe = CollectionOutput
+    opts_class = CollectionFieldOpts

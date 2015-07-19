@@ -4,12 +4,6 @@ from kim.mapper import Mapper, MapperError
 from kim import field
 
 
-class TestType(object):
-    def __init__(self, *args, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-
 def test_nested_defers_mapper_checks():
     """ensure that instantiating a nested field with an invalid mapper
     doesn't emit an error until the nested mapper is actually needed.

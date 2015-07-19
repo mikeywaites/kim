@@ -73,6 +73,11 @@ def get_data_from_source(field, data):
 
     """
 
+    # If the field is wrapped by another field then the relevant data
+    # will have already been pulled from the source.
+    if field.opts._is_wrapped:
+        return data
+
     value = attr_or_key(data, field.name)
     if value:
         return value
