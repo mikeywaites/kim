@@ -93,14 +93,13 @@ def update_output(field, data, output):
     """Store ``data`` at the given key or attribute for a ``field`` inside
     of ``output``
 
-    :param field: and instance of :class:`kim.field.Field`
+    :param field: instance of :class:`kim.field.Field`
     :param data: the desired value to store in output for the field.
     :param output: and object that supports setattr or key based ops
 
     :raises: FieldError
     :returns: None
     """
-
     try:
         setattr(output, field.name, data)
     except AttributeError:

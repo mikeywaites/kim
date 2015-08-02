@@ -346,7 +346,7 @@ class CollectionFieldOpts(FieldOpts):
     def __init__(self, field, **kwargs):
         """Construct a new instance of :class:`.CollectionFieldOpts`
 
-        :param role: specify the name of a role to use on the Nested mapper
+        :param field: specify the field type mpapped inside of this collection.
 
         """
         self.field = field
@@ -372,6 +372,26 @@ class CollectionFieldOpts(FieldOpts):
 
 
 class Collection(Field):
+    """:class:`.Collection` represents  collection of other field types,
+    typically stored in a list.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.String()
+            users = field.Collection(field.Nested('OtherMapper', required=True))
+            user_ids = field.Collection(field.String())
+
+    .. seealso::
+
+        :py:class:`.CollectionFieldOpts`
+
+    """
 
     input_pipe = CollectionInput
     output_pipe = CollectionOutput

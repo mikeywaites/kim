@@ -19,24 +19,24 @@ def is_list(field, data):
         raise field.invalid("invalid type")
 
 
-def marshall_collection(field, data):
-    _field = field.opts.field
-    output = []
+def run_collection(collection_field, data, func):
+
     for datum in data:
         _output = {}
-        _field.marshal(datum, _output)
-        output.append(_output[field.name])
+        func(datum, _output)
+        yield _output[collection_field.name]
+
+
+def marshall_collection(field, data):
+    wrapped_field = field.opts.field
+    output = [o for o in run_collection(field, data, wrapped_field.marshal)]
 
     return output
 
 
 def serialize_collection(field, data):
-    _field = field.opts.field
-    output = []
-    for datum in data:
-        _output = {}
-        _field.serialize(datum, _output)
-        output.append(_output[field.name])
+    wrapped_field = field.opts.field
+    output = [o for o in run_collection(field, data, wrapped_field.serialize)]
 
     return output
 
