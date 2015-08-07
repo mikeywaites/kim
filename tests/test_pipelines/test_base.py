@@ -1,7 +1,7 @@
 import pytest
 
 from kim.field import Field, FieldInvalid
-from kim.pipelines.base import get_data_from_source
+from kim.pipelines.base import get_data_from_source, update_output
 
 
 def test_get_data_from_source_pipe():
@@ -24,3 +24,48 @@ def test_get_data_from_source_pipe():
 
     with pytest.raises(FieldInvalid):
         get_data_from_source(field3, data)
+
+
+def test_update_output_with_object():
+
+    data = {
+        'name': 'mike',
+        'test': 'true',
+        'nested': {'foo': 'bar'}
+    }
+
+    class MyObject(object):
+        pass
+
+    output = MyObject()
+    field = Field(name='name', required=True)
+    update_output(field, data['name'], output)
+    assert output.name == 'mike'
+
+
+def test_update_output_with_dict():
+
+    data = {
+        'name': 'mike',
+        'test': 'true',
+        'nested': {'foo': 'bar'}
+    }
+
+    output = {}
+
+    field = Field(name='name', required=True)
+    update_output(field, data['name'], output)
+    assert output == {'name': 'mike'}
+
+
+def test_update_output_invalid_output_type():
+
+    data = {
+        'name': 'mike',
+        'test': 'true',
+        'nested': {'foo': 'bar'}
+    }
+
+    field = Field(name='name', required=True)
+    with pytest.raises(FieldInvalid):
+        update_output(field, data['name'], 1)

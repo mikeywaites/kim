@@ -69,8 +69,65 @@ A ``Mapper`` may also define a ``__roles__`` property.  Usage of roles is covere
 
         id = field.Integer(read_only=True)
         name = field.String(required=True)
-        company = field.Nested('myapp.mappers.CompanyMapper')
+        company = field.Nested('CompanyMapper')
 
         __roles__ = {
             'public' whitelist('name'),
         }
+
+
+Using Mappers
+-----------------
+
+Now we have seen how to define mappers, it's time to take a look out how Kim handles marshaling and serializing data.  A critical design feature of Kim's mappers is that each Mapper represents a single datum.
+Whilst its possible to map many objects, which is demonstrated below, :py:class:`.Mapper` only handles one object at a time.
+
+Marshaling data
+^^^^^^^^^^^^^^^^^
+
+Marshaling defines the process of pushing data into a mapper.  It valdiates the data is in the correct state before marshaling the input to the Mappers defined ``__type__`` object.
+
+When marshaling, users pass data to the contructor of the :py:class:`.Mapper` using the ``data`` kwarg.  Once a mapper has been instantiated, users simply call the :meth:`kim.mapper.Mapper.marshal` method
+to process the data.
+
+.. code-block:: python
+
+    data = json.loads(request.body)
+    user = UserMapper(data=data).marshal()
+
+    db.session.add(user)
+    db.session.commit()
+
+
+Marshaling many objects.
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    users = UserMapper.many().marshal(users_json)
+
+    db.session.add_all(users)
+    db.session.commit()
+
+
+
+Serializing data
+^^^^^^^^^^^^^^^^^
+
+Serializing data is the opposite process from marshaling.  A mapper is provided with an object, typically a database orm object or other valid type, and kim serializes the object attributes into the defined data structure.
+
+When serializing, users pass the object being serialized to the Mappers contructor using the ``obj`` kwarg.  Once the mapper has been instantiated, users simply call the :meth:`kim.mapper.Mapper.serialize` method to process the output.
+
+.. code-block:: python
+
+    user = get_user_by_id(1)
+    return json.dumps(UserMapper(obj=user).serialize())
+
+
+Serializing many objects.
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    users = get_user()
+    return UserMapper.many().serialize(users)
