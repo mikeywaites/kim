@@ -5,6 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from kim.exception import StopPipelineExecution
 from kim.utils import attr_or_key
 
 
@@ -36,21 +37,26 @@ class Pipeline(object):
 
         """
         pipe_data = data
-        for pipe in self.input_pipes:
-            pipe_data = pipe(field, pipe_data)
+        try:
 
-        # validation pipes should not affect the data being piped
-        # they only raise exceptions of validation fails.
-        for pipe in self.validation_pipes:
-            pipe(field, pipe_data)
+            for pipe in self.input_pipes:
+                pipe_data = pipe(field, pipe_data)
 
-        for pipe in self.process_pipes:
-            pipe_data = pipe(field, pipe_data)
+            # validation pipes should not affect the data being piped
+            # they only raise exceptions if validation fails.
+            for pipe in self.validation_pipes:
+                pipe(field, pipe_data)
 
-        for pipe in self.output_pipes:
-            pipe(field, pipe_data, output)
+            for pipe in self.process_pipes:
+                pipe_data = pipe(field, pipe_data)
 
-        return output
+            for pipe in self.output_pipes:
+                pipe(field, pipe_data, output)
+
+            return output
+
+        except StopPipelineExecution:
+            return output
 
 
 class Input(Pipeline):
@@ -89,6 +95,18 @@ def get_data_from_source(field, data):
         return field.opts.default
 
 
+def read_only(field, data):
+    """End processing of a pipeline if a Field is marked as read_only.
+
+    :raises  StopPipelineExecution:
+    """
+
+    if field.opts.read_only:
+        raise StopPipelineExecution('read_only field')
+
+    return data
+
+
 def update_output(field, data, output):
     """Store ``data`` at the given key or attribute for a ``field`` inside
     of ``output``
@@ -108,3 +126,9 @@ def update_output(field, data, output):
         except TypeError:
             raise field.invalid('output does not support attribute or '
                                 'key based set operations')
+
+
+marshal_input_pipe = [read_only, get_data_from_source]
+serialize_input_pipe = [get_data_from_source, ]
+marshal_output_pipe = [update_output, ]
+serialize_output_pipe = [update_output, ]
