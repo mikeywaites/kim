@@ -1,6 +1,7 @@
 import pytest
 
 from kim import Mapper, field
+from kim.field import FieldInvalid
 
 from ..helpers import TestType
 
@@ -59,7 +60,7 @@ def test_marshal_read_only_collection():
     assert output == {}
 
 
-def test_marshal_nested_collection():
+def test_marshal_nested_collection_allow_create():
 
     class UserMapper(Mapper):
 
@@ -69,13 +70,102 @@ def test_marshal_nested_collection():
         name = field.String()
     data = {'id': 2, 'name': 'bob', 'users': [{'id': '1', 'name': 'mike'}]}
 
-    f = field.Collection(field.Nested('UserMapper', name='users'))
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      allow_create=True))
     output = {}
     f.marshal(data, output)
     assert output == {'users': [TestType(id='1', name='mike')]}
 
 
-@pytest.skip
+def test_marshal_nested_collection_default():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = TestType(id='1', name='mike')
+    data = {'id': 2, 'name': 'bob', 'users': [{'id': '1',
+                                              'name': 'ignore this'}]}
+
+    def getter(field, data):
+        if data['id'] == '1':
+            return user
+
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      getter=getter))
+    output = {}
+    f.marshal(data, output)
+    assert output == {'users': [user]}
+    assert user.name == 'mike'
+
+
+def test_marshal_nested_collection_allow_updates():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = TestType(id='1', name='mike')
+    data = {'id': 2, 'name': 'bob', 'users': [{'id': '1', 'name': 'new name'}]}
+
+    def getter(field, data):
+        if data['id'] == '1':
+            return user
+
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      getter=getter, allow_updates=True))
+    output = {}
+    f.marshal(data, output)
+    assert output == {'users': [user]}
+    assert user.name == 'new name'
+
+
+def test_marshal_nested_collection_allow_updates_in_place():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        name = field.String()
+
+    user = TestType(id='1', name='mike')
+    data = {'id': 2, 'name': 'bob', 'users': [{'name': 'new name'}]}
+
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      allow_updates_in_place=True))
+    output = {'users': [user]}
+    f.marshal(data, output)
+    assert output == {'users': [user]}
+    assert user.name == 'new name'
+
+
+def test_marshal_nested_collection_allow_updates_in_place_too_many():
+    # We're updating in place, but there are more users in the input data
+    # than already exist so an error should be raised
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        name = field.String()
+
+    user = TestType(id='1', name='mike')
+    data = {'id': 2, 'name': 'bob', 'users': [
+        {'name': 'name1'}, {'name': 'name2'}]}
+
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      allow_updates_in_place=True))
+    output = {'users': [user]}
+    with pytest.raises(FieldInvalid):
+        f.marshal(data, output)
+
+
 def test_serialize_nested_collection():
 
     class UserMapper(Mapper):
@@ -89,8 +179,7 @@ def test_serialize_nested_collection():
     post = TestType(id='1', users=users)
 
     output = {}
-    f = field.Collection(field.Nested('UserMapper', name='users',
-                                      allow_create=True))
+    f = field.Collection(field.Nested('UserMapper', name='users'))
     f.serialize(post, output)
 
     assert output == {'users': [{'id': '1', 'name': 'mike'},
