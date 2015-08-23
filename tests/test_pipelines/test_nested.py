@@ -1,6 +1,7 @@
 import pytest
 
 from kim.mapper import Mapper, MapperError
+from kim.field import FieldInvalid
 from kim import field
 
 
@@ -162,3 +163,53 @@ def test_marshal_read_only_nested_mapper():
     output = {}
     test_field.marshal(data, output)
     assert output == {}
+
+
+def test_marshal_nested_with_getter():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    users = {
+        '1': {'id': '1', 'name': 'mike'},
+        '2': {'id': '2', 'name': 'jack'}
+    }
+
+    def getter(field, data):
+        return users[data['id']]
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {'id': '1'}}
+    output = {}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'mike'}}
+
+    data2 = {'id': 2, 'name': 'bob', 'user': {'id': '2'}}
+    output = {}
+    test_field.marshal(data2, output)
+    assert output == {'user': {'id': '2', 'name': 'jack'}}
+
+
+def test_marshal_nested_with_getter_failure():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    def getter(field, data):
+        return None
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter)
+
+    data = {'id': 2, 'name': 'bob', 'user': {'id': '1'}}
+    output = {}
+    with pytest.raises(FieldInvalid):
+        test_field.marshal(data, output)
