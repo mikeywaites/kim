@@ -25,9 +25,22 @@ def serialize_nested(field, data):
     return nested_mapper.serialize(role=field.opts.role)
 
 
+def call_getter(field, data):
+    if field.opts.getter:
+        result = field.opts.getter(field, data)
+        if result is None:
+            raise field.invalid('%s not found' % field.name)
+        else:
+            return result
+    else:
+        return data
+
+
 class NestedInput(Input):
 
-    input_pipes = marshal_input_pipe
+    input_pipes = marshal_input_pipe + [
+        call_getter
+    ]
     process_pipes = [
         marshal_nested
     ]

@@ -287,6 +287,7 @@ class NestedFieldOpts(FieldOpts):
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
         self.collection_class = kwargs.pop('collection_class', list)
+        self.getter = kwargs.pop('getter', None)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 
