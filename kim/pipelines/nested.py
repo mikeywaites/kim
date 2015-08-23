@@ -18,17 +18,21 @@ def _call_getter(field, data):
 
 def marshal_nested(field, data, output):
     """Marshal data using the nested mapper defined on this field.
-    """
-    # 1. User has passed an id and no updates are allowed.
-    #    Resolve the id to an object and return immediately
-    # 2. User has passed an id and updates are allowed.
-    #    Resolve the id to an object and call recursively to update it
-    # 3. Object already exists, user has not passed an id and in place
-    #    updates are allowed. Call recursively to update existing object.
-    # 4. User has not passed an id and creation of new objects is allowed
-    #    Call recursively to create a new object
-    # 5. User has not passed an id and creation of new objects is not
-    #    allowed, nor are in place updates. Raise an exception.
+
+    There are 5 possible scenarios, depending on the security setters and
+    presence of a getter function:
+    1. Getter function returns an object and no updates are allowed.
+       Return the object immediately
+    2. Getter function returns an object and updates are allowed.
+       Call the nested mapper with the object to update it
+    3. Object already exists, getter function returns None/does not exist and
+       in place updates are allowed.
+       Call the nested mapper with the existing object to update it
+    4. Getter function returns None/does not exist and creation of new objects
+       is allowed
+       Call the nested mapper to create a new object
+    5. Getter function returns None/does not exist and creation of new objects
+       is not allowed, nor are in place updates. Raise an exception."""
 
     resolved = _call_getter(field, data)
 
