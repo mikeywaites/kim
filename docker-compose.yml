@@ -1,0 +1,5 @@
+python:
+  volumes:
+   - .:/usr/src/app
+  command: python setup.py test
+  build: Dockerfile

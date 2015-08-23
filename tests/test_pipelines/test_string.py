@@ -43,3 +43,12 @@ def test_string_output():
     output = {}
     field.serialize(Foo(), output)
     assert output == {'name': 'value'}
+
+
+def test_marshal_read_only_string():
+
+    field = String(name='name', read_only=True, required=True)
+
+    output = {}
+    field.marshal({'name': 'foo', 'email': 'mike@mike.com'}, output)
+    assert output == {}

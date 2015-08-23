@@ -33,6 +33,13 @@ def test_integer_input():
     assert output == {'name': 2}
 
 
+def test_integer_field_invalid_type():
+
+    field = Integer(name='name')
+    with pytest.raises(FieldInvalid):
+        field.marshal({'name': None, 'email': 'mike@mike.com'}, {})
+
+
 def test_integer_output():
 
     class Foo(object):
@@ -43,3 +50,12 @@ def test_integer_output():
     output = {}
     field.serialize(Foo(), output)
     assert output == {'name': 2}
+
+
+def test_marshal_read_only_integer():
+
+    field = Integer(name='name', read_only=True, required=True)
+
+    output = {}
+    field.marshal({'id': 2, 'email': 'mike@mike.com'}, output)
+    assert output == {}

@@ -1,9 +1,9 @@
 import pytest
 
 from kim.exception import MapperError
-from kim.mapper import Mapper, _MapperConfig
+from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
 from kim.field import Field, String, Integer
-from kim.role import whitelist
+from kim.role import whitelist, blacklist
 
 
 class TestType(object):
@@ -14,14 +14,6 @@ class TestType(object):
 
 class TestField(Field):
     pass
-
-
-
-
-@pytest.fixture(scope='function', autouse=True)
-def empty_registry():
-
-    _MapperConfig.MAPPER_REGISTRY.clear()
 
 
 def test_mapper_sets_fields():
@@ -180,9 +172,9 @@ def test_inherit_parent_roles():
     mapper = Child(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name'),
-        'overview': ['name', ],
-        'parent': ['name', ],
-        'id_only': ['id', ],
+        'overview': whitelist('name', ),
+        'parent': whitelist('name', ),
+        'id_only': whitelist('id', ),
     }
 
 
@@ -214,14 +206,14 @@ def test_new_mapper_sets_roles():
 
     mapper = MyMapper(data={})
     assert mapper.roles == {
-        'overview': ['email', ],
+        'overview': whitelist('email', ),
         '__default__': whitelist('id', 'name', 'email')}
 
     mapper = OtherMapper(data={})
     assert mapper.roles == {
         '__default__': whitelist('id', 'name', 'email'),
-        'overview': ['email'],
-        'private': ['id', ]
+        'overview': whitelist('email'),
+        'private': whitelist('id', )
     }
 
 
@@ -263,6 +255,203 @@ def test_mapper_serialize():
     assert result == {'id': 2, 'name': 'bob'}
 
 
+def test_mapper_serialize_many():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj1 = TestType(id=1, name='bob')
+    obj2 = TestType(id=2, name='mike')
+
+    result = MapperBase.many().serialize([obj1, obj2])
+
+    assert result == [{'id': 1, 'name': 'bob'}, {'id': 2, 'name': 'mike'}]
+
+
+def test_mapper_marshal_many():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = [{'name': 'mike', 'id': 1}, {'name': 'bob', 'id': 2}]
+
+    result = MapperBase.many().marshal(data)
+
+    assert len(result) == 2
+    res1, res2 = result
+    assert (res1.name, res1.id) == ('mike', 1)
+    assert (res2.name, res2.id) == ('bob', 2)
+
+
+def test_mapper_marshal_many_with_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': blacklist('id')
+        }
+
+    data = [{'name': 'mike', 'id': 1}, {'name': 'bob', 'id': 2}]
+
+    result = MapperBase.many().marshal(data, role='private')
+
+    assert len(result) == 2
+    res1, res2 = result
+    assert getattr(res1, 'id', False) is False
+    assert getattr(res2, 'id', False) is False
+    assert res1.name == 'mike'
+    assert res2.name == 'bob'
+
+
+def test_mapper_serialize_many_with_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': blacklist('id')
+        }
+
+    obj1 = TestType(id=1, name='bob')
+    obj2 = TestType(id=2, name='mike')
+
+    result = MapperBase.many().serialize([obj1, obj2], role='private')
+
+    assert result == [{'name': 'bob'}, {'name': 'mike'}]
+
+
+def test_mapper_serialize_with_role_str():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize(role='private')
+
+    assert result == {'id': 2}
+
+
+def test_mapper_marshal_with_role_str():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    result = mapper.marshal(role='private')
+
+    assert result.id == 3
+
+
+def test_mapper_serialize_with_role_as_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize(role=blacklist('id'))
+
+    assert result == {'name': 'bob'}
+
+
+def test_mapper_marshal_with_role_as_role():
+
+    class MyType(TestType):
+
+        def __init__(self, **params):
+            self.id = 2
+            super(MyType, self).__init__(**params)
+
+    class MapperBase(Mapper):
+
+        __type__ = MyType
+
+        id = Integer()
+        name = String()
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    obj = mapper.marshal(role=blacklist('id'))
+
+    assert obj.name == 'mike'
+    assert obj.id == 2
+
+
+def test_mapper_serialize_with_invalid_role_type():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+
+    with pytest.raises(MapperError):
+        mapper.serialize(role=object())
+
+
+def test_mapper_marshal_with_invalid_role_type():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj)
+
+    with pytest.raises(MapperError):
+        mapper.marshal(role=object())
+
+
 def test_mapper_marshal():
 
     class MapperBase(Mapper):
@@ -280,6 +469,55 @@ def test_mapper_marshal():
     assert isinstance(result, TestType)
     assert result.id == 2
     assert result.name == 'bob'
+
+
+def test_get_fields_with_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    data = {'id': 2, 'name': 'bob'}
+    mapper = MapperBase(data=data)
+    fields = mapper._get_fields('private')
+    assert [MapperBase.fields['id'], ] == fields
+
+
+def test_get_fields_with_invalid_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'id': 2, 'name': 'bob'}
+    mapper = MapperBase(data=data)
+    with pytest.raises(MapperError):
+        mapper._get_fields('invalid')
+
+
+def test_mapper_with_invalid_role_type():
+
+    with pytest.raises(MapperError):
+        class MapperBase(Mapper):
+
+            __type__ = TestType
+
+            id = Integer()
+            name = String()
+
+            __roles__ = {
+                'public': object()
+            }
 
 
 def test_mapper_marshal_update():
@@ -331,3 +569,34 @@ def test_mapper_already_registered():
 
     with pytest.raises(MapperError):
         create_mapper()
+
+
+def test_get_mapper_from_registry_str_name():
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    mapper = get_mapper_from_registry('UserMapper')
+    assert mapper == UserMapper
+
+
+def test_get_mapper_from_registry_mapper_type():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    mapper = get_mapper_from_registry(UserMapper)
+    assert mapper == UserMapper
+
+
+def test_get_mapper_from_registry_mapper_does_not_exist():
+
+    with pytest.raises(MapperError):
+        get_mapper_from_registry('OtherMapper')

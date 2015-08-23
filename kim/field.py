@@ -10,7 +10,9 @@ from .utils import set_creation_order
 from .pipelines import (
     Input, Output,
     StringInput, StringOutput,
-    IntegerInput, IntegerOutput
+    IntegerInput, IntegerOutput,
+    NestedInput, NestedOutput,
+    CollectionInput, CollectionOutput
 )
 
 
@@ -46,12 +48,11 @@ class FieldOpts(object):
         :param default: Specify a default value for this field
         :param allow_none: Speficy if this fields value can be None
         :param read_only: Speficy if this field should be ignored when marshaling
-
         :raises: :class:`.FieldOptsError`
         :returns: None
         """
 
-        self._opts = opts
+        self._opts = opts.copy()
 
         # set attribute_name, name and source options.
         name = opts.pop('name', None)
@@ -64,6 +65,9 @@ class FieldOpts(object):
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
+
+        # internal attrs
+        self._is_wrapped = opts.pop('_is_wrapped', False)
 
         self.validate()
 
@@ -142,14 +146,14 @@ class Field(object):
     input_pipe = Input
     output_pipe = Output
 
-    def __init__(self, **field_opts):
+    def __init__(self, *args, **field_opts):
         """Construct a new instance of field.  Each field accepts a set of
         kwargs that will be passed directly to the fields
         defined ``opts_class``.
         """
 
         try:
-            self.opts = self.opts_class(**field_opts)
+            self.opts = self.opts_class(*args, **field_opts)
         except FieldOptsError as e:
             msg = '{0} field has invalid options: {1}' \
                 .format(self.__class__.__name__, e.message)
@@ -262,3 +266,138 @@ class Integer(Field):
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput
+
+
+class NestedFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Nested`.
+
+    """
+
+    def __init__(self, mapper_or_mapper_name, **kwargs):
+        """Construct a new instance of :class:`.NestedFieldOpts`
+
+        :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
+            or a valid mapper name
+        :param role: specify the name of a role to use on the Nested mapper
+        :param collection_class: provide a custom type to be used when
+            mapping many nested objects
+        :param getter: provide a function taking (field, data) which returns
+            the object to be set on this field, or None if it can't find one.
+            This is useful where your API accepts simply `{'id': 2}` but you
+            want a full object to be set
+
+        """
+        self.mapper = mapper_or_mapper_name
+        self.role = kwargs.pop('role', '__default__')
+        self.collection_class = kwargs.pop('collection_class', list)
+        self.getter = kwargs.pop('getter', None)
+        super(NestedFieldOpts, self).__init__(**kwargs)
+
+
+class Nested(Field):
+    """:class:`.Nested` represents an object that is represented by another
+    mapper.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.String()
+            user = field.Nested('OtherMapper', required=True)
+
+    .. seealso::
+
+        :py:class:`.NestedFieldOpts`
+
+    """
+
+    opts_class = NestedFieldOpts
+    input_pipe = NestedInput
+    output_pipe = NestedOutput
+
+    def get_mapper(self, as_class=False, **mapper_params):
+        """Retrieve the specified mapper from the Mapper registry.
+
+        :param mapper_params: A dict of kwarg's to pass to the specified
+            mappers constructor
+        :param as_class: Return the Mapper class object without
+            calling the constructor.  This is typically used when nested
+            is mapping many objects.
+
+        :rtype: :py:class:`.Mapper`
+        :returns: a new instance of the specified mapper
+        """
+
+        from .mapper import get_mapper_from_registry
+
+        mapper = get_mapper_from_registry(self.opts.mapper)
+        if as_class:
+            return mapper
+
+        return mapper(**mapper_params)
+
+
+class CollectionFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Collection`.
+
+    """
+
+    def __init__(self, field, **kwargs):
+        """Construct a new instance of :class:`.CollectionFieldOpts`
+
+        :param field: specify the field type mpapped inside of this collection.
+
+        """
+        self.field = field
+        self.field.opts._is_wrapped = True
+        super(CollectionFieldOpts, self).__init__(**kwargs)
+
+    def get_name(self):
+        """proxy access to the :py:class:`.FieldOpts` defined for
+        this collection field.
+
+        :rtype: str
+        :returns: The value of get_name from FieldOpts
+
+        """
+
+        return self.field.name
+
+    def validate(self):
+
+        if not isinstance(self.field, Field):
+            raise FieldOptsError('Collection requires a valid Field '
+                                 'instance as its first argument')
+
+
+class Collection(Field):
+    """:class:`.Collection` represents  collection of other field types,
+    typically stored in a list.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.String()
+            users = field.Collection(field.Nested('OtherMapper', required=True))
+            user_ids = field.Collection(field.String())
+
+    .. seealso::
+
+        :py:class:`.CollectionFieldOpts`
+
+    """
+
+    input_pipe = CollectionInput
+    output_pipe = CollectionOutput
+    opts_class = CollectionFieldOpts
