@@ -282,6 +282,10 @@ class NestedFieldOpts(FieldOpts):
         :param role: specify the name of a role to use on the Nested mapper
         :param collection_class: provide a custom type to be used when
             mapping many nested objects
+        :param getter: provide a function taking (field, data) which returns
+            the object to be set on this field, or None if it can't find one.
+            This is useful where your API accepts simply `{'id': 2}` but you
+            want a full object to be set
 
         """
         self.mapper = mapper_or_mapper_name
