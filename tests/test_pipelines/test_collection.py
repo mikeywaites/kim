@@ -75,6 +75,7 @@ def test_marshal_nested_collection():
     assert output == {'users': [TestType(id='1', name='mike')]}
 
 
+@pytest.skip
 def test_serialize_nested_collection():
 
     class UserMapper(Mapper):
@@ -88,7 +89,8 @@ def test_serialize_nested_collection():
     post = TestType(id='1', users=users)
 
     output = {}
-    f = field.Collection(field.Nested('UserMapper', name='users'))
+    f = field.Collection(field.Nested('UserMapper', name='users',
+                                      allow_create=True))
     f.serialize(post, output)
 
     assert output == {'users': [{'id': '1', 'name': 'mike'},

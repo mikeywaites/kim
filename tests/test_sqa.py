@@ -67,7 +67,7 @@ def test_marshal_nested_mapper(db_session):
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True)
+        user = field.Nested('UserMapper', required=True, allow_create=True)
 
     data = {
         'id': 2,

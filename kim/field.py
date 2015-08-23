@@ -292,6 +292,10 @@ class NestedFieldOpts(FieldOpts):
         self.role = kwargs.pop('role', '__default__')
         self.collection_class = kwargs.pop('collection_class', list)
         self.getter = kwargs.pop('getter', None)
+        self.allow_updates = kwargs.pop('allow_updates', False)
+        self.allow_updates_in_place = kwargs.pop(
+            'allow_updates_in_place', False)
+        self.allow_create = kwargs.pop('allow_create', False)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 

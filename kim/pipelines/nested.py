@@ -7,14 +7,47 @@
 
 from .base import (Input, Output, marshal_input_pipe, marshal_output_pipe,
                    serialize_input_pipe, serialize_output_pipe)
+from kim.utils import attr_or_key
 
 
-def marshal_nested(field, data):
+def _call_getter(field, data):
+    if field.opts.getter:
+        result = field.opts.getter(field, data)
+        return result
+
+
+def marshal_nested(field, data, output):
     """Marshal data using the nested mapper defined on this field.
     """
+    # 1. User has passed an id and no updates are allowed.
+    #    Resolve the id to an object and return immediately
+    # 2. User has passed an id and updates are allowed.
+    #    Resolve the id to an object and call recursively to update it
+    # 3. Object already exists, user has not passed an id and in place
+    #    updates are allowed. Call recursively to update existing object.
+    # 4. User has not passed an id and creation of new objects is allowed
+    #    Call recursively to create a new object
+    # 5. User has not passed an id and creation of new objects is not
+    #    allowed, nor are in place updates. Raise an exception.
 
-    nested_mapper = field.get_mapper(data=data)
-    return nested_mapper.marshal(role=field.opts.role)
+    resolved = _call_getter(field, data)
+
+    if resolved is not None:
+        if field.opts.allow_updates:
+            nested_mapper = field.get_mapper(data=data, obj=resolved)
+            return nested_mapper.marshal(role=field.opts.role)
+        else:
+            return resolved
+    else:
+        if field.opts.allow_updates_in_place:
+            existing_value = attr_or_key(output, field.name)
+            nested_mapper = field.get_mapper(data=data, obj=existing_value)
+            return nested_mapper.marshal(role=field.opts.role)
+        elif field.opts.allow_create:
+            nested_mapper = field.get_mapper(data=data)
+            return nested_mapper.marshal(role=field.opts.role)
+        else:
+            raise field.invalid('%s not found' % field.name)
 
 
 def serialize_nested(field, data):
@@ -25,26 +58,10 @@ def serialize_nested(field, data):
     return nested_mapper.serialize(role=field.opts.role)
 
 
-def call_getter(field, data):
-    if field.opts.getter:
-        result = field.opts.getter(field, data)
-        if result is None:
-            raise field.invalid('%s not found' % field.name)
-        else:
-            return result
-    else:
-        return data
-
-
 class NestedInput(Input):
 
-    input_pipes = marshal_input_pipe + [
-        call_getter
-    ]
-    process_pipes = [
-        marshal_nested
-    ]
-    output_pipes = marshal_output_pipe
+    input_pipes = marshal_input_pipe
+    output_pipes = [marshal_nested] + marshal_output_pipe
 
 
 class NestedOutput(Output):
