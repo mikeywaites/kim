@@ -60,7 +60,7 @@ def test_marshal_nested():
 
         __type__ = dict
 
-        id = field.String(required=True, read_only=True)
+        id = field.String(required=True)
         name = field.String()
 
     data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
@@ -128,3 +128,37 @@ def test_marshal_nested_with_role():
     output = {}
     test_field.marshal(data, output)
     assert output == {'user': {'name': 'mike'}}
+
+
+def test_marshal_nested_with_read_only_field():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+    data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+    test_field = field.Nested('UserMapper', name='user')
+
+    output = {}
+    test_field.marshal(data, output)
+    assert output == {'user': {'name': 'mike'}}
+
+
+def test_marshal_read_only_nested_mapper():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+    data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+    test_field = field.Nested('UserMapper', name='user', read_only=True)
+
+    output = {}
+    test_field.marshal(data, output)
+    assert output == {}

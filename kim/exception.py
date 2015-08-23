@@ -32,3 +32,7 @@ class FieldError(KimException):
 
 class FieldInvalid(KimException):
     pass
+
+
+class StopPipelineExecution(KimException):
+    pass

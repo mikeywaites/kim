@@ -48,13 +48,24 @@ def test_serialize_flat_collection():
     assert output == {'post_ids': [2, 1]}
 
 
+def test_marshal_read_only_collection():
+
+    f = field.Collection(field.Integer(name='post_ids'), read_only=True)
+    output = {}
+    data = {
+        'post_ids': [2, 1]
+    }
+    f.marshal(data, output)
+    assert output == {}
+
+
 def test_marshal_nested_collection():
 
     class UserMapper(Mapper):
 
         __type__ = TestType
 
-        id = field.String(required=True, read_only=True)
+        id = field.String(required=True)
         name = field.String()
     data = {'id': 2, 'name': 'bob', 'users': [{'id': '1', 'name': 'mike'}]}
 

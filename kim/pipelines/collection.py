@@ -5,7 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import Input, Output, get_data_from_source, update_output
+from .base import (Input, Output, marshal_input_pipe, marshal_output_pipe,
+                   serialize_input_pipe, serialize_output_pipe)
 
 
 def is_list(field, data):
@@ -28,6 +29,10 @@ def run_collection(collection_field, data, func):
 
 
 def marshall_collection(field, data):
+    """iterate over each item in ``data`` and marshal the item through the
+    wrapped field defined for this collection
+
+    """
     wrapped_field = field.opts.field
     output = [o for o in run_collection(field, data, wrapped_field.marshal)]
 
@@ -35,6 +40,10 @@ def marshall_collection(field, data):
 
 
 def serialize_collection(field, data):
+    """iterate over each item in ``data`` and serialize the item through the
+    wrapped field defined for this collection
+
+    """
     wrapped_field = field.opts.field
     output = [o for o in run_collection(field, data, wrapped_field.serialize)]
 
@@ -43,31 +52,23 @@ def serialize_collection(field, data):
 
 class CollectionInput(Input):
 
-    input_pipes = [
-        get_data_from_source,
-    ]
+    input_pipes = marshal_input_pipe
     validation_pipes = [
         is_list,
     ]
     process_pipes = [
         marshall_collection,
     ]
-    output_pipes = [
-        update_output,
-    ]
+    output_pipes = marshal_output_pipe
 
 
 class CollectionOutput(Output):
 
-    input_pipes = [
-        get_data_from_source,
-    ]
+    input_pipes = serialize_input_pipe
     validation_pipes = [
         is_list,
     ]
     process_pipes = [
         serialize_collection,
     ]
-    output_pipes = [
-        update_output,
-    ]
+    output_pipes = serialize_output_pipe
