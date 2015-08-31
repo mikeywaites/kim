@@ -62,10 +62,14 @@ class FieldOpts(object):
 
         self._opts = opts.copy()
 
+        # internal attrs
+        self._is_wrapped = opts.pop('_is_wrapped', False)
+
         # set attribute_name, name and source options.
         name = opts.pop('name', None)
         attribute_name = opts.pop('attribute_name', None)
         source = opts.pop('source', None)
+
         self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
@@ -76,9 +80,6 @@ class FieldOpts(object):
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
-
-        # internal attrs
-        self._is_wrapped = opts.pop('_is_wrapped', False)
 
         self.validate()
 
@@ -377,8 +378,26 @@ class CollectionFieldOpts(FieldOpts):
 
         """
         self.field = field
+        try:
+            self.field.name
+        except FieldError:
+            pass
+        else:
+            raise FieldError('name/attribute_name/source should '
+                             'not be passed to a wrapped field.')
+
         self.field.opts._is_wrapped = True
         super(CollectionFieldOpts, self).__init__(**kwargs)
+
+    def set_name(self, *args, **kwargs):
+        """proxy access to the :py:class:`.FieldOpts` defined for
+        this collection field.
+
+        :returns: None
+
+        """
+        self.field.opts.set_name(*args, **kwargs)
+        super(CollectionFieldOpts, self).set_name(*args, **kwargs)
 
     def get_name(self):
         """proxy access to the :py:class:`.FieldOpts` defined for

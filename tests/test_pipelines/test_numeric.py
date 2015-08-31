@@ -8,7 +8,7 @@ def test_is_valid_integer_pipe():
     """test piping data through is_valid_integer.
     """
 
-    field = Integer()
+    field = Integer(name='test')
 
     with pytest.raises(FieldInvalid):
         is_valid_integer(field, 'foo')

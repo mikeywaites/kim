@@ -5,9 +5,31 @@ from kim import Mapper, field
 from ..helpers import TestType
 
 
+def test_collection_proxies_name_to_wrapped_field():
+
+    f = field.Collection(field.Integer(), name='post_ids')
+    f2 = field.Collection(field.String(), name='test')
+
+    with pytest.raises(field.FieldError):
+        field.Collection(field.String(name='foo'))
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True)
+        tags = field.Collection(field.String())
+
+    assert f.name == 'post_ids'
+    assert f2.name == 'test'
+
+    mapper = UserMapper({})
+    assert mapper.fields['tags'].name == 'tags'
+
+
 def test_marshal_collection_requires_list():
 
-    f = field.Collection(field.Integer(name='post_ids'))
+    f = field.Collection(field.Integer(), name='post_ids')
     output = {}
     data = {'post_ids': 1}
 
@@ -17,7 +39,7 @@ def test_marshal_collection_requires_list():
 
 def test_serialize_collection_requires_list():
 
-    f = field.Collection(field.Integer(name='post_ids'))
+    f = field.Collection(field.Integer(), name='post_ids')
     output = {}
     data = {'post_ids': 1}
 
@@ -28,7 +50,7 @@ def test_serialize_collection_requires_list():
 
 def test_marshal_flat_collection():
 
-    f = field.Collection(field.Integer(name='post_ids'))
+    f = field.Collection(field.Integer(), name='post_ids')
     output = {}
     data = {
         'post_ids': [2, 1]
@@ -39,7 +61,7 @@ def test_marshal_flat_collection():
 
 def test_serialize_flat_collection():
 
-    f = field.Collection(field.Integer(name='post_ids'))
+    f = field.Collection(field.Integer(), name='post_ids')
     output = {}
     data = {
         'post_ids': [2, 1]
@@ -50,7 +72,7 @@ def test_serialize_flat_collection():
 
 def test_marshal_read_only_collection():
 
-    f = field.Collection(field.Integer(name='post_ids'), read_only=True)
+    f = field.Collection(field.Integer(), name='post_ids', read_only=True)
     output = {}
     data = {
         'post_ids': [2, 1]
@@ -69,7 +91,7 @@ def test_marshal_nested_collection():
         name = field.String()
     data = {'id': 2, 'name': 'bob', 'users': [{'id': '1', 'name': 'mike'}]}
 
-    f = field.Collection(field.Nested('UserMapper', name='users'))
+    f = field.Collection(field.Nested('UserMapper'), name='users')
     output = {}
     f.marshal(data, output)
     assert output == {'users': [TestType(id='1', name='mike')]}
@@ -88,7 +110,7 @@ def test_serialize_nested_collection():
     post = TestType(id='1', users=users)
 
     output = {}
-    f = field.Collection(field.Nested('UserMapper', name='users'))
+    f = field.Collection(field.Nested('UserMapper'), name='users')
     f.serialize(post, output)
 
     assert output == {'users': [{'id': '1', 'name': 'mike'},
