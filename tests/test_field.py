@@ -2,7 +2,7 @@ import pytest
 
 from kim.field import (
     Field, FieldError, FieldInvalid, FieldOptsError, FieldOpts,
-    Input, Output)
+    Input, Output, DEFAULT_ERROR_MSGS)
 
 
 def test_field_opts_correctly_set_for_field():
@@ -67,7 +67,31 @@ def test_field_invalid():
 
     with pytest.raises(FieldInvalid):
 
-        field.invalid('not valid')
+        field.invalid(error_type='type_error')
+
+
+def test_field_custom_error_messages_updates_defaults():
+
+    msgs = {
+        'type_error': 'This field failed to validate due to a type error'
+    }
+    field = Field(name='foo', error_msgs=msgs)
+    exp = DEFAULT_ERROR_MSGS.copy()
+    exp.update(msgs)
+    assert field.opts.error_msgs == exp
+
+
+def test_field_invalid_custom_error_messages():
+
+    msgs = {
+        'type_error': 'This field failed to validate due to a type error'
+    }
+    field = Field(name='foo', error_msgs=msgs)
+
+    try:
+        field.invalid(error_type='type_error')
+    except FieldInvalid as e:
+        assert e.message == msgs['type_error']
 
 
 def test_get_field_input_pipe():

@@ -26,10 +26,13 @@ def serialize_nested(field, data):
 
 
 def call_getter(field, data):
+    """
+    TODO add docstring
+    """
     if field.opts.getter:
         result = field.opts.getter(field, data)
         if result is None:
-            raise field.invalid('%s not found' % field.name)
+            raise field.invalid(error_type='not_found')
         else:
             return result
     else:
