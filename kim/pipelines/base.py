@@ -5,7 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from kim.exception import StopPipelineExecution
+from kim.exception import StopPipelineExecution, FieldError
 from kim.utils import attr_or_key
 
 
@@ -88,9 +88,9 @@ def get_data_from_source(field, data):
     if value:
         return value
     elif field.opts.required and not value:
-        raise field.invalid('This is a required field')
+        raise field.invalid(error_type='required')
     elif not value and not field.opts.default and not field.opts.allow_none:
-        raise field.invalid('This field cannot be NULL')
+        raise field.invalid(error_type='required')
     elif not value:
         return field.opts.default
 
@@ -124,8 +124,8 @@ def update_output(field, data, output):
         try:
             output[field.name] = data
         except TypeError:
-            raise field.invalid('output does not support attribute or '
-                                'key based set operations')
+            raise FieldError('output does not support attribute or '
+                             'key based set operations')
 
 
 marshal_input_pipe = [read_only, get_data_from_source]

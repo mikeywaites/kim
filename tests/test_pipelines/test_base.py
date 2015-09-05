@@ -1,6 +1,6 @@
 import pytest
 
-from kim.field import Field, FieldInvalid
+from kim.field import Field, FieldInvalid, FieldError
 from kim.pipelines.base import get_data_from_source, update_output
 
 
@@ -67,5 +67,5 @@ def test_update_output_invalid_output_type():
     }
 
     field = Field(name='name', required=True)
-    with pytest.raises(FieldInvalid):
+    with pytest.raises(FieldError):
         update_output(field, data['name'], 1)
