@@ -44,6 +44,8 @@ def test_field_marshal_to_source():
 
 
 def test_field_serialize_from_name():
+    """On TestType, we have not defined a custom source so 'name' should be
+    used in the json output"""
 
     class MapperBase(Mapper):
 
@@ -60,6 +62,8 @@ def test_field_serialize_from_name():
 
 
 def test_field_marshal_to_name():
+    """On TestType, we have not defined a custom source so 'name' should be
+    used when updating the object"""
 
     class MapperBase(Mapper):
 
