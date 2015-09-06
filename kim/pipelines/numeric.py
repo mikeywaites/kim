@@ -20,9 +20,9 @@ def is_valid_integer(field, data):
     try:
         return int(data)
     except TypeError:
-        raise field.invalid("field is not a valid integer")
+        raise field.invalid(error_type='type_error')
     except ValueError:
-        raise field.invalid("field is not a valid integer")
+        raise field.invalid(error_type='type_error')
 
 
 class IntegerInput(Input):

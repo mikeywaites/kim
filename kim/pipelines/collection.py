@@ -18,7 +18,7 @@ def is_list(field, data):
     """
 
     if not isinstance(data, list):
-        raise field.invalid("invalid type")
+        raise field.invalid(error_type='type_error')
 
 
 def run_collection(collection_field, data, func, output=None):

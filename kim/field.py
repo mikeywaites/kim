@@ -15,6 +15,12 @@ from .pipelines import (
     CollectionInput, CollectionOutput
 )
 
+DEFAULT_ERROR_MSGS = {
+    'required': 'This is a required field',
+    'type_error': 'Invalid type',
+    'not_found': '{name} not found'
+}
+
 
 class FieldOpts(object):
     """FieldOpts are used to provide configuration options to :class:`.Field`.
@@ -48,26 +54,32 @@ class FieldOpts(object):
         :param default: Specify a default value for this field
         :param allow_none: Speficy if this fields value can be None
         :param read_only: Speficy if this field should be ignored when marshaling
+        :param error_msgs: a dict of error_type: error messages.
+
         :raises: :class:`.FieldOptsError`
         :returns: None
         """
 
         self._opts = opts.copy()
 
+        # internal attrs
+        self._is_wrapped = opts.pop('_is_wrapped', False)
+
         # set attribute_name, name and source options.
         name = opts.pop('name', None)
         attribute_name = opts.pop('attribute_name', None)
         source = opts.pop('source', None)
+
         self.set_name(name=name, attribute_name=attribute_name, source=source)
+
+        self.error_msgs = DEFAULT_ERROR_MSGS.copy()
+        self.error_msgs.update(opts.pop('error_msgs', {}))
 
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
-
-        # internal attrs
-        self._is_wrapped = opts.pop('_is_wrapped', False)
 
         self.validate()
 
@@ -161,7 +173,18 @@ class Field(object):
 
         set_creation_order(self)
 
-    def invalid(self, message):
+    def get_error(self, error_type):
+        """Return the error message for an ``error_type``.
+
+        :param error_type: the key of the error found in self.error_msgs
+        """
+
+        parse_opts = {
+            'name': self.name
+        }
+        return self.opts.error_msgs[error_type].format(**parse_opts)
+
+    def invalid(self, error_type):
         """Raise an Exception using the provided ``message``.  This method
         is typically used by pipes to allow :py:class:``~.Field`` to control
         how its errors are handled.
@@ -170,7 +193,7 @@ class Field(object):
         :raises: FieldInvalid
         """
 
-        raise FieldInvalid(message)
+        raise FieldInvalid(self.get_error(error_type))
 
     @property
     def name(self):
@@ -359,8 +382,26 @@ class CollectionFieldOpts(FieldOpts):
 
         """
         self.field = field
+        try:
+            self.field.name
+        except FieldError:
+            pass
+        else:
+            raise FieldError('name/attribute_name/source should '
+                             'not be passed to a wrapped field.')
+
         self.field.opts._is_wrapped = True
         super(CollectionFieldOpts, self).__init__(**kwargs)
+
+    def set_name(self, *args, **kwargs):
+        """proxy access to the :py:class:`.FieldOpts` defined for
+        this collection field.
+
+        :returns: None
+
+        """
+        self.field.opts.set_name(*args, **kwargs)
+        super(CollectionFieldOpts, self).set_name(*args, **kwargs)
 
     def get_name(self):
         """proxy access to the :py:class:`.FieldOpts` defined for

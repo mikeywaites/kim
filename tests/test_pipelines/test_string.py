@@ -13,7 +13,7 @@ def test_is_valid_string_pipe():
         def __str__(self):
             raise ValueError('invalid string')
 
-    field = String()
+    field = String(name='test')
     invalid_string = InvalidString()
 
     with pytest.raises(FieldInvalid):

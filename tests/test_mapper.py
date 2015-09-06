@@ -1,8 +1,8 @@
 import pytest
 
-from kim.exception import MapperError
+from kim.exception import MapperError, MappingInvalid
 from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
-from kim.field import Field, String, Integer
+from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
 
 
@@ -600,3 +600,74 @@ def test_get_mapper_from_registry_mapper_does_not_exist():
 
     with pytest.raises(MapperError):
         get_mapper_from_registry('OtherMapper')
+
+
+def test_mapper_with_invalid_fields_sets_errors():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'id': False, 'name': 'bob'}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {'id': 'Invalid type'}
+
+
+def test_mapper_with_invalid_nested_fields_sets_errors():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, allow_updates_in_place=True)
+
+    data = {'id': 1, 'name': 'bob', 'user': {'name': 1}}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {'user': {'id': 'This is a required field'}}
+
+
+def test_mapper_with_invalid_collection_fields_sets_errors():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        users = Collection(Nested(UserMapper, allow_updates_in_place=True))
+
+    data = {'id': 1, 'name': 'bob',
+            'users': [{'name': 1, 'id': 'foo'}, {'name': 1}]}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {'users': {'id': 'This is a required field'}}

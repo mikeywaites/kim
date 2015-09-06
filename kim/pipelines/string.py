@@ -21,7 +21,7 @@ def is_valid_string(field, data):
     try:
         return str(data)
     except ValueError:
-        raise field.invalid("field is not a valid string")
+        raise field.invalid(error_type='type_error')
 
 
 class StringInput(Input):

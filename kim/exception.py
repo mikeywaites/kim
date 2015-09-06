@@ -18,6 +18,13 @@ class MapperError(KimException):
     pass
 
 
+class MappingInvalid(KimException):
+
+    def __init__(self, errors, *args, **kwargs):
+        self.errors = errors
+        super(MappingInvalid, self).__init__('Mapping invalid', *args, **kwargs)
+
+
 class RoleError(KimException):
     pass
 

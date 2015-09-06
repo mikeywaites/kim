@@ -11,8 +11,8 @@ import inspect
 
 from collections import OrderedDict
 
-from .exception import MapperError
-from .field import Field, FieldError
+from .exception import MapperError, MappingInvalid
+from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, Role
 
 
@@ -235,6 +235,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         self.obj = obj
         self.data = data
+        self.errors = {}
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
@@ -305,7 +306,13 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         output = {}  # Should this be user definable?
 
         for field in self._get_fields(role):
-            field.serialize(self._get_obj(), output)
+            try:
+                field.serialize(self._get_obj(), output)
+            except FieldInvalid as e:
+                self.errors[field.name] = e.message
+
+        if self.errors:
+            raise MappingInvalid(self.errors)
 
         return output
 
@@ -319,7 +326,16 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         output = self._get_obj()
 
         for field in self._get_fields(role):
-            field.marshal(self.data, output)
+            try:
+                field.marshal(self.data, output)
+            except FieldInvalid as e:
+                self.errors[field.name] = e.message
+            except MappingInvalid as e:
+                # handle errors from nested mappers.
+                self.errors[field.name] = e.errors
+
+        if self.errors:
+            raise MappingInvalid(self.errors)
 
         return output
 

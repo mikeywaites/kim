@@ -56,7 +56,7 @@ def marshal_nested(field, data, output):
             nested_mapper = field.get_mapper(data=data)
             return nested_mapper.marshal(role=field.opts.role)
         else:
-            raise field.invalid('%s not found' % field.name)
+            raise field.invalid(error_type='not_found')
 
 
 def serialize_nested(field, data):
@@ -65,6 +65,20 @@ def serialize_nested(field, data):
 
     nested_mapper = field.get_mapper(obj=data)
     return nested_mapper.serialize(role=field.opts.role)
+
+
+def call_getter(field, data):
+    """
+    TODO add docstring
+    """
+    if field.opts.getter:
+        result = field.opts.getter(field, data)
+        if result is None:
+            raise field.invalid(error_type='not_found')
+        else:
+            return result
+    else:
+        return data
 
 
 class NestedInput(Input):
