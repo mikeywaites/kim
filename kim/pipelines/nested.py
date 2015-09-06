@@ -49,7 +49,7 @@ def marshal_nested(field, data, output):
             # a nested collection with more objects in the json input
             # than already exist
             if not existing_value:
-                raise field.invalid('invalid number of %s' % field.name)
+                raise field.invalid('invalid_collection_length')
             nested_mapper = field.get_mapper(data=data, obj=existing_value)
             return nested_mapper.marshal(role=field.opts.role)
         elif field.opts.allow_create:
