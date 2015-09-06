@@ -18,7 +18,8 @@ from .pipelines import (
 DEFAULT_ERROR_MSGS = {
     'required': 'This is a required field',
     'type_error': 'Invalid type',
-    'not_found': '{name} not found'
+    'not_found': '{name} not found',
+    'none_not_allowed': 'This field cannot be null',
 }
 
 
@@ -79,7 +80,7 @@ class FieldOpts(object):
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
         self.error_msgs.update(opts.pop('error_msgs', self.extra_error_msgs))
 
-        self.required = opts.pop('required', False)
+        self.required = opts.pop('required', True)
         self.default = opts.pop('default', None)
 
         self.allow_none = opts.pop('allow_none', True)
