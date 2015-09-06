@@ -72,6 +72,8 @@ class FieldOpts(object):
         attribute_name = opts.pop('attribute_name', None)
         source = opts.pop('source', None)
 
+        self.name, self.attribute_name, self.source = None, None, None
+
         self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
@@ -117,9 +119,9 @@ class FieldOpts(object):
 
         :returns: None
         """
-        self.attribute_name = attribute_name
-        self.name = name or self.attribute_name
-        self.source = source or self.name
+        self.attribute_name = self.attribute_name or attribute_name
+        self.name = self.name or name or self.attribute_name
+        self.source = self.source or source or self.name
 
     def get_name(self):
         """return the name property set by :meth:`set_name`
