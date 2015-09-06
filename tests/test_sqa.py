@@ -4,9 +4,8 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-from kim.mapper import Mapper
+from kim.mapper import Mapper, MappingInvalid
 from kim import field
-from kim.field import FieldInvalid
 
 
 Base = declarative_base()
@@ -156,8 +155,10 @@ def test_marshal_nested_mapper_defaults_not_found(db_session):
 
     mapper = PostMapper(data=data)
 
-    with pytest.raises(FieldInvalid):
+    with pytest.raises(MappingInvalid):
         mapper.marshal()
+
+    assert mapper.errors == {'user': 'user not found'}
 
 
 def test_marshal_nested_mapper_allow_updates(db_session):
