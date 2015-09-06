@@ -20,21 +20,19 @@ def is_list(field, data):
         raise field.invalid(error_type='type_error')
 
 
-def run_collection(collection_field, data, func):
-
-    for datum in data:
-        _output = {}
-        func(datum, _output)
-        yield _output[collection_field.name]
-
-
 def marshall_collection(field, data):
     """iterate over each item in ``data`` and marshal the item through the
     wrapped field defined for this collection
 
     """
     wrapped_field = field.opts.field
-    output = [o for o in run_collection(field, data, wrapped_field.marshal)]
+    output = []
+
+    for datum in data:
+        _output = {}
+        wrapped_field.marshal(datum, _output)
+        result = _output[wrapped_field.opts.source]
+        output.append(result)
 
     return output
 
@@ -45,7 +43,13 @@ def serialize_collection(field, data):
 
     """
     wrapped_field = field.opts.field
-    output = [o for o in run_collection(field, data, wrapped_field.serialize)]
+    output = []
+
+    for datum in data:
+        _output = {}
+        wrapped_field.serialize(datum, _output)
+        result = _output[wrapped_field.name]
+        output.append(result)
 
     return output
 
