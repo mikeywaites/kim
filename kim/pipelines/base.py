@@ -85,14 +85,15 @@ def get_data_from_name(field, data):
         return data
 
     value = attr_or_key(data, field.name)
-    if value:
-        return value
-    elif field.opts.required and not value:
-        raise field.invalid(error_type='required')
-    elif not value and not field.opts.default and not field.opts.allow_none:
-        raise field.invalid(error_type='required')
-    elif not value:
-        return field.opts.default
+    if value is None:
+        if field.opts.required and field.opts.default is None:
+            raise field.invalid(error_type='required')
+        elif field.opts.default is not None:
+            return field.opts.default
+        elif not field.opts.allow_none:
+            raise field.invalid(error_type='none_not_allowed')
+
+    return value
 
 
 def get_data_from_source(field, data):

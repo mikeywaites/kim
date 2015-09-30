@@ -11,6 +11,7 @@ def test_get_data_from_name_pipe():
     data = {
         'name': 'mike',
         'test': 'true',
+        'falsy': 0,
         'nested': {'foo': 'bar'}
     }
 
@@ -18,14 +19,25 @@ def test_get_data_from_name_pipe():
     field = Field(name='foo', required=True)
     field2 = Field(name='foo', default=default, required=False)
     field3 = Field(name='foo', allow_none=False, required=False)
+    field4 = Field(name='falsy', required=True)
+    field5 = Field(name='falsy', allow_none=False)
 
+    # Required but not present and no default
     with pytest.raises(FieldInvalid):
         get_data_from_name(field, data)
 
+    # Not present but default set
     assert get_data_from_name(field2, data) == default
 
+    # Not present and none not allowed
     with pytest.raises(FieldInvalid):
         get_data_from_name(field3, data)
+
+    # Required, value present and falsy - should still be allowed
+    assert get_data_from_name(field4, data) == 0
+
+    # None not allowed, value present and falsy - should still be allowed
+    assert get_data_from_name(field5, data) == 0
 
 
 def test_get_data_from_source_pipe():
