@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Kim
@@ -85,7 +84,7 @@ with open('VERSION') as fh:
 
 
 setup(
-    name='py-kim',
+    name='kim2',
     version=VERSION,
     author='Mikey Waites, Jack Saunders',
     author_email='code@bruv.io',
