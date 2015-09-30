@@ -588,6 +588,39 @@ def test_mapper_serialize_with_role_str():
     assert result == {'id': 2}
 
 
+def test_mapper_serialize_raw_with_role():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+        __roles__ = {
+            'private': whitelist('name')
+        }
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, role='private')
+
+        __roles__ = {
+            'private': whitelist('name', 'user')
+        }
+
+    obj = IterableTestType(id=2, name='bob', user__id='id', user__name='name')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize(role='private', raw=True)
+
+    assert result == {'name': 'bob', 'user': {'name': 'name'}}
+
+
 def test_mapper_marshal_with_role_str():
 
     class MapperBase(Mapper):
@@ -606,6 +639,34 @@ def test_mapper_marshal_with_role_str():
     result = mapper.marshal(role='private')
 
     assert result.id == 3
+
+
+def test_mapper_marshal_with_empty_nested():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, role='private')
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    result = mapper.marshal(role='private')
+
+    assert getattr(result, 'user', None) is None
 
 
 def test_mapper_serialize_with_role_as_role():
