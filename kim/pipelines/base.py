@@ -67,9 +67,9 @@ class Output(Pipeline):
     pass
 
 
-def get_data_from_source(field, data):
+def get_data_from_name(field, data):
     """extracts a specific key from data using field.name.  This pipe is
-    typically used as the entry point to a chain of pipes.
+    typically used as the entry point to a chain of input pipes.
 
     :param field: the current instance of :py:class:``~.Field`` being iterated
     :param data: full data object being piped in or out for this ``field``
@@ -80,19 +80,41 @@ def get_data_from_source(field, data):
     """
 
     # If the field is wrapped by another field then the relevant data
-    # will have already been pulled from the source.
+    # will have already been pulled from the name.
     if field.opts._is_wrapped:
         return data
 
     value = attr_or_key(data, field.name)
-    if value:
-        return value
-    elif field.opts.required and not value:
-        raise field.invalid(error_type='required')
-    elif not value and not field.opts.default and not field.opts.allow_none:
-        raise field.invalid(error_type='required')
-    elif not value:
-        return field.opts.default
+    if value is None:
+        if field.opts.required and field.opts.default is None:
+            raise field.invalid(error_type='required')
+        elif field.opts.default is not None:
+            return field.opts.default
+        elif not field.opts.allow_none:
+            raise field.invalid(error_type='none_not_allowed')
+
+    return value
+
+
+def get_data_from_source(field, data):
+    """extracts a specific key from data using field.source.  This pipe is
+    typically used as the entry point to a chain of output pipes.
+
+    :param field: the current instance of :py:class:``~.Field`` being iterated
+    :param data: full data object being piped in or out for this ``field``
+
+    :rtype: mixed
+    :returns: the key found in data using field.source
+
+    """
+
+    # If the field is wrapped by another field then the relevant data
+    # will have already been pulled from the source.
+    if field.opts._is_wrapped:
+        return data
+
+    value = attr_or_key(data, field.opts.source)
+    return value
 
 
 def read_only(field, data):
@@ -107,8 +129,8 @@ def read_only(field, data):
     return data
 
 
-def update_output(field, data, output):
-    """Store ``data`` at the given key or attribute for a ``field`` inside
+def update_output_to_name(field, data, output):
+    """Store ``data`` at field.name for a ``field`` inside
     of ``output``
 
     :param field: instance of :class:`kim.field.Field`
@@ -128,7 +150,28 @@ def update_output(field, data, output):
                              'key based set operations')
 
 
-marshal_input_pipe = [read_only, get_data_from_source]
+def update_output_to_source(field, data, output):
+    """Store ``data`` at field.opts.source for a ``field`` inside
+    of ``output``
+
+    :param field: instance of :class:`kim.field.Field`
+    :param data: the desired value to store in output for the field.
+    :param output: and object that supports setattr or key based ops
+
+    :raises: FieldError
+    :returns: None
+    """
+    try:
+        setattr(output, field.opts.source, data)
+    except AttributeError:
+        try:
+            output[field.opts.source] = data
+        except TypeError:
+            raise FieldError('output does not support attribute or '
+                             'key based set operations')
+
+
+marshal_input_pipe = [read_only, get_data_from_name]
 serialize_input_pipe = [get_data_from_source, ]
-marshal_output_pipe = [update_output, ]
-serialize_output_pipe = [update_output, ]
+marshal_output_pipe = [update_output_to_source, ]
+serialize_output_pipe = [update_output_to_name, ]

@@ -51,21 +51,21 @@ def test_serialize_collection_requires_list():
 
 def test_marshal_flat_collection():
 
-    f = field.Collection(field.Integer(), name='post_ids')
+    f = field.Collection(field.Integer(), name='post_ids', source='posts')
     output = {}
     data = {
         'post_ids': [2, 1]
     }
     f.marshal(data, output)
-    assert output == {'post_ids': [2, 1]}
+    assert output == {'posts': [2, 1]}
 
 
 def test_serialize_flat_collection():
 
-    f = field.Collection(field.Integer(), name='post_ids')
+    f = field.Collection(field.Integer(), name='post_ids', source='posts')
     output = {}
     data = {
-        'post_ids': [2, 1]
+        'posts': [2, 1]
     }
     f.serialize(data, output)
     assert output == {'post_ids': [2, 1]}

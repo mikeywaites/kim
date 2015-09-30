@@ -902,7 +902,7 @@ def test_mapper_with_invalid_fields_sets_errors():
         id = Integer()
         name = String()
 
-    data = {'id': False, 'name': 'bob'}
+    data = {'id': 'abc', 'name': 'bob'}
 
     mapper = MapperBase(data=data)
     with pytest.raises(MappingInvalid):
@@ -917,7 +917,7 @@ def test_mapper_with_invalid_nested_fields_sets_errors():
 
         __type__ = dict
 
-        id = String(required=True)
+        id = String()
         name = String()
 
     class MapperBase(Mapper):

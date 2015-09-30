@@ -18,7 +18,8 @@ from .pipelines import (
 DEFAULT_ERROR_MSGS = {
     'required': 'This is a required field',
     'type_error': 'Invalid type',
-    'not_found': '{name} not found'
+    'not_found': '{name} not found',
+    'none_not_allowed': 'This field cannot be null',
 }
 
 
@@ -74,12 +75,14 @@ class FieldOpts(object):
         attribute_name = opts.pop('attribute_name', None)
         source = opts.pop('source', None)
 
+        self.name, self.attribute_name, self.source = None, None, None
+
         self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
         self.error_msgs.update(opts.pop('error_msgs', self.extra_error_msgs))
 
-        self.required = opts.pop('required', False)
+        self.required = opts.pop('required', True)
         self.default = opts.pop('default', None)
         self.null_default = opts.pop('null_default', None)
 
@@ -120,9 +123,9 @@ class FieldOpts(object):
 
         :returns: None
         """
-        self.attribute_name = attribute_name
-        self.name = name or self.attribute_name
-        self.source = source or self.name
+        self.attribute_name = self.attribute_name or attribute_name
+        self.name = self.name or name or self.attribute_name
+        self.source = self.source or source or self.name
 
     def get_name(self):
         """return the name property set by :meth:`set_name`
