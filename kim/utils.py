@@ -8,6 +8,8 @@
 
 _creation_order = 1
 
+from collections import defaultdict
+
 
 def set_creation_order(instance):
     """Assign a '_creation_order' sequence to the given instance.
@@ -30,3 +32,10 @@ def attr_or_key(obj, name):
         return obj.get(name)
     else:
         return getattr(obj, name, None)
+
+
+def recursive_defaultdict():
+    """A simple recurrsive version of ``collections.defaultdict``
+
+    """
+    return defaultdict(recursive_defaultdict)

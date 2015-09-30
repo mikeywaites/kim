@@ -63,6 +63,9 @@ def serialize_nested(field, data):
     """Serialize data using the nested mapper defined on this field.
     """
 
+    if data is None:
+        return field.opts.null_default
+
     nested_mapper = field.get_mapper(obj=data)
     return nested_mapper.serialize(role=field.opts.role)
 

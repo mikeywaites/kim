@@ -9,11 +9,12 @@ import weakref
 import six
 import inspect
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, Role
+from .utils import recursive_defaultdict
 
 
 def mapper_is_defined(mapper_name):
@@ -217,13 +218,16 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperIterator(cls, **mapper_params)
 
-    def __init__(self, obj=None, data=None):
+    def __init__(self, obj=None, data=None, raw=False):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
 
         :param obj: the object to be serialized, or updated by marshaling
         :param data: input data to be used for marshaling
+        :param raw: the mapper will instruct fields to populate themselves
+            using __duner__ field names where required.
+
         :raises: :class:`.MapperError`
         :returns: None
         """
@@ -236,6 +240,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.obj = obj
         self.data = data
         self.errors = {}
+        self.raw = raw
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
@@ -296,23 +301,108 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         role = self._get_role(name_or_role)
         return [f for name, f in six.iteritems(self.fields) if name in role]
 
-    def serialize(self, role='__default__'):
+    def _data_supports_transform(self, data):
+        """return a boolean indicating if the given data object supports key
+        based iteration
+
+        :param data: the data object being used for iteration
+
+        """
+
+        return getattr(data, 'keys', False) is not False
+
+    def _remove_none(self, output):
+        """If all components of a dictionary are none, remove it and mark
+        the entire data as None
+
+        This method is used to evaluate data that has been transformed when
+        the `raw=True` option is used.
+
+        :param output: the data being evaulated
+
+        """
+        all_none = True
+        for k, v in six.iteritems(output):
+            if type(v) == defaultdict:
+                output[k] = self._remove_none(v)
+            else:
+                if v is not None:
+                    all_none = False
+        if all_none:
+            return None
+        else:
+            return output
+
+    def transform_data(self, data):
+        """ Transform flat data from a KeyedTuple with keys in the form:
+                [
+                 'id',
+                    'name',
+                    'contact_details__phone',
+                    'contact_details__address__postcode'
+                    ]
+                    Into:
+                    {
+                        'id': x,
+                        'name': x,
+                        'contact_details': {
+                            'phone': x,
+                            'address': {
+                                'postcode': x
+                            }
+                        }
+                    }
+                ]
+
+            :param data: The object or data being transformed
+
+            :returns: transformed data
+
+        """
+        if not self._data_supports_transform(data):
+            raise MapperError('%s object does not appear to '
+                              'support key based iteration '
+                              'required when raw=True' % type(data))
+
+        output = recursive_defaultdict()
+        for key in data.keys():
+            path = key.split('__')
+            target = output
+            # Walk along the path until we find the final dict to insert the
+            # data into
+            for component in path[:-1]:
+                target = target[component]
+            # And finally set the key on the final dict to the relevant data
+            target[path[-1]] = getattr(data, key)
+
+        return self._remove_none(output)
+
+    def serialize(self, role='__default__', raw=False):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
+
+        :param role: specify the role to use when serializing this mapper
+        :param raw: instruct the mapper to transform the data before serializing.
+            This option overrides the Mapper.raw setting.
 
         :returns: dict containing serialized object
         """
 
         output = {}  # Should this be user definable?
 
+        transform_data = raw or self.raw
+        if transform_data:
+            data = self.transform_data(self._get_obj())
+        else:
+            data = self._get_obj()
+
         for field in self._get_fields(role):
             try:
-                field.serialize(self._get_obj(), output)
-            except FieldInvalid as e:
-                self.errors[field.name] = e.message
-
-        if self.errors:
-            raise MappingInvalid(self.errors)
+                field.serialize(data, output)
+            except FieldInvalid:
+                pass
+            except MappingInvalid:
+                pass
 
         return output
 

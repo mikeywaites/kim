@@ -12,6 +12,32 @@ Base = declarative_base()
 DBSession = sessionmaker()
 
 
+@pytest.fixture
+def mappers(request):
+
+    class __Mappers(object):
+        pass
+
+    class UserMapper(Mapper):
+
+        __type__ = User
+
+        id = field.Integer(read_only=True)
+        name = field.String()
+
+    class PostMapper(Mapper):
+
+        __type__ = Post
+
+        title = field.String()
+        user = field.Nested('UserMapper', required=True, allow_create=True)
+
+    mappers = __Mappers()
+    mappers.UserMapper = UserMapper
+    mappers.PostMapper = PostMapper
+    return mappers
+
+
 class User(Base):
 
     __tablename__ = 'users'
@@ -69,6 +95,14 @@ def test_marshal_nested_mapper_allow_create(db_session):
         title = field.String()
         user = field.Nested('UserMapper', required=True, allow_create=True)
 
+    mappers.UserMapper = UserMapper
+    mappers.PostMapper = PostMapper
+
+    return mappers
+
+
+def test_marshal_nested_mapper(db_session, mappers):
+
     data = {
         'id': 2,
         'title': 'my post',
@@ -77,7 +111,25 @@ def test_marshal_nested_mapper_allow_create(db_session):
             'name': 'mike',
         }
     }
-    mapper = PostMapper(data=data)
+    mapper = mappers.PostMapper(data=data)
+    obj = mapper.marshal()
+
+    assert isinstance(obj, Post)
+    assert obj.title == 'my post'
+    assert isinstance(obj.user, User)
+
+
+def test_serializer_nested_mapper(db_session, mappers):
+
+    data = {
+        'id': 2,
+        'title': 'my post',
+        'user': {
+            'id': 1,
+            'name': 'mike',
+        }
+    }
+    mapper = mappers.PostMapper(data=data)
     obj = mapper.marshal()
 
     assert isinstance(obj, Post)

@@ -57,6 +57,8 @@ class FieldOpts(object):
         :param allow_none: Speficy if this fields value can be None
         :param read_only: Speficy if this field should be ignored when marshaling
         :param error_msgs: a dict of error_type: error messages.
+        :param null_default: specify the default type to return when a field is
+            null IE None or {} or ''
 
         :raises: :class:`.FieldOptsError`
         :returns: None
@@ -79,6 +81,7 @@ class FieldOpts(object):
 
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
+        self.null_default = opts.pop('null_default', None)
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
