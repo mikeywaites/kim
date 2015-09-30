@@ -926,7 +926,7 @@ def test_mapper_with_invalid_nested_fields_sets_errors():
 
         id = Integer()
         name = String()
-        user = Nested(UserMapper)
+        user = Nested(UserMapper, allow_create=True)
 
     data = {'id': 1, 'name': 'bob', 'user': {'name': 1}}
 
@@ -952,7 +952,7 @@ def test_mapper_with_invalid_collection_fields_sets_errors():
 
         id = Integer()
         name = String()
-        users = Collection(Nested(UserMapper))
+        users = Collection(Nested(UserMapper, allow_create=True))
 
     data = {'id': 1, 'name': 'bob',
             'users': [{'name': 1, 'id': 'foo'}, {'name': 1}]}

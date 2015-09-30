@@ -43,6 +43,8 @@ class FieldOpts(object):
         :class:`.Field`
     """
 
+    extra_error_msgs = {}
+
     def __init__(self, **opts):
         """ Construct a new instance of :class:`FieldOpts`
         and set config options
@@ -75,7 +77,7 @@ class FieldOpts(object):
         self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
-        self.error_msgs.update(opts.pop('error_msgs', {}))
+        self.error_msgs.update(opts.pop('error_msgs', self.extra_error_msgs))
 
         self.required = opts.pop('required', False)
         self.default = opts.pop('default', None)
@@ -300,6 +302,10 @@ class NestedFieldOpts(FieldOpts):
 
     """
 
+    extra_error_msgs = {
+        'invalid_collection_length': 'invalid number of {name}s'
+    }
+
     def __init__(self, mapper_or_mapper_name, **kwargs):
         """Construct a new instance of :class:`.NestedFieldOpts`
 
@@ -318,6 +324,10 @@ class NestedFieldOpts(FieldOpts):
         self.role = kwargs.pop('role', '__default__')
         self.collection_class = kwargs.pop('collection_class', list)
         self.getter = kwargs.pop('getter', None)
+        self.allow_updates = kwargs.pop('allow_updates', False)
+        self.allow_updates_in_place = kwargs.pop(
+            'allow_updates_in_place', False)
+        self.allow_create = kwargs.pop('allow_create', False)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 

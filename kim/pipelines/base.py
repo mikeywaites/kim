@@ -51,7 +51,7 @@ class Pipeline(object):
                 pipe_data = pipe(field, pipe_data)
 
             for pipe in self.output_pipes:
-                pipe(field, pipe_data, output)
+                pipe_data = pipe(field, pipe_data, output)
 
             return output
 

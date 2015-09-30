@@ -65,7 +65,7 @@ def test_marshal_nested():
         name = field.String()
 
     data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-    test_field = field.Nested('UserMapper', name='user')
+    test_field = field.Nested('UserMapper', name='user', allow_create=True)
 
     output = {}
     test_field.marshal(data, output)
@@ -124,7 +124,8 @@ def test_marshal_nested_with_role():
         }
 
     data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-    test_field = field.Nested('UserMapper', name='user', role='public')
+    test_field = field.Nested('UserMapper', name='user', role='public',
+                              allow_create=True)
 
     output = {}
     test_field.marshal(data, output)
@@ -141,7 +142,7 @@ def test_marshal_nested_with_read_only_field():
         name = field.String()
 
     data = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-    test_field = field.Nested('UserMapper', name='user')
+    test_field = field.Nested('UserMapper', name='user', allow_create=True)
 
     output = {}
     test_field.marshal(data, output)
@@ -213,3 +214,151 @@ def test_marshal_nested_with_getter_failure():
     output = {}
     with pytest.raises(FieldInvalid):
         test_field.marshal(data, output)
+
+
+def test_marshal_nested_with_defaults():
+    # Users may only be passed by id and may not be updated
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = {'id': '1', 'name': 'mike'}
+
+    def getter(field, data):
+        return user
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '1', 'name': 'this should be ignored'}}
+    output = {}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'mike'}}
+
+    assert user['name'] == 'mike'
+
+
+def test_marshal_nested_with_allow_updates():
+    # Users may only be passed by id and may be updated, but not created
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = {'id': '1', 'name': 'mike'}
+
+    def getter(field, data):
+        if data['id'] == '1':
+            return user
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter,
+                              allow_updates=True)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '1', 'name': 'a new name'}}
+    output = {}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'a new name'}}
+    assert user['name'] == 'a new name'
+
+    data2 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '2', 'name': 'should not allow this to be created'}}
+    output = {}
+    with pytest.raises(FieldInvalid):
+        test_field.marshal(data2, output)
+
+
+def test_marshal_nested_with_allow_create_only():
+    # Users may only be passed by id or created if they don't exist
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = {'id': '1', 'name': 'mike'}
+
+    def getter(field, data):
+        if data['id'] == '1':
+            return user
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter,
+                              allow_create=True)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '1', 'name': 'this should be ignored'}}
+    output = {}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'mike'}}
+
+    assert user['name'] == 'mike'
+
+    data2 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '2', 'name': 'jack'}}
+    output = {}
+    test_field.marshal(data2, output)
+    assert output == {'user': {'id': '2', 'name': 'jack'}}
+
+
+def test_marshal_nested_with_allow_create_and_allow_updates():
+    # Users may only be passed by id or created if they don't exist and
+    # updated
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    user = {'id': '1', 'name': 'mike'}
+
+    def getter(field, data):
+        if data['id'] == '1':
+            return user
+
+    test_field = field.Nested('UserMapper', name='user', getter=getter,
+                              allow_create=True, allow_updates=True)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '1', 'name': 'a new name'}}
+    output = {}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'a new name'}}
+    assert user['name'] == 'a new name'
+
+    data2 = {'id': 2, 'name': 'bob', 'user': {
+        'id': '2', 'name': 'jack'}}
+    output = {}
+    test_field.marshal(data2, output)
+    assert output == {'user': {'id': '2', 'name': 'jack'}}
+
+
+def test_marshal_nested_with_allow_updates_in_place():
+    # No getter required, but the existing user object can be changed
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        name = field.String()
+
+    user = {'id': '1', 'name': 'mike'}
+    output = {'user': user}
+
+    test_field = field.Nested('UserMapper', name='user',
+                              allow_updates_in_place=True)
+
+    data1 = {'id': 2, 'name': 'bob', 'user': {'name': 'a new name'}}
+    test_field.marshal(data1, output)
+    assert output == {'user': {'id': '1', 'name': 'a new name'}}
+    assert user['name'] == 'a new name'
