@@ -15,7 +15,7 @@ def is_valid_type(type_):
     :rtype: boolean
     :returns: True or False
     """
-    from kim.types import BaseType
+    from kim1.types import BaseType
 
     return isinstance(type_, BaseType)
 

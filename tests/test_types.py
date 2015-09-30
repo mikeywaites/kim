@@ -7,14 +7,14 @@ import decimal
 from datetime import date, datetime
 from iso8601.iso8601 import Utc
 
-from kim.roles import Role
-from kim.mapping import Mapping
-from kim.exceptions import ValidationError
-from kim.types import (Nested, String, Collection, Integer, BaseType,
+from kim1.roles import Role
+from kim1.mapping import Mapping
+from kim1.exceptions import ValidationError
+from kim1.types import (Nested, String, Collection, Integer, BaseType,
                        TypedType, Date, DateTime, Regexp,
                        Email, Float, Decimal, PositiveInteger,
                        NumericType)
-from kim.fields import Field
+from kim1.fields import Field
 
 
 ImportByStringMapping = Mapping()

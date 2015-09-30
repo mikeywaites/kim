@@ -4,10 +4,10 @@ import decimal
 
 from iso8601.iso8601 import Utc
 
-from kim.serializers import Serializer, Field
-from kim.types import (String, Collection, Nested, Integer, Email, Date,
+from kim1.serializers import Serializer, Field
+from kim1.types import (String, Collection, Nested, Integer, Email, Date,
     DateTime, Decimal)
-from kim.roles import whitelist
+from kim1.roles import whitelist
 
 
 class BasicAcceptanceTests(unittest.TestCase):

@@ -12,7 +12,7 @@ import importlib
 from .exceptions import ValidationError, ConfigurationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
 
-from kim.utils import is_valid_type
+from kim1.utils import is_valid_type
 
 
 def iskimtype(type_):

@@ -4,11 +4,11 @@
 import unittest
 import mock
 
-from kim.exceptions import RoleNotFound, ValidationError, MappingErrors
-from kim.serializers import Field, Serializer
-from kim.types import String, Integer, Nested
-from kim.fields import Field
-from kim.roles import whitelist
+from kim1.exceptions import RoleNotFound, ValidationError, MappingErrors
+from kim1.serializers import Field, Serializer
+from kim1.types import String, Integer, Nested
+from kim1.fields import Field
+from kim1.roles import whitelist
 
 
 class SerializerTests(unittest.TestCase):

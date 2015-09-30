@@ -3,10 +3,10 @@
 
 import unittest
 
-from kim.roles import Role, create_mapping_from_role, whitelist, blacklist
-from kim.mapping import Mapping
-from kim import types
-from kim.fields import Field
+from kim1.roles import Role, create_mapping_from_role, whitelist, blacklist
+from kim1.mapping import Mapping
+from kim1 import types
+from kim1.fields import Field
 
 
 class MyCustomMapping(Mapping):

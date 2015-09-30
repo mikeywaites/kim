@@ -4,10 +4,10 @@
 import unittest
 import mock
 
-from kim import types
-from kim.exceptions import MappingErrors, KimError
-from kim.mapping import Mapping, marshal, serialize, Visitor
-from kim.fields import Field
+from kim1 import types
+from kim1.exceptions import MappingErrors, KimError
+from kim1.mapping import Mapping, marshal, serialize, Visitor
+from kim1.fields import Field
 
 
 class NotAType(object):

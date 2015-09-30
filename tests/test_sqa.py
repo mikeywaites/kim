@@ -5,13 +5,13 @@ import unittest
 from iso8601.iso8601 import Utc
 import uuid
 
-from kim.serializers import Field
-from kim.roles import whitelist
-from kim import types
-from kim.contrib.sqa import (
+from kim1.serializers import Field
+from kim1.roles import whitelist
+from kim1 import types
+from kim1.contrib.sqa import (
     SQASerializer, NestedForeignKey, NestedForeignKeyStr, IntegerForeignKey,
     RelationshipCollection)
-from kim.exceptions import MappingErrors, ConfigurationError
+from kim1.exceptions import MappingErrors, ConfigurationError
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship

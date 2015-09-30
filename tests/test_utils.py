@@ -3,9 +3,9 @@
 
 import unittest
 
-from kim.utils import is_valid_type, is_role
-from kim.types import BaseType
-from kim.roles import Role, BaseRole
+from kim1.utils import is_valid_type, is_role
+from kim1.types import BaseType
+from kim1.roles import Role, BaseRole
 
 
 class UtilTests(unittest.TestCase):

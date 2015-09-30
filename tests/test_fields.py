@@ -4,9 +4,9 @@
 import unittest
 import mock
 
-from kim.fields import Field
-from kim.types import String
-from kim.exceptions import ValidationError
+from kim1.fields import Field
+from kim1.types import String
+from kim1.exceptions import ValidationError
 
 
 class MyType(object):
