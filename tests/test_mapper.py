@@ -12,6 +12,20 @@ class TestType(object):
             setattr(self, k, v)
 
 
+class IterableTestType(object):
+    """This test type mimics constructs like SQA's result class or
+    declarative_base objects that support iteration that enables access to
+    attributes.
+    """
+    def __init__(self, *args, **kwargs):
+        self.kwargs = kwargs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def keys(self):
+        return self.kwargs.keys()
+
+
 class TestField(Field):
     pass
 
@@ -255,6 +269,222 @@ def test_mapper_serialize():
     assert result == {'id': 2, 'name': 'bob'}
 
 
+def test_mapper_serialize_raw_standard_obj():
+    """Ensure we can still serialize a mapper  with raw=True when the object
+    has standardly named field names, IE no __dunder__
+    """
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = IterableTestType(id=2, name='bob')
+
+    mapper = MapperBase(obj, raw=True)
+    result = mapper.serialize()
+
+    assert result == {'id': 2, 'name': 'bob'}
+
+
+def test_mapper_serialize_raw():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper)
+
+    obj = IterableTestType(
+        id=2, name='bob',
+        user__id='foo',
+        user__name='bar',
+        user__company__name='baz',
+        user__company__id='bin')
+
+    obj = IterableTestType(id=2, name='bob', user__id='foo', user__name='bar')
+    mapper = MapperBase(obj, raw=True)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {
+            'id': 'foo',
+            'name': 'bar'
+        }
+    }
+
+
+def test_mapper_serialize_raw_nested_nested():
+
+    class CompanyMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+        company = Nested(CompanyMapper)
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper)
+
+    obj = IterableTestType(
+        id=2, name='bob',
+        user__id='foo',
+        user__name='bar',
+        user__company__name='baz',
+        user__company__id='bin')
+
+    mapper = MapperBase(obj, raw=True)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {
+            'id': 'foo',
+            'name': 'bar',
+            'company': {
+                'id': 'bin',
+                'name': 'baz'
+            }
+        }
+    }
+
+
+def test_mapper_serialize_empty_nested_sets_null_default():
+    """Ensure that when when a nested mapper has no data, the defined
+    null_default is returned in its place.
+
+    """
+
+    class CompanyMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+        company = Nested(CompanyMapper)
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, null_default={})
+
+    user_type = TestType(id='3', name='foo')
+    obj1 = TestType(id='2', name='foo', user=user_type)
+    mapper = MapperBase(obj1)
+    result = mapper.serialize()
+    assert result == {
+        'id': '2',
+        'name': 'foo',
+        'user': {
+            'id': '3',
+            'name': 'foo',
+            'company': None
+        }
+    }
+
+    obj2 = IterableTestType(id=2, name='bob', user__id='3', user__name='foo')
+
+    mapper = MapperBase(obj2, raw=True)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {
+            'id': '3',
+            'name': 'foo',
+            'company': None
+        }
+    }
+
+
+def test_serialize_empty_nested_nested():
+    """Ensure that when when a nested mapper has no data, the defined
+    null_default is returned in its place.
+
+    """
+
+    class CompanyMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+        company = Nested(CompanyMapper)
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, null_default={})
+
+    obj1 = TestType(id='2', name='foo', user=None)
+    mapper = MapperBase(obj1)
+    result = mapper.serialize()
+    assert result == {
+        'id': '2',
+        'name': 'foo',
+        'user': {}
+    }
+
+    obj2 = IterableTestType(id=2, name='bob')
+
+    mapper = MapperBase(obj2, raw=True)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {}
+    }
+
+
 def test_mapper_serialize_many():
 
     class MapperBase(Mapper):
@@ -358,6 +588,39 @@ def test_mapper_serialize_with_role_str():
     assert result == {'id': 2}
 
 
+def test_mapper_serialize_raw_with_role():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+        __roles__ = {
+            'private': whitelist('name')
+        }
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, role='private')
+
+        __roles__ = {
+            'private': whitelist('name', 'user')
+        }
+
+    obj = IterableTestType(id=2, name='bob', user__id='id', user__name='name')
+
+    mapper = MapperBase(obj)
+    result = mapper.serialize(role='private', raw=True)
+
+    assert result == {'name': 'bob', 'user': {'name': 'name'}}
+
+
 def test_mapper_marshal_with_role_str():
 
     class MapperBase(Mapper):
@@ -376,6 +639,34 @@ def test_mapper_marshal_with_role_str():
     result = mapper.marshal(role='private')
 
     assert result.id == 3
+
+
+def test_mapper_marshal_with_empty_nested():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = String(required=True, read_only=True)
+        name = String()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        user = Nested(UserMapper, role='private')
+
+        __roles__ = {
+            'private': ['id', ]
+        }
+
+    data = {'name': 'mike', 'id': 3}
+    mapper = MapperBase(data=data)
+    result = mapper.marshal(role='private')
+
+    assert getattr(result, 'user', None) is None
 
 
 def test_mapper_serialize_with_role_as_role():
