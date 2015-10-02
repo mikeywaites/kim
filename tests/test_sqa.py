@@ -79,26 +79,22 @@ def db_session(request, connection):
     return DBSession()
 
 
-def test_marshal_nested_mapper_allow_create(db_session):
+def test_marshal_nested_mapper_allow_create(db_session, mappers):
 
-    class UserMapper(Mapper):
+    data = {
+        'id': 2,
+        'title': 'my post',
+        'user': {
+            'id': 1,
+            'name': 'mike',
+        }
+    }
+    mapper = mappers.PostMapper(data=data)
+    obj = mapper.marshal()
 
-        __type__ = User
-
-        id = field.Integer(read_only=True)
-        name = field.String()
-
-    class PostMapper(Mapper):
-
-        __type__ = Post
-
-        title = field.String()
-        user = field.Nested('UserMapper', required=True, allow_create=True)
-
-    mappers.UserMapper = UserMapper
-    mappers.PostMapper = PostMapper
-
-    return mappers
+    assert isinstance(obj, Post)
+    assert obj.title == 'my post'
+    assert isinstance(obj.user, User)
 
 
 def test_marshal_nested_mapper(db_session, mappers):

@@ -84,7 +84,7 @@ with open('VERSION') as fh:
 
 
 setup(
-    name='kim2',
+    name='py-kim',
     version=VERSION,
     author='Mikey Waites, Jack Saunders',
     author_email='code@bruv.io',
