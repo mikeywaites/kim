@@ -12,7 +12,8 @@ from .pipelines import (
     StringInput, StringOutput,
     IntegerInput, IntegerOutput,
     NestedInput, NestedOutput,
-    CollectionInput, CollectionOutput
+    CollectionInput, CollectionOutput,
+    BooleanInput, BooleanOutput
 )
 
 DEFAULT_ERROR_MSGS = {
@@ -297,6 +298,42 @@ class Integer(Field):
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput
+
+
+class BooleanFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Boolean`.
+
+    """
+
+    def __init__(self, **kwargs):
+        self.true_boolean_values = \
+            kwargs.pop('true_boolean_values', [True, 'true', '1', 1, 'True'])
+        self.false_boolean_values = \
+            kwargs.pop('false_boolean_values', [False, 'false', '0', 0, 'False'])
+
+        super(BooleanFieldOpts, self).__init__(**kwargs)
+
+
+class Boolean(Field):
+    """:class:`.Boolean` represents a value that must be valid
+    boolean type.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            active = field.Boolean(required=True)
+
+    """
+
+    opts_class = BooleanFieldOpts
+    input_pipe = BooleanInput
+    output_pipe = BooleanOutput
 
 
 class NestedFieldOpts(FieldOpts):
