@@ -54,23 +54,22 @@ def test_boolean_input():
     assert output == {'is_active': True}
 
 
-#def test_string_output():
-#    # TODO this requires fleshing out some more..
-#
-#    class Foo(object):
-#        name = 'value'
-#
-#    field = String(name='name', required=True)
-#
-#    output = {}
-#    field.serialize(Foo(), output)
-#    assert output == {'name': 'value'}
-#
-#
-#def test_marshal_read_only_string():
-#
-#    field = String(name='name', read_only=True, required=True)
-#
-#    output = {}
-#    field.marshal({'name': 'foo', 'email': 'mike@mike.com'}, output)
-#    assert output == {}
+def test_boolean_input_with_allow_none():
+
+    field = Boolean(name='is_active', required=False, allow_none=True)
+
+    output = {}
+    field.marshal({'is_active': None, 'email': 'mike@mike.com'}, output)
+    assert output == {'is_active': None}
+
+
+def test_boolean_output():
+
+    class Foo(object):
+        is_active = True
+
+    field = Boolean(name='is_active', required=True)
+
+    output = {}
+    field.serialize(Foo(), output)
+    assert output == {'is_active': True}

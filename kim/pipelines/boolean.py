@@ -21,6 +21,9 @@ def is_allowed_value(field, data):
     allowed_values = set(field.opts.true_boolean_values
                          + field.opts.false_boolean_values)
 
+    if field.opts.allow_none is True and data is None:
+        return data
+
     if data not in allowed_values:
         raise field.invalid(error_type='type_error')
 
@@ -33,7 +36,9 @@ def coerce_to_boolean(field, data):
 
     """
 
-    if data in field.opts.true_boolean_values:
+    if data is None and field.opts.allow_none:
+        return data
+    elif data in field.opts.true_boolean_values:
         return True
     else:
         return False
