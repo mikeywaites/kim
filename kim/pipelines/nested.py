@@ -5,7 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (Input, Output, marshal_input_pipe, marshal_output_pipe,
+from .base import (pipe, Input, Output,
+                   marshal_input_pipe, marshal_output_pipe,
                    serialize_input_pipe, serialize_output_pipe)
 from kim.utils import attr_or_key
 
@@ -16,6 +17,7 @@ def _call_getter(field, data):
         return result
 
 
+@pipe()
 def marshal_nested(field, data, output):
     """Marshal data using the nested mapper defined on this field.
 
@@ -59,6 +61,7 @@ def marshal_nested(field, data, output):
             raise field.invalid(error_type='not_found')
 
 
+@pipe()
 def serialize_nested(field, data):
     """Serialize data using the nested mapper defined on this field.
     """

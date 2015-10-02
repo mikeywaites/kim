@@ -5,8 +5,45 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from functools import wraps
+
 from kim.exception import StopPipelineExecution, FieldError
 from kim.utils import attr_or_key
+
+
+class Pipe(object):
+
+    def __init__(self, func, field, data, output, *args, **kwargs):
+        self.func = func
+        self.field = field
+        self.data = data
+        self.output = output
+
+    def run(self):
+
+        return self.func(self.field, self.data)
+
+
+class OutputPipe(Pipe):
+
+    def run(self):
+
+        return self.func(self.field, self.data, self.output)
+
+
+def pipe(run_if_none=False, pipe_class=Pipe):
+
+    def pipe_decorator(pipe_func):
+
+        @wraps(pipe_func)
+        def inner(field=None, data=None, output=None, *args, **kwargs):
+
+            kwargs.pop('output', {})
+            return pipe_class(pipe_func, field, data, output).run()
+
+        return inner
+
+    return pipe_decorator
 
 
 class Pipeline(object):
@@ -67,6 +104,7 @@ class Output(Pipeline):
     pass
 
 
+@pipe()
 def get_data_from_name(field, data):
     """extracts a specific key from data using field.name.  This pipe is
     typically used as the entry point to a chain of input pipes.
@@ -96,6 +134,7 @@ def get_data_from_name(field, data):
     return value
 
 
+@pipe()
 def get_data_from_source(field, data):
     """extracts a specific key from data using field.source.  This pipe is
     typically used as the entry point to a chain of output pipes.
@@ -117,6 +156,7 @@ def get_data_from_source(field, data):
     return value
 
 
+@pipe()
 def read_only(field, data):
     """End processing of a pipeline if a Field is marked as read_only.
 
@@ -129,6 +169,7 @@ def read_only(field, data):
     return data
 
 
+@pipe(pipe_class=OutputPipe)
 def update_output_to_name(field, data, output):
     """Store ``data`` at field.name for a ``field`` inside
     of ``output``
@@ -150,7 +191,8 @@ def update_output_to_name(field, data, output):
                              'key based set operations')
 
 
-def update_output_to_source(field, data, output):
+@pipe(pipe_class=OutputPipe)
+def update_output_to_source(field, data, output=None):
     """Store ``data`` at field.opts.source for a ``field`` inside
     of ``output``
 
