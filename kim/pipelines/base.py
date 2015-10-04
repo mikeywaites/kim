@@ -5,6 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from itertools import chain
 from functools import wraps
 
 from kim.exception import StopPipelineExecution, FieldError
@@ -12,34 +13,46 @@ from kim.utils import attr_or_key
 
 
 class Pipe(object):
+    """Base pipe class wrapping a pipe func allowing users to provide
+    custom base pipe objects.
 
-    def __init__(self, func, field, data, output, *args, **kwargs):
+    """
+
+    def __init__(self, func=None, *args, **kwargs):
         self.func = func
+
+    def __call__(self, session, *args, **kwargs):
+
+        return self.run(session, **kwargs)
+
+    def run(self, session, **kwargs):
+
+        return self.func(session, **kwargs)
+
+
+class Session(object):
+    """Pipeline session objects acts as store for the state passed between
+    one pipe method to another.
+
+    """
+
+    def __init__(self, field, data, output, **kwargs):
         self.field = field
         self.data = data
         self.output = output
 
-    def run(self):
 
-        return self.func(self.field, self.data)
-
-
-class OutputPipe(Pipe):
-
-    def run(self):
-
-        return self.func(self.field, self.data, self.output)
-
-
-def pipe(run_if_none=False, pipe_class=Pipe):
+def pipe(pipe_class=Pipe, **pipe_kwargs):
+    """pipe decorator is provided as a convenience method for creating Pipe
+    objects
+    """
 
     def pipe_decorator(pipe_func):
 
         @wraps(pipe_func)
-        def inner(field=None, data=None, output=None, *args, **kwargs):
+        def inner(session, *args, **kwargs):
 
-            kwargs.pop('output', {})
-            return pipe_class(pipe_func, field, data, output).run()
+            return pipe_class(pipe_func, **pipe_kwargs)(session)
 
         return inner
 
@@ -73,27 +86,17 @@ class Pipeline(object):
         """ Iterate over all of the defined 'pipes' for this pipeline.
 
         """
-        pipe_data = data
+        session = Session(field, data, output)
         try:
 
-            for pipe in self.input_pipes:
-                pipe_data = pipe(field, pipe_data)
+            for pipe in chain(self.input_pipes, self.validation_pipes,
+                              self.process_pipes, self.output_pipes):
+                pipe(session)
 
-            # validation pipes should not affect the data being piped
-            # they only raise exceptions if validation fails.
-            for pipe in self.validation_pipes:
-                pipe(field, pipe_data)
-
-            for pipe in self.process_pipes:
-                pipe_data = pipe(field, pipe_data)
-
-            for pipe in self.output_pipes:
-                pipe_data = pipe(field, pipe_data, output)
-
-            return output
+            return session.output
 
         except StopPipelineExecution:
-            return output
+            return session.output
 
 
 class Input(Pipeline):
@@ -105,12 +108,11 @@ class Output(Pipeline):
 
 
 @pipe()
-def get_data_from_name(field, data):
+def get_data_from_name(session):
     """extracts a specific key from data using field.name.  This pipe is
     typically used as the entry point to a chain of input pipes.
 
-    :param field: the current instance of :py:class:``~.Field`` being iterated
-    :param data: full data object being piped in or out for this ``field``
+    :param session: Kim pipeline session instance
 
     :rtype: mixed
     :returns: the key found in data using field.name
@@ -119,28 +121,29 @@ def get_data_from_name(field, data):
 
     # If the field is wrapped by another field then the relevant data
     # will have already been pulled from the name.
-    if field.opts._is_wrapped:
-        return data
+    if session.field.opts._is_wrapped:
+        return session.data
 
-    value = attr_or_key(data, field.name)
+    value = attr_or_key(session.data, session.field.name)
     if value is None:
-        if field.opts.required and field.opts.default is None:
-            raise field.invalid(error_type='required')
-        elif field.opts.default is not None:
-            return field.opts.default
-        elif not field.opts.allow_none:
-            raise field.invalid(error_type='none_not_allowed')
+        if session.field.opts.required and session.field.opts.default is None:
+            raise session.field.invalid(error_type='required')
+        elif session.field.opts.default is not None:
+            session.data = session.field.opts.default
+            return session.data
+        elif not session.field.opts.allow_none:
+            raise session.field.invalid(error_type='none_not_allowed')
 
-    return value
+    session.data = value
+    return session.data
 
 
 @pipe()
-def get_data_from_source(field, data):
+def get_data_from_source(session):
     """extracts a specific key from data using field.source.  This pipe is
     typically used as the entry point to a chain of output pipes.
 
-    :param field: the current instance of :py:class:``~.Field`` being iterated
-    :param data: full data object being piped in or out for this ``field``
+    :param session: Kim pipeline session instance
 
     :rtype: mixed
     :returns: the key found in data using field.source
@@ -149,65 +152,64 @@ def get_data_from_source(field, data):
 
     # If the field is wrapped by another field then the relevant data
     # will have already been pulled from the source.
-    if field.opts._is_wrapped:
-        return data
+    if session.field.opts._is_wrapped:
+        return session.data
 
-    value = attr_or_key(data, field.opts.source)
-    return value
+    value = attr_or_key(session.data, session.field.opts.source)
+    session.data = value
+    return session.data
 
 
 @pipe()
-def read_only(field, data):
+def read_only(session):
     """End processing of a pipeline if a Field is marked as read_only.
+
+    :param session: Kim pipeline session instance
 
     :raises  StopPipelineExecution:
     """
 
-    if field.opts.read_only:
+    if session.field.opts.read_only:
         raise StopPipelineExecution('read_only field')
 
-    return data
+    return session.data
 
 
-@pipe(pipe_class=OutputPipe)
-def update_output_to_name(field, data, output):
+@pipe()
+def update_output_to_name(session):
     """Store ``data`` at field.name for a ``field`` inside
     of ``output``
 
-    :param field: instance of :class:`kim.field.Field`
-    :param data: the desired value to store in output for the field.
-    :param output: and object that supports setattr or key based ops
+    :param session: Kim pipeline session instance
 
     :raises: FieldError
     :returns: None
     """
     try:
-        setattr(output, field.name, data)
+        setattr(session.output, session.field.name, session.data)
     except AttributeError:
         try:
-            output[field.name] = data
+            session.output[session.field.name] = session.data
         except TypeError:
             raise FieldError('output does not support attribute or '
                              'key based set operations')
 
 
-@pipe(pipe_class=OutputPipe)
-def update_output_to_source(field, data, output=None):
+@pipe()
+def update_output_to_source(session):
     """Store ``data`` at field.opts.source for a ``field`` inside
     of ``output``
 
-    :param field: instance of :class:`kim.field.Field`
-    :param data: the desired value to store in output for the field.
-    :param output: and object that supports setattr or key based ops
+    :param session: Kim pipeline session instance
 
     :raises: FieldError
     :returns: None
     """
     try:
-        setattr(output, field.opts.source, data)
+        setattr(session.output, session.field.opts.source, session.data)
     except AttributeError:
         try:
-            output[field.opts.source] = data
+            session.output[session.field.opts.source] = session.data
         except TypeError:
             raise FieldError('output does not support attribute or '
                              'key based set operations')
