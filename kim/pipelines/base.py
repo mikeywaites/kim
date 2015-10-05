@@ -18,8 +18,9 @@ class Pipe(object):
 
     """
 
-    def __init__(self, func=None, *args, **kwargs):
+    def __init__(self, func=None, run_if_none=False, *args, **kwargs):
         self.func = func
+        self.run_if_none = run_if_none
 
     def __call__(self, session, *args, **kwargs):
 
@@ -27,7 +28,12 @@ class Pipe(object):
 
     def run(self, session, **kwargs):
 
-        return self.func(session, **kwargs)
+        if session.data is not None:
+            return self.func(session, **kwargs)
+        elif session.data is None and self.run_if_none:
+            return self.func(session, **kwargs)
+        else:
+            return session.data
 
 
 class Session(object):
@@ -175,7 +181,7 @@ def read_only(session):
     return session.data
 
 
-@pipe()
+@pipe(run_if_none=True)
 def update_output_to_name(session):
     """Store ``data`` at field.name for a ``field`` inside
     of ``output``
@@ -195,7 +201,7 @@ def update_output_to_name(session):
                              'key based set operations')
 
 
-@pipe()
+@pipe(run_if_none=True)
 def update_output_to_source(session):
     """Store ``data`` at field.opts.source for a ``field`` inside
     of ``output``

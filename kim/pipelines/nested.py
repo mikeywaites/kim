@@ -69,7 +69,7 @@ def marshal_nested(session):
     return session.data
 
 
-@pipe()
+@pipe(run_if_none=True)
 def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
 
