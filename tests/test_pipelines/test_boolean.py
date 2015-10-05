@@ -1,25 +1,44 @@
 import pytest
 
 from kim.field import FieldInvalid, Boolean
+from kim.pipelines.base import Session
 from kim.pipelines.boolean import is_allowed_value
 
 
 def test_is_allowed_value():
 
     field = Boolean(name='test')
+    session = Session(field, 'test', {})
 
     with pytest.raises(FieldInvalid):
-        is_allowed_value(field, 'test')
+        is_allowed_value(session)
 
-    assert is_allowed_value(field, True) is True
-    assert is_allowed_value(field, 'true') == 'true'
-    assert is_allowed_value(field, '1') == '1'
-    assert is_allowed_value(field, 'True') == 'True'
-    assert is_allowed_value(field, False) is False
-    assert is_allowed_value(field, 'false') == 'false'
-    assert is_allowed_value(field, '0') == '0'
-    assert is_allowed_value(field, 0) == 0
-    assert is_allowed_value(field, 'False') == 'False'
+    session.data = True
+    assert is_allowed_value(session) is True
+
+    session.data = 'true'
+    assert is_allowed_value(session) == 'true'
+
+    session.data = '1'
+    assert is_allowed_value(session) == '1'
+
+    session.data = 'True'
+    assert is_allowed_value(session) == 'True'
+
+    session.data = False
+    assert is_allowed_value(session) is False
+
+    session.data = 'false'
+    assert is_allowed_value(session) == 'false'
+
+    session.data = '0'
+    assert is_allowed_value(session) == '0'
+
+    session.data = 0
+    assert is_allowed_value(session) == 0
+
+    session.data = 'False'
+    assert is_allowed_value(session) == 'False'
 
 
 def test_is_allowed_value_with_custom_values():
@@ -27,13 +46,20 @@ def test_is_allowed_value_with_custom_values():
     field = Boolean(name='test', true_boolean_values=['foo'],
                     false_boolean_values=['bar'])
 
-    with pytest.raises(FieldInvalid):
-        is_allowed_value(field, True)
-    with pytest.raises(FieldInvalid):
-        is_allowed_value(field, False)
+    data = True
+    session = Session(field, data, {})
 
-    assert is_allowed_value(field, 'foo') == 'foo'
-    assert is_allowed_value(field, 'bar') == 'bar'
+    with pytest.raises(FieldInvalid):
+        is_allowed_value(session)
+
+    session.data = False
+    with pytest.raises(FieldInvalid):
+        is_allowed_value(session)
+
+    session.data = 'foo'
+    assert is_allowed_value(session) == 'foo'
+    session.data = 'bar'
+    assert is_allowed_value(session) == 'bar'
 
 
 def test_boolean_input():
