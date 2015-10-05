@@ -48,7 +48,7 @@ class Session(object):
         self.output = output
 
 
-def pipe(pipe_class=Pipe, **pipe_kwargs):
+def pipe(**pipe_kwargs):
     """pipe decorator is provided as a convenience method for creating Pipe
     objects
     """
@@ -58,7 +58,7 @@ def pipe(pipe_class=Pipe, **pipe_kwargs):
         @wraps(pipe_func)
         def inner(session, *args, **kwargs):
 
-            return pipe_class(pipe_func, **pipe_kwargs)(session)
+            return Pipe(pipe_func, **pipe_kwargs)(session)
 
         return inner
 
