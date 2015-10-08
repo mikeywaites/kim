@@ -318,9 +318,8 @@ class BooleanFieldOpts(FieldOpts):
                        [False, 'false', '0', 0, 'False'])
 
         super(BooleanFieldOpts, self).__init__(**kwargs)
-        if self.choices is None:
-            self.choices = set(self.true_boolean_values +
-                               self.false_boolean_values)
+        self.choices = set(self.true_boolean_values +
+                           self.false_boolean_values)
 
 
 class Boolean(Field):
