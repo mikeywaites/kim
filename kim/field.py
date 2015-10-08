@@ -21,6 +21,7 @@ DEFAULT_ERROR_MSGS = {
     'type_error': 'Invalid type',
     'not_found': '{name} not found',
     'none_not_allowed': 'This field cannot be null',
+    'invalid_choice': 'invalid choice',
 }
 
 
@@ -61,6 +62,7 @@ class FieldOpts(object):
         :param error_msgs: a dict of error_type: error messages.
         :param null_default: specify the default type to return when a field is
             null IE None or {} or ''
+        :param choices: specify an array of valid values
 
         :raises: :class:`.FieldOptsError`
         :returns: None
@@ -89,6 +91,7 @@ class FieldOpts(object):
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
+        self.choices = opts.pop('choices', None)
 
         self.validate()
 
@@ -308,11 +311,16 @@ class BooleanFieldOpts(FieldOpts):
 
     def __init__(self, **kwargs):
         self.true_boolean_values = \
-            kwargs.pop('true_boolean_values', [True, 'true', '1', 1, 'True'])
+            kwargs.pop('true_boolean_values',
+                       [True, 'true', '1', 1, 'True'])
         self.false_boolean_values = \
-            kwargs.pop('false_boolean_values', [False, 'false', '0', 0, 'False'])
+            kwargs.pop('false_boolean_values',
+                       [False, 'false', '0', 0, 'False'])
 
         super(BooleanFieldOpts, self).__init__(**kwargs)
+        if self.choices is None:
+            self.choices = set(self.true_boolean_values +
+                               self.false_boolean_values)
 
 
 class Boolean(Field):

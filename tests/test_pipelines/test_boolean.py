@@ -1,8 +1,7 @@
 import pytest
 
 from kim.field import FieldInvalid, Boolean
-from kim.pipelines.base import Session
-from kim.pipelines.boolean import is_allowed_value
+from kim.pipelines.base import Session, is_valid_choice
 
 
 def test_is_allowed_value():
@@ -11,34 +10,34 @@ def test_is_allowed_value():
     session = Session(field, 'test', {})
 
     with pytest.raises(FieldInvalid):
-        is_allowed_value(session)
+        is_valid_choice(session)
 
     session.data = True
-    assert is_allowed_value(session) is True
+    assert is_valid_choice(session) is True
 
     session.data = 'true'
-    assert is_allowed_value(session) == 'true'
+    assert is_valid_choice(session) == 'true'
 
     session.data = '1'
-    assert is_allowed_value(session) == '1'
+    assert is_valid_choice(session) == '1'
 
     session.data = 'True'
-    assert is_allowed_value(session) == 'True'
+    assert is_valid_choice(session) == 'True'
 
     session.data = False
-    assert is_allowed_value(session) is False
+    assert is_valid_choice(session) is False
 
     session.data = 'false'
-    assert is_allowed_value(session) == 'false'
+    assert is_valid_choice(session) == 'false'
 
     session.data = '0'
-    assert is_allowed_value(session) == '0'
+    assert is_valid_choice(session) == '0'
 
     session.data = 0
-    assert is_allowed_value(session) == 0
+    assert is_valid_choice(session) == 0
 
     session.data = 'False'
-    assert is_allowed_value(session) == 'False'
+    assert is_valid_choice(session) == 'False'
 
 
 def test_is_allowed_value_with_custom_values():
@@ -50,16 +49,16 @@ def test_is_allowed_value_with_custom_values():
     session = Session(field, data, {})
 
     with pytest.raises(FieldInvalid):
-        is_allowed_value(session)
+        is_valid_choice(session)
 
     session.data = False
     with pytest.raises(FieldInvalid):
-        is_allowed_value(session)
+        is_valid_choice(session)
 
     session.data = 'foo'
-    assert is_allowed_value(session) == 'foo'
+    assert is_valid_choice(session) == 'foo'
     session.data = 'bar'
-    assert is_allowed_value(session) == 'bar'
+    assert is_valid_choice(session) == 'bar'
 
 
 def test_boolean_input():

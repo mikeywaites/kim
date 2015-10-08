@@ -7,6 +7,7 @@
 
 from .base import (
     pipe,
+    is_valid_choice,
     Input, Output, marshal_input_pipe, marshal_output_pipe,
     serialize_input_pipe, serialize_output_pipe)
 
@@ -32,7 +33,8 @@ class IntegerInput(Input):
     input_pipes = marshal_input_pipe
 
     validation_pipes = [
-        is_valid_integer
+        is_valid_integer,
+        is_valid_choice
     ]
     output_pipes = marshal_output_pipe
 

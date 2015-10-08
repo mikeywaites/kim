@@ -8,24 +8,9 @@
 from .base import (
     pipe,
     Input, Output,
+    is_valid_choice,
     marshal_input_pipe, serialize_input_pipe,
     marshal_output_pipe, serialize_output_pipe)
-
-
-@pipe()
-def is_allowed_value(session):
-    """pipe used to determine is a valid bool value.
-
-    :param session: Kim pipeline session instance
-    """
-
-    allowed_values = set(session.field.opts.true_boolean_values
-                         + session.field.opts.false_boolean_values)
-
-    if session.data not in allowed_values:
-        raise session.field.invalid(error_type='type_error')
-
-    return session.data
 
 
 @pipe()
@@ -49,7 +34,7 @@ class BooleanInput(Input):
     input_pipes = marshal_input_pipe
 
     validation_pipes = [
-        is_allowed_value,
+        is_valid_choice,
     ]
     process_pipes = [
         coerce_to_boolean,

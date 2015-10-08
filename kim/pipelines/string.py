@@ -8,6 +8,7 @@
 from .base import (
     pipe,
     Input, Output,
+    is_valid_choice,
     marshal_input_pipe, serialize_input_pipe,
     marshal_output_pipe, serialize_output_pipe)
 
@@ -32,6 +33,7 @@ class StringInput(Input):
 
     validation_pipes = [
         is_valid_string,
+        is_valid_choice
     ]
     output_pipes = marshal_output_pipe
 

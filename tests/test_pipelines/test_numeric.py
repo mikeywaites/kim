@@ -64,3 +64,14 @@ def test_marshal_read_only_integer():
     output = {}
     field.marshal({'id': 2, 'email': 'mike@mike.com'}, output)
     assert output == {}
+
+
+def test_is_valid_choice():
+
+    field = Integer(name='type', choices=[1, 2])
+    output = {}
+    with pytest.raises(FieldInvalid):
+        field.marshal({'type': 3}, output)
+
+    field.marshal({'type': 1}, output)
+    assert output == {'type': 1}

@@ -181,6 +181,22 @@ def read_only(session):
     return session.data
 
 
+@pipe()
+def is_valid_choice(session):
+    """End processing of a pipeline if a Field is marked as read_only.
+
+    :param session: Kim pipeline session instance
+
+    :raises  StopPipelineExecution:
+    """
+
+    choices = session.field.opts.choices
+    if choices is not None and session.data not in choices:
+        raise session.field.invalid('invalid_choice')
+
+    return session.data
+
+
 @pipe(run_if_none=True)
 def update_output_to_name(session):
     """Store ``data`` at field.name for a ``field`` inside

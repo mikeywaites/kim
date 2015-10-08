@@ -55,3 +55,14 @@ def test_marshal_read_only_string():
     output = {}
     field.marshal({'name': 'foo', 'email': 'mike@mike.com'}, output)
     assert output == {}
+
+
+def test_is_valid_choice():
+
+    field = String(name='type', choices=['one', 'two'])
+    output = {}
+    with pytest.raises(FieldInvalid):
+        field.marshal({'type': 'three'}, output)
+
+    field.marshal({'type': 'one'}, output)
+    assert output == {'type': 'one'}
