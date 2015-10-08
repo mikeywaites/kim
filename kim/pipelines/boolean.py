@@ -6,42 +6,42 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 from .base import (
+    pipe,
     Input, Output,
     marshal_input_pipe, serialize_input_pipe,
     marshal_output_pipe, serialize_output_pipe)
 
 
-def is_allowed_value(field, data):
+@pipe()
+def is_allowed_value(session):
     """pipe used to determine is a valid bool value.
 
-    :param field: instance of :py:class:``~.Field`` being pipelined
-    :param data: data being piplined for the instance of the field.
+    :param session: Kim pipeline session instance
     """
 
-    allowed_values = set(field.opts.true_boolean_values
-                         + field.opts.false_boolean_values)
+    allowed_values = set(session.field.opts.true_boolean_values
+                         + session.field.opts.false_boolean_values)
 
-    if field.opts.allow_none is True and data is None:
-        return data
+    if session.data not in allowed_values:
+        raise session.field.invalid(error_type='type_error')
 
-    if data not in allowed_values:
-        raise field.invalid(error_type='type_error')
-
-    return data
+    return session.data
 
 
-def coerce_to_boolean(field, data):
+@pipe()
+def coerce_to_boolean(session):
     """Given a valid boolean value, ie True, 'true', 'false', False, 0, 1
     set the data to the python boolean type True or False
 
-    """
+    :param session: Kim pipeline session instance
 
-    if data is None and field.opts.allow_none:
-        return data
-    elif data in field.opts.true_boolean_values:
-        return True
+    """
+    if session.data in session.field.opts.true_boolean_values:
+        session.data = True
     else:
-        return False
+        session.data = False
+
+    return session.data
 
 
 class BooleanInput(Input):
