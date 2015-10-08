@@ -385,6 +385,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param raw: instruct the mapper to transform the data before serializing.
             This option overrides the Mapper.raw setting.
 
+        :raises: FieldInalid, MapperError
         :returns: dict containing serialized object
         """
 
@@ -397,12 +398,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             data = self._get_obj()
 
         for field in self._get_fields(role):
-            try:
-                field.serialize(data, output)
-            except FieldInvalid:
-                pass
-            except MappingInvalid:
-                pass
+            # we let FieldInvalid and MapperError error here as serialization
+            # should not error on validation pipes.
+            field.serialize(data, output)
 
         return output
 

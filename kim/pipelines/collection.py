@@ -77,18 +77,13 @@ def serialize_collection(session):
 class CollectionInput(Input):
 
     input_pipes = marshal_input_pipe
-    validation_pipes = [
-        is_list,
-    ]
+    validation_pipes = [is_list, ]
     output_pipes = [marshall_collection] + marshal_output_pipe
 
 
 class CollectionOutput(Output):
 
     input_pipes = serialize_input_pipe
-    validation_pipes = [
-        is_list,
-    ]
     process_pipes = [
         serialize_collection,
     ]
