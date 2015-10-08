@@ -1,6 +1,7 @@
 import pytest
 
 from kim.field import FieldInvalid, String
+from kim.pipelines.base import Session
 from kim.pipelines.string import is_valid_string
 
 
@@ -15,11 +16,13 @@ def test_is_valid_string_pipe():
 
     field = String(name='test')
     invalid_string = InvalidString()
+    session = Session(field, invalid_string, {})
 
     with pytest.raises(FieldInvalid):
-        is_valid_string(field, invalid_string)
+        is_valid_string(session)
 
-    assert is_valid_string(field, 'yes') == 'yes'
+    session.data = 'yes'
+    assert is_valid_string(session) == 'yes'
 
 
 def test_string_input():
@@ -52,3 +55,14 @@ def test_marshal_read_only_string():
     output = {}
     field.marshal({'name': 'foo', 'email': 'mike@mike.com'}, output)
     assert output == {}
+
+
+def test_is_valid_choice():
+
+    field = String(name='type', choices=['one', 'two'])
+    output = {}
+    with pytest.raises(FieldInvalid):
+        field.marshal({'type': 'three'}, output)
+
+    field.marshal({'type': 'one'}, output)
+    assert output == {'type': 'one'}

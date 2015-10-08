@@ -2,6 +2,7 @@ import pytest
 
 from kim.field import Field, FieldInvalid, FieldError
 from kim.pipelines.base import (
+    Session,
     get_data_from_source, get_data_from_name, update_output_to_name,
     update_output_to_source)
 
@@ -23,33 +24,42 @@ def test_get_data_from_name_pipe():
     field5 = Field(name='falsy', allow_none=False)
 
     # Required but not present and no default
+    output = {}
+    session = Session(field, data, output)
     with pytest.raises(FieldInvalid):
-        get_data_from_name(field, data)
+        get_data_from_name(session)
 
     # Not present but default set
-    assert get_data_from_name(field2, data) == default
+    session = Session(field2, data, output)
+    assert get_data_from_name(session) == default
 
     # Not present and none not allowed
+    session = Session(field3, data, output)
     with pytest.raises(FieldInvalid):
-        get_data_from_name(field3, data)
+        get_data_from_name(session)
 
     # Required, value present and falsy - should still be allowed
-    assert get_data_from_name(field4, data) == 0
+    session = Session(field4, data, output)
+    assert get_data_from_name(session) == 0
 
     # None not allowed, value present and falsy - should still be allowed
-    assert get_data_from_name(field5, data) == 0
+    session = Session(field5, data, output)
+    assert get_data_from_name(session) == 0
 
 
 def test_get_data_from_source_pipe():
     data = {
         'name': 'mike'
     }
+    output = {}
 
     field = Field(source='foo')
-    assert get_data_from_source(field, data) is None
+    session = Session(field, data, output)
+    assert get_data_from_source(session) is None
 
     field = Field(source='name')
-    assert get_data_from_source(field, data) == 'mike'
+    session = Session(field, data, output)
+    assert get_data_from_source(session) == 'mike'
 
 
 def test_update_output_to_name_with_object():
@@ -65,7 +75,10 @@ def test_update_output_to_name_with_object():
 
     output = MyObject()
     field = Field(name='name', required=True)
-    update_output_to_name(field, data['name'], output)
+    session = Session(field, data, output)
+    session.data = data['name']
+
+    update_output_to_name(session)
     assert output.name == 'mike'
 
 
@@ -80,7 +93,9 @@ def test_update_output_to_name_with_dict():
     output = {}
 
     field = Field(name='name', required=True)
-    update_output_to_name(field, data['name'], output)
+    session = Session(field, data, output)
+    session.data = data['name']
+    update_output_to_name(session)
     assert output == {'name': 'mike'}
 
 
@@ -93,8 +108,9 @@ def test_update_output_to_name_invalid_output_type():
     }
 
     field = Field(name='name', required=True)
+    session = Session(field, data, 1)
     with pytest.raises(FieldError):
-        update_output_to_name(field, data['name'], 1)
+        update_output_to_name(session)
 
 
 def test_update_output_to_source_with_object():
@@ -110,7 +126,10 @@ def test_update_output_to_source_with_object():
 
     output = MyObject()
     field = Field(source='source', required=True)
-    update_output_to_source(field, data['source'], output)
+    session = Session(field, data, output)
+    session.data = data['source']
+
+    update_output_to_source(session)
     assert output.source == 'mike'
 
 
@@ -125,7 +144,9 @@ def test_update_output_to_source_with_dict():
     output = {}
 
     field = Field(source='source', required=True)
-    update_output_to_source(field, data['source'], output)
+    session = Session(field, data, output)
+    session.data = data['source']
+    update_output_to_source(session)
     assert output == {'source': 'mike'}
 
 
@@ -137,6 +158,8 @@ def test_update_output_to_source_invalid_output_type():
         'nested': {'foo': 'bar'}
     }
 
+    output = 1
     field = Field(source='source', required=True)
+    session = Session(field, data, output)
     with pytest.raises(FieldError):
-        update_output_to_source(field, data['source'], 1)
+        update_output_to_source(session)

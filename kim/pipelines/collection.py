@@ -5,33 +5,38 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (Input, Output, marshal_input_pipe, marshal_output_pipe,
+from .base import (pipe, Input, Output, marshal_input_pipe, marshal_output_pipe,
                    serialize_input_pipe, serialize_output_pipe)
 from kim.utils import attr_or_key
 
 
-def is_list(field, data):
+@pipe()
+def is_list(session):
     """pipe used to determine if a value can be iterated.
 
-    :param field: instance of :py:class:``~.Field`` being pipelined
-    :param data: data being piplined for the instance of the field.
+    :param session: Kim pipeline session instance
+
+    :raises:  InvalidField
     """
 
-    if not isinstance(data, list):
-        raise field.invalid(error_type='type_error')
+    if not isinstance(session.data, list):
+        raise session.field.invalid(error_type='type_error')
 
 
-def marshall_collection(field, data, output):
+@pipe()
+def marshall_collection(session):
     """iterate over each item in ``data`` and marshal the item through the
     wrapped field defined for this collection
 
+    :param session: Kim pipeline session instance
+
     """
-    wrapped_field = field.opts.field
-    existing_value = attr_or_key(output, field.opts.source)
+    wrapped_field = session.field.opts.field
+    existing_value = attr_or_key(session.output, session.field.opts.source)
 
     output = []
 
-    for i, datum in enumerate(data):
+    for i, datum in enumerate(session.data):
         _output = {}
         # If the object already exists, try to match up the existing elements
         # with those in the input json
@@ -44,24 +49,29 @@ def marshall_collection(field, data, output):
         result = _output[wrapped_field.opts.source]
         output.append(result)
 
-    return output
+    session.data = output
+    return session.data
 
 
-def serialize_collection(field, data):
+@pipe()
+def serialize_collection(session):
     """iterate over each item in ``data`` and serialize the item through the
     wrapped field defined for this collection
 
+    :param session: Kim pipeline session instance
+
     """
-    wrapped_field = field.opts.field
+    wrapped_field = session.field.opts.field
     output = []
 
-    for datum in data:
+    for datum in session.data:
         _output = {}
         wrapped_field.serialize(datum, _output)
         result = _output[wrapped_field.name]
         output.append(result)
 
-    return output
+    session.data = output
+    return session.data
 
 
 class CollectionInput(Input):

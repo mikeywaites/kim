@@ -1,4 +1,4 @@
-# kim/pipelines/string.py
+# kim/pipelines/boolean.py
 # Copyright (C) 2014-2015 the Kim authors and contributors
 # <see AUTHORS file>
 #
@@ -14,31 +14,35 @@ from .base import (
 
 
 @pipe()
-def is_valid_string(session):
-    """pipe used to determine if a value can be coerced to a string
+def coerce_to_boolean(session):
+    """Given a valid boolean value, ie True, 'true', 'false', False, 0, 1
+    set the data to the python boolean type True or False
 
     :param session: Kim pipeline session instance
 
     """
+    if session.data in session.field.opts.true_boolean_values:
+        session.data = True
+    else:
+        session.data = False
 
-    try:
-        return str(session.data)
-    except ValueError:
-        raise session.field.invalid(error_type='type_error')
+    return session.data
 
 
-class StringInput(Input):
+class BooleanInput(Input):
 
     input_pipes = marshal_input_pipe
 
     validation_pipes = [
-        is_valid_string,
-        is_valid_choice
+        is_valid_choice,
+    ]
+    process_pipes = [
+        coerce_to_boolean,
     ]
     output_pipes = marshal_output_pipe
 
 
-class StringOutput(Output):
+class BooleanOutput(Output):
 
     input_pipes = serialize_input_pipe
     output_pipes = serialize_output_pipe

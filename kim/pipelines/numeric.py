@@ -6,23 +6,26 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 from .base import (
+    pipe,
+    is_valid_choice,
     Input, Output, marshal_input_pipe, marshal_output_pipe,
     serialize_input_pipe, serialize_output_pipe)
 
 
-def is_valid_integer(field, data):
+@pipe()
+def is_valid_integer(session):
     """pipe used to determine if a value can be coerced to an int
 
-    :param field: instance of :py:class:``~.Field`` being pipelined
-    :param data: data being piplined for the instance of the field.
+    :param session: Kim pipeline session instance
+
     """
 
     try:
-        return int(data)
+        return int(session.data)
     except TypeError:
-        raise field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type='type_error')
     except ValueError:
-        raise field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type='type_error')
 
 
 class IntegerInput(Input):
@@ -30,7 +33,8 @@ class IntegerInput(Input):
     input_pipes = marshal_input_pipe
 
     validation_pipes = [
-        is_valid_integer
+        is_valid_integer,
+        is_valid_choice
     ]
     output_pipes = marshal_output_pipe
 

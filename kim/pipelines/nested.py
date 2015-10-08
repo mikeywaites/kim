@@ -5,7 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (Input, Output, marshal_input_pipe, marshal_output_pipe,
+from .base import (pipe, Input, Output,
+                   marshal_input_pipe, marshal_output_pipe,
                    serialize_input_pipe, serialize_output_pipe)
 from kim.utils import attr_or_key
 
@@ -16,7 +17,8 @@ def _call_getter(field, data):
         return result
 
 
-def marshal_nested(field, data, output):
+@pipe()
+def marshal_nested(session):
     """Marshal data using the nested mapper defined on this field.
 
     There are 5 possible scenarios, depending on the security setters and
@@ -32,42 +34,57 @@ def marshal_nested(field, data, output):
        is allowed
        Call the nested mapper to create a new object
     5. Getter function returns None/does not exist and creation of new objects
-       is not allowed, nor are in place updates. Raise an exception."""
+       is not allowed, nor are in place updates. Raise an exception.
 
-    resolved = _call_getter(field, data)
+    :param session: Kim pipeline session instance
+
+    """
+
+    resolved = _call_getter(session.field, session.data)
 
     if resolved is not None:
-        if field.opts.allow_updates:
-            nested_mapper = field.get_mapper(data=data, obj=resolved)
-            return nested_mapper.marshal(role=field.opts.role)
+        if session.field.opts.allow_updates:
+            nested_mapper = session.field.get_mapper(
+                data=session.data, obj=resolved)
+            session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
-            return resolved
+            session.data = resolved
     else:
-        if field.opts.allow_updates_in_place:
-            existing_value = attr_or_key(output, field.name)
+        if session.field.opts.allow_updates_in_place:
+            existing_value = attr_or_key(session.output, session.field.name)
             # If no existing value is found in the output, this is probably
             # a nested collection with more objects in the json input
             # than already exist
             if not existing_value:
-                raise field.invalid('invalid_collection_length')
-            nested_mapper = field.get_mapper(data=data, obj=existing_value)
-            return nested_mapper.marshal(role=field.opts.role)
-        elif field.opts.allow_create:
-            nested_mapper = field.get_mapper(data=data)
-            return nested_mapper.marshal(role=field.opts.role)
+                raise session.field.invalid('invalid_collection_length')
+            nested_mapper = session.field.get_mapper(
+                data=session.data, obj=existing_value)
+            session.data = nested_mapper.marshal(role=session.field.opts.role)
+        elif session.field.opts.allow_create:
+            nested_mapper = session.field.get_mapper(data=session.data)
+            session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
-            raise field.invalid(error_type='not_found')
+            raise session.field.invalid(error_type='not_found')
+
+    return session.data
 
 
-def serialize_nested(field, data):
+@pipe(run_if_none=True)
+def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
+
+    :param session: Kim pipeline session instance
+
     """
 
-    if data is None:
-        return field.opts.null_default
+    if session.data is None:
+        session.data = session.field.opts.null_default
+        return session.data
 
-    nested_mapper = field.get_mapper(obj=data)
-    return nested_mapper.serialize(role=field.opts.role)
+    nested_mapper = session.field.get_mapper(obj=session.data)
+    session.data = nested_mapper.serialize(role=session.field.opts.role)
+
+    return session.data
 
 
 class NestedInput(Input):

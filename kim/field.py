@@ -12,7 +12,8 @@ from .pipelines import (
     StringInput, StringOutput,
     IntegerInput, IntegerOutput,
     NestedInput, NestedOutput,
-    CollectionInput, CollectionOutput
+    CollectionInput, CollectionOutput,
+    BooleanInput, BooleanOutput
 )
 
 DEFAULT_ERROR_MSGS = {
@@ -20,6 +21,7 @@ DEFAULT_ERROR_MSGS = {
     'type_error': 'Invalid type',
     'not_found': '{name} not found',
     'none_not_allowed': 'This field cannot be null',
+    'invalid_choice': 'invalid choice',
 }
 
 
@@ -60,6 +62,7 @@ class FieldOpts(object):
         :param error_msgs: a dict of error_type: error messages.
         :param null_default: specify the default type to return when a field is
             null IE None or {} or ''
+        :param choices: specify an array of valid values
 
         :raises: :class:`.FieldOptsError`
         :returns: None
@@ -88,6 +91,7 @@ class FieldOpts(object):
 
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
+        self.choices = opts.pop('choices', None)
 
         self.validate()
 
@@ -297,6 +301,46 @@ class Integer(Field):
 
     input_pipe = IntegerInput
     output_pipe = IntegerOutput
+
+
+class BooleanFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Boolean`.
+
+    """
+
+    def __init__(self, **kwargs):
+        self.true_boolean_values = \
+            kwargs.pop('true_boolean_values',
+                       [True, 'true', '1', 1, 'True'])
+        self.false_boolean_values = \
+            kwargs.pop('false_boolean_values',
+                       [False, 'false', '0', 0, 'False'])
+
+        super(BooleanFieldOpts, self).__init__(**kwargs)
+        self.choices = set(self.true_boolean_values +
+                           self.false_boolean_values)
+
+
+class Boolean(Field):
+    """:class:`.Boolean` represents a value that must be valid
+    boolean type.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            active = field.Boolean(required=True)
+
+    """
+
+    opts_class = BooleanFieldOpts
+    input_pipe = BooleanInput
+    output_pipe = BooleanOutput
 
 
 class NestedFieldOpts(FieldOpts):
