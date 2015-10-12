@@ -62,6 +62,23 @@ def test_get_data_from_source_pipe():
     assert get_data_from_source(session) == 'mike'
 
 
+def test_get_data_from_source_pipe_dot_syntax():
+    data = {
+        'user': {
+            'name': 'mike'
+        }
+    }
+    output = {}
+
+    field = Field(source='foo.bar')
+    session = Session(field, data, output)
+    assert get_data_from_source(session) is None
+
+    field = Field(source='user.name')
+    session = Session(field, data, output)
+    assert get_data_from_source(session) == 'mike'
+
+
 def test_update_output_to_name_with_object():
 
     data = {
