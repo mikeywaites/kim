@@ -240,7 +240,7 @@ class Field(object):
         """
         self.opts.set_name(name)
 
-    def marshal(self, data, output):
+    def marshal(self, data, output, **opts):
         """Run the input pipeline for this field for the given `data` and
         update `output` in place.
 
@@ -249,9 +249,9 @@ class Field(object):
         :returns: None
         """
 
-        self.input_pipe().run(self, data, output)
+        self.input_pipe().run(self, data, output, **opts)
 
-    def serialize(self, obj, output):
+    def serialize(self, obj, output, **opts):
         """Run the output pipeline for this field for the given `data` and
         update `output` in place.
 
@@ -260,7 +260,7 @@ class Field(object):
         :returns: None
         """
 
-        self.output_pipe().run(self, obj, output)
+        self.output_pipe().run(self, obj, output, **opts)
 
 
 class String(Field):

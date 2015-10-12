@@ -218,7 +218,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperIterator(cls, **mapper_params)
 
-    def __init__(self, obj=None, data=None, raw=False):
+    def __init__(self, obj=None, data=None, partial=False, raw=False):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
@@ -227,6 +227,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param data: input data to be used for marshaling
         :param raw: the mapper will instruct fields to populate themselves
             using __duner__ field names where required.
+        :param partial: allow pipelines to pull data from an existing source
+            or fall back to standard checks.
+
 
         :raises: :class:`.MapperError`
         :returns: None
@@ -241,6 +244,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.data = data
         self.errors = {}
         self.raw = raw
+        self.partial = partial
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
@@ -398,9 +402,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             data = self._get_obj()
 
         for field in self._get_fields(role):
-            # we let FieldInvalid and MapperError error here as serialization
-            # should not error on validation pipes.
-            field.serialize(data, output)
+            field.serialize(data, output, partial=self.partial)
 
         return output
 
@@ -415,7 +417,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         for field in self._get_fields(role):
             try:
-                field.marshal(self.data, output)
+                field.marshal(self.data, output, partial=self.partial)
             except FieldInvalid as e:
                 self.errors[field.name] = e.message
             except MappingInvalid as e:
