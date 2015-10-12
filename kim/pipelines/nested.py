@@ -11,9 +11,9 @@ from .base import (pipe, Input, Output,
 from kim.utils import attr_or_key
 
 
-def _call_getter(field, data):
-    if field.opts.getter:
-        result = field.opts.getter(field, data)
+def _call_getter(session):
+    if session.field.opts.getter:
+        result = session.field.opts.getter(session.field, session.data)
         return result
 
 
@@ -40,7 +40,7 @@ def marshal_nested(session):
 
     """
 
-    resolved = _call_getter(session.field, session.data)
+    resolved = _call_getter(session)
 
     if resolved is not None:
         if session.field.opts.allow_updates:
