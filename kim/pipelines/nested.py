@@ -13,7 +13,7 @@ from kim.utils import attr_or_key
 
 def _call_getter(session):
     if session.field.opts.getter:
-        result = session.field.opts.getter(session.field, session.data)
+        result = session.field.opts.getter(session)
         return result
 
 
