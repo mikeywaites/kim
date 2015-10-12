@@ -172,8 +172,8 @@ def test_marshal_nested_mapper_defaults(db_session):
         id = field.Integer(read_only=True)
         name = field.String()
 
-    def getter(field, data):
-        return db_session.query(User).get(data['id'])
+    def getter(session):
+        return db_session.query(User).get(session.data['id'])
 
     class PostMapper(Mapper):
 
@@ -212,8 +212,8 @@ def test_marshal_nested_mapper_defaults_not_found(db_session):
         id = field.Integer(read_only=True)
         name = field.String()
 
-    def getter(field, data):
-        return db_session.query(User).get(data['id'])
+    def getter(session):
+        return db_session.query(User).get(session.data['id'])
 
     class PostMapper(Mapper):
 
@@ -248,8 +248,8 @@ def test_marshal_nested_mapper_allow_updates(db_session):
         id = field.Integer(read_only=True)
         name = field.String()
 
-    def getter(field, data):
-        return db_session.query(User).get(data['id'])
+    def getter(session):
+        return db_session.query(User).get(session.data['id'])
 
     class PostMapper(Mapper):
 
@@ -288,8 +288,8 @@ def test_marshal_nested_mapper_allow_updates_in_place(db_session):
 
         name = field.String()
 
-    def getter(field, data):
-        return db_session.query(User).get(data['id'])
+    def getter(session):
+        return db_session.query(User).get(session.data['id'])
 
     class PostMapper(Mapper):
 

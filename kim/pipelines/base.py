@@ -42,11 +42,14 @@ class Session(object):
 
     """
 
-    def __init__(self, field, data, output, partial=False, **kwargs):
+    def __init__(self, field, data, output,
+                 partial=False, parent=None, **kwargs):
+
         self.field = field
         self.data = data
         self.output = output
         self.partial = partial
+        self.parent = parent
 
 
 def pipe(**pipe_kwargs):
@@ -93,7 +96,11 @@ class Pipeline(object):
         """ Iterate over all of the defined 'pipes' for this pipeline.
 
         """
-        session = Session(field, data, output, partial=opts.get('partial', False))
+        session = Session(
+            field, data, output,
+            parent=opts.get('parent_session', None),
+            partial=opts.get('partial', False))
+
         try:
 
             for pipe in chain(self.input_pipes, self.validation_pipes,

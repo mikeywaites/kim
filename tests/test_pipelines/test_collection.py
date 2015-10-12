@@ -112,8 +112,8 @@ def test_marshal_nested_collection_default():
     data = {'id': 2, 'name': 'bob', 'users': [{'id': '1',
                                               'name': 'ignore this'}]}
 
-    def getter(field, data):
-        if data['id'] == '1':
+    def getter(session):
+        if session.data['id'] == '1':
             return user
 
     f = field.Collection(field.Nested('UserMapper', getter=getter),
@@ -136,8 +136,8 @@ def test_marshal_nested_collection_allow_updates():
     user = TestType(id='1', name='mike')
     data = {'id': 2, 'name': 'bob', 'users': [{'id': '1', 'name': 'new name'}]}
 
-    def getter(field, data):
-        if data['id'] == '1':
+    def getter(session):
+        if session.data['id'] == '1':
             return user
 
     f = field.Collection(field.Nested('UserMapper', getter=getter,
