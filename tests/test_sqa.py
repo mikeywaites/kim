@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from kim.mapper import Mapper, MappingInvalid
 from kim import field
@@ -47,6 +48,10 @@ class User(Base):
     fullname = Column(String)
     password = Column(String)
 
+    @hybrid_property
+    def anonymous(self):
+        return False
+
 
 class Post(Base):
 
@@ -77,6 +82,31 @@ def db_session(request, connection):
     request.addfinalizer(trans.rollback)
 
     return DBSession()
+
+
+def test_partial_updates(db_session):
+
+    class UserMapper(Mapper):
+
+        __type__ = User
+
+        id = field.Integer(read_only=True)
+        name = field.String()
+
+    class PostMapper(Mapper):
+
+        __type__ = Post
+
+        title = field.String()
+        user = field.Nested('UserMapper', required=True, allow_create=True)
+        readers = field.Collection(field.Nested('UserMapper'), required=False)
+
+    data = {'title': 'new'}
+    user = User(id='id', name='mike')
+    post = Post(title='test post', user=user)
+    mapper = PostMapper(data=data, obj=post, partial=True)
+    obj = mapper.marshal()
+    assert obj.title == 'new'
 
 
 def test_marshal_nested_mapper_allow_create(db_session, mappers):

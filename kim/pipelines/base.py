@@ -42,10 +42,11 @@ class Session(object):
 
     """
 
-    def __init__(self, field, data, output, **kwargs):
+    def __init__(self, field, data, output, partial=False, **kwargs):
         self.field = field
         self.data = data
         self.output = output
+        self.partial = partial
 
 
 def pipe(**pipe_kwargs):
@@ -88,11 +89,11 @@ class Pipeline(object):
     process_pipes = []
     output_pipes = []
 
-    def run(self, field, data, output):
+    def run(self, field, data, output, **opts):
         """ Iterate over all of the defined 'pipes' for this pipeline.
 
         """
-        session = Session(field, data, output)
+        session = Session(field, data, output, partial=opts.get('partial', False))
         try:
 
             for pipe in chain(self.input_pipes, self.validation_pipes,
@@ -130,7 +131,13 @@ def get_data_from_name(session):
     if session.field.opts._is_wrapped:
         return session.data
 
-    value = attr_or_key(session.data, session.field.name)
+    if session.partial and session.output:
+        value = attr_or_key(session.data, session.field.name)
+        if value is None:
+            value = attr_or_key(session.output, session.field.name)
+    else:
+        value = attr_or_key(session.data, session.field.name)
+
     if value is None:
         if session.field.opts.required and session.field.opts.default is None:
             raise session.field.invalid(error_type='required')
