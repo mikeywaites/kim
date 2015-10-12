@@ -22,16 +22,23 @@ def set_creation_order(instance):
     _creation_order += 1
 
 
-def attr_or_key(obj, name):
-    """attempt to use getattr to access an attribute of obj, if that fails
-    assume obj support key based look ups like a dict.
-
-    """
-
+def _attr_or_key(obj, name):
     if isinstance(obj, dict):
         return obj.get(name)
     else:
         return getattr(obj, name, None)
+
+
+def attr_or_key(obj, name):
+    """attempt to use getattr to access an attribute of obj, if that fails
+    assume obj support key based look ups like a dict.
+
+    Supports dot syntax to span nested objects/dicts eg 'foo.bar.baz'
+    """
+    components = name.split('.')
+    for component in components:
+        obj = _attr_or_key(obj, component)
+    return obj
 
 
 def recursive_defaultdict():
