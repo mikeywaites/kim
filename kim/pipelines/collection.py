@@ -45,7 +45,7 @@ def marshall_collection(session):
                 _output[wrapped_field.opts.source] = existing_value[i]
             except IndexError:
                 pass
-        wrapped_field.marshal(datum, _output)
+        wrapped_field.marshal(datum, _output, parent_session=session)
         result = _output[wrapped_field.opts.source]
         output.append(result)
 
@@ -66,7 +66,7 @@ def serialize_collection(session):
 
     for datum in session.data:
         _output = {}
-        wrapped_field.serialize(datum, _output)
+        wrapped_field.serialize(datum, _output, parent_session=session)
         result = _output[wrapped_field.name]
         output.append(result)
 

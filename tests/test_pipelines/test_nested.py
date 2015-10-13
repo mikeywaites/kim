@@ -180,8 +180,8 @@ def test_marshal_nested_with_getter():
         '2': {'id': '2', 'name': 'jack'}
     }
 
-    def getter(field, data):
-        return users[data['id']]
+    def getter(session):
+        return users[session.data['id']]
 
     test_field = field.Nested('UserMapper', name='user', getter=getter)
 
@@ -205,7 +205,7 @@ def test_marshal_nested_with_getter_failure():
         id = field.String(required=True)
         name = field.String()
 
-    def getter(field, data):
+    def getter(session):
         return None
 
     test_field = field.Nested('UserMapper', name='user', getter=getter)
@@ -228,7 +228,7 @@ def test_marshal_nested_with_defaults():
 
     user = {'id': '1', 'name': 'mike'}
 
-    def getter(field, data):
+    def getter(session):
         return user
 
     test_field = field.Nested('UserMapper', name='user', getter=getter)
@@ -254,8 +254,8 @@ def test_marshal_nested_with_allow_updates():
 
     user = {'id': '1', 'name': 'mike'}
 
-    def getter(field, data):
-        if data['id'] == '1':
+    def getter(session):
+        if session.data['id'] == '1':
             return user
 
     test_field = field.Nested('UserMapper', name='user', getter=getter,
@@ -287,8 +287,8 @@ def test_marshal_nested_with_allow_create_only():
 
     user = {'id': '1', 'name': 'mike'}
 
-    def getter(field, data):
-        if data['id'] == '1':
+    def getter(session):
+        if session.data['id'] == '1':
             return user
 
     test_field = field.Nested('UserMapper', name='user', getter=getter,
@@ -322,8 +322,8 @@ def test_marshal_nested_with_allow_create_and_allow_updates():
 
     user = {'id': '1', 'name': 'mike'}
 
-    def getter(field, data):
-        if data['id'] == '1':
+    def getter(session):
+        if session.data['id'] == '1':
             return user
 
     test_field = field.Nested('UserMapper', name='user', getter=getter,
