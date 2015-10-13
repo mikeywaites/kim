@@ -66,7 +66,7 @@ def serialize_collection(session):
 
     for datum in session.data:
         _output = {}
-        wrapped_field.serialize(datum, _output)
+        wrapped_field.serialize(datum, _output, parent_session=session)
         result = _output[wrapped_field.name]
         output.append(result)
 
