@@ -150,7 +150,7 @@ def test_serialize_with_validation_hooks():
 
         my_score = Integer(name='score')
 
-        @serialization.validates('score', pipe_type='output')
+        @serialization.validates('score')
         def greater_than(session):
 
             hook_mock()
@@ -202,7 +202,7 @@ def test_serialize_with_input_hooks():
 
         my_score = Integer(name='score')
 
-        @serialization.inputs('score', pipe_type='output')
+        @serialization.inputs('score')
         def greater_than(session):
 
             hook_mock()
@@ -254,7 +254,7 @@ def test_serialize_with_process_hooks():
 
         my_score = Integer(name='score')
 
-        @serialization.processes('score', pipe_type='output')
+        @serialization.processes('score')
         def greater_than(session):
 
             hook_mock()
@@ -306,7 +306,7 @@ def test_serialize_with_output_hooks():
 
         my_score = Integer(name='score')
 
-        @serialization.outputs('score', pipe_type='output')
+        @serialization.outputs('score')
         def greater_than(session):
 
             hook_mock()
