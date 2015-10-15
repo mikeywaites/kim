@@ -1,9 +1,12 @@
 import pytest
 
+from six import get_unbound_function
+
 from kim.exception import MapperError, MappingInvalid
 from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
 from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
+from kim.pipelines import marshaling, serialization
 
 
 class TestType(object):
@@ -962,3 +965,103 @@ def test_mapper_with_invalid_collection_fields_sets_errors():
         mapper.marshal()
 
     assert mapper.errors == {'users': {'id': 'This is a required field'}}
+
+
+def test_setting_validation_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @marshaling.validates('name')
+        def unique_name(self, session):
+            pass
+
+        @serialization.validates('name')
+        def foo(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.unique_name)
+    output_func = get_unbound_function(UserMapper.foo)
+    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['validation']
+    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['validation']
+
+
+def test_setting_input_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @marshaling.inputs('name')
+        def foo(self, session):
+            pass
+
+        @serialization.inputs('name')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['input']
+    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['input']
+
+
+def test_setting_process_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @marshaling.processes('name')
+        def foo(self, session):
+            pass
+
+        @serialization.processes('name')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['process']
+    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['process']
+
+
+def test_setting_output_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @marshaling.outputs('name')
+        def foo(self, session):
+            pass
+
+        @serialization.outputs('name')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['output']
+    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['output']

@@ -69,6 +69,18 @@ def pipe(**pipe_kwargs):
     return pipe_decorator
 
 
+def _decorate_pipe(fn, fields, pipe_type, pipeline_type):
+
+    fn.__mapper_field_hook = pipe_type
+    fn.__mapper_field_hook_opts = {
+        'serialize': pipeline_type == 'serialize',
+        'marshal': pipeline_type == 'marshal',
+    }
+    fn._field_names = fields
+
+    return fn
+
+
 class Pipeline(object):
     """Pipelines provide a simple, extensible way of processing data.  Each
     pipeline provides 4 input groups, ``input_pipes``, ``validation_pipes``,
@@ -111,14 +123,6 @@ class Pipeline(object):
 
         except StopPipelineExecution:
             return session.output
-
-
-class Input(Pipeline):
-    pass
-
-
-class Output(Pipeline):
-    pass
 
 
 @pipe()
@@ -251,7 +255,4 @@ def update_output_to_source(session):
                              'key based set operations')
 
 
-marshal_input_pipe = [read_only, get_data_from_name]
-serialize_input_pipe = [get_data_from_source, ]
-marshal_output_pipe = [update_output_to_source, ]
-serialize_output_pipe = [update_output_to_name, ]
+

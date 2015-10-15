@@ -5,16 +5,19 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from collections import defaultdict
+
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
-    Input, Output,
-    StringInput, StringOutput,
-    IntegerInput, IntegerOutput,
-    NestedInput, NestedOutput,
-    CollectionInput, CollectionOutput,
-    BooleanInput, BooleanOutput
+    StringMarshalPipeline, StringSerializePipeline,
+    IntegerMarshalPipeline, IntegerSerializePipeline,
+    NestedMarshalPipeline, NestedSerializePipeline,
+    CollectionMarshalPipeline, CollectionSerializePipeline,
+    BooleanMarshalPipeline, BooleanSerializePipeline
 )
+from .pipelines.marshaling import MarshalPipeline
+from .pipelines.serialization import SerializePipeline
 
 DEFAULT_ERROR_MSGS = {
     'required': 'This is a required field',
@@ -93,6 +96,9 @@ class FieldOpts(object):
         self.read_only = opts.pop('read_only', False)
         self.choices = opts.pop('choices', None)
 
+        self.extra_marshal_pipes = defaultdict(list)
+        self.extra_serialize_pipes = defaultdict(list)
+
         self.validate()
 
     def validate(self):
@@ -167,8 +173,8 @@ class Field(object):
     """
 
     opts_class = FieldOpts
-    input_pipe = Input
-    output_pipe = Output
+    marshal_pipeline = MarshalPipeline
+    serialize_pipeline = SerializePipeline
 
     def __init__(self, *args, **field_opts):
         """Construct a new instance of field.  Each field accepts a set of
@@ -249,7 +255,7 @@ class Field(object):
         :returns: None
         """
 
-        self.input_pipe().run(self, data, output, **opts)
+        self.marshal_pipeline().run(self, data, output, **opts)
 
     def serialize(self, obj, output, **opts):
         """Run the output pipeline for this field for the given `data` and
@@ -260,7 +266,7 @@ class Field(object):
         :returns: None
         """
 
-        self.output_pipe().run(self, obj, output, **opts)
+        self.serialize_pipeline().run(self, obj, output, **opts)
 
 
 class String(Field):
@@ -279,8 +285,8 @@ class String(Field):
 
     """
 
-    input_pipe = StringInput
-    output_pipe = StringOutput
+    marshal_pipeline = StringMarshalPipeline
+    serialize_pipeline = StringSerializePipeline
 
 
 class Integer(Field):
@@ -299,8 +305,8 @@ class Integer(Field):
 
     """
 
-    input_pipe = IntegerInput
-    output_pipe = IntegerOutput
+    marshal_pipeline = IntegerMarshalPipeline
+    serialize_pipeline = IntegerSerializePipeline
 
 
 class BooleanFieldOpts(FieldOpts):
@@ -339,8 +345,8 @@ class Boolean(Field):
     """
 
     opts_class = BooleanFieldOpts
-    input_pipe = BooleanInput
-    output_pipe = BooleanOutput
+    marshal_pipeline = BooleanMarshalPipeline
+    serialize_pipeline = BooleanSerializePipeline
 
 
 class NestedFieldOpts(FieldOpts):
@@ -400,8 +406,8 @@ class Nested(Field):
     """
 
     opts_class = NestedFieldOpts
-    input_pipe = NestedInput
-    output_pipe = NestedOutput
+    marshal_pipeline = NestedMarshalPipeline
+    serialize_pipeline = NestedSerializePipeline
 
     def get_mapper(self, as_class=False, **mapper_params):
         """Retrieve the specified mapper from the Mapper registry.
@@ -499,6 +505,6 @@ class Collection(Field):
 
     """
 
-    input_pipe = CollectionInput
-    output_pipe = CollectionOutput
+    marshal_pipeline = CollectionMarshalPipeline
+    serialize_pipeline = CollectionSerializePipeline
     opts_class = CollectionFieldOpts

@@ -5,11 +5,9 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (
-    pipe,
-    is_valid_choice,
-    Input, Output, marshal_input_pipe, marshal_output_pipe,
-    serialize_input_pipe, serialize_output_pipe)
+from .base import pipe, is_valid_choice
+from .marshaling import MarshalPipeline
+from .serialization import SerializePipeline
 
 
 @pipe()
@@ -28,18 +26,11 @@ def is_valid_integer(session):
         raise session.field.invalid(error_type='type_error')
 
 
-class IntegerInput(Input):
+class IntegerMarshalPipeline(MarshalPipeline):
 
-    input_pipes = marshal_input_pipe
-
-    validation_pipes = [
-        is_valid_integer,
-        is_valid_choice
-    ]
-    output_pipes = marshal_output_pipe
+    validation_pipes = \
+        [is_valid_integer, is_valid_choice] + MarshalPipeline.validation_pipes
 
 
-class IntegerOutput(Output):
-
-    input_pipes = serialize_input_pipe
-    output_pipes = serialize_output_pipe
+class IntegerSerializePipeline(SerializePipeline):
+    pass

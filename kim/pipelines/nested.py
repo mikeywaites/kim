@@ -5,10 +5,11 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (pipe, Input, Output,
-                   marshal_input_pipe, marshal_output_pipe,
-                   serialize_input_pipe, serialize_output_pipe)
 from kim.utils import attr_or_key
+
+from .base import pipe
+from .marshaling import MarshalPipeline
+from .serialization import SerializePipeline
 
 
 def _call_getter(session):
@@ -87,16 +88,11 @@ def serialize_nested(session):
     return session.data
 
 
-class NestedInput(Input):
+class NestedMarshalPipeline(MarshalPipeline):
 
-    input_pipes = marshal_input_pipe
-    output_pipes = [marshal_nested] + marshal_output_pipe
+    output_pipes = [marshal_nested, ] + MarshalPipeline.output_pipes
 
 
-class NestedOutput(Output):
+class NestedSerializePipeline(SerializePipeline):
 
-    input_pipes = serialize_input_pipe
-    process_pipes = [
-        serialize_nested
-    ]
-    output_pipes = serialize_output_pipe
+    process_pipes = [serialize_nested, ] + SerializePipeline.process_pipes

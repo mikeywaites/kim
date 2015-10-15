@@ -2,7 +2,10 @@ import pytest
 
 from kim.field import (
     Field, FieldError, FieldInvalid, FieldOptsError, FieldOpts,
-    Input, Output, DEFAULT_ERROR_MSGS)
+    DEFAULT_ERROR_MSGS)
+
+from kim.pipelines.marshaling import MarshalPipeline
+from kim.pipelines.serialization import SerializePipeline
 
 
 def test_field_opts_correctly_set_for_field():
@@ -98,14 +101,14 @@ def test_get_field_input_pipe():
 
     field = Field(name='foo')
 
-    assert field.input_pipe == Input
+    assert field.marshal_pipeline == MarshalPipeline
 
 
 def test_get_field_output_pipe():
 
     field = Field(name='foo')
 
-    assert field.output_pipe == Output
+    assert field.serialize_pipeline == SerializePipeline
 
 
 def test_field_invalid_opts_class():

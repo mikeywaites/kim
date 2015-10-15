@@ -1,5 +1,10 @@
+import mock
+
 from kim.mapper import Mapper
 from kim.field import Integer, Collection
+from kim.pipelines import marshaling
+from kim.pipelines import serialization
+
 from .helpers import TestType
 
 
@@ -105,3 +110,213 @@ def test_field_marshal_to_name():
     result = mapper.marshal()
 
     assert result.score == 5
+
+
+def test_marshal_with_input_validation_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @marshaling.validates('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_serialize_with_validation_hooks():
+    """Serialization should not run any validation hooks
+    """
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @serialization.validates('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(obj=data)
+    mapper.serialize()
+
+    assert not hook_mock.called
+    assert hook_mock.call_count == 0
+
+
+def test_marshal_with_input_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @marshaling.inputs('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_serialize_with_input_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @serialization.inputs('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(obj=data)
+    mapper.serialize()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_marshal_with_proces_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @marshaling.processes('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_serialize_with_process_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @serialization.processes('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(obj=data)
+    mapper.serialize()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_marshal_with_output_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @marshaling.outputs('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
+
+
+def test_serialize_with_output_hooks():
+
+    hook_mock = mock.Mock()
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+
+        @serialization.outputs('score')
+        def greater_than(session):
+
+            hook_mock()
+
+            return session.data
+
+    data = {'score': 5}
+
+    mapper = MapperBase(obj=data)
+    mapper.serialize()
+
+    assert hook_mock.called
+    assert hook_mock.call_count == 1
