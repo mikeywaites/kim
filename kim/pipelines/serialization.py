@@ -55,11 +55,12 @@ class SerializePipeline(Pipeline):
     output_pipes = [update_output_to_name, serialize_extra_outputs, ]
 
 
-def validates(*fields, **kw):
+def validates(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     serialize pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import serialization
@@ -75,16 +76,17 @@ def validates(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'validation', 'serialize')
+        return _decorate_pipe(fn, fields, 'validation', 'serialize', **pipe_opts)
 
     return wrap
 
 
-def outputs(*fields, **kw):
+def outputs(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     serialize pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import serialization
@@ -100,16 +102,17 @@ def outputs(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'output', 'serialize')
+        return _decorate_pipe(fn, fields, 'output', 'serialize', **pipe_opts)
 
     return wrap
 
 
-def inputs(*fields, **kw):
+def inputs(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     serialize pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import serialization
@@ -125,16 +128,17 @@ def inputs(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'input', 'serialize')
+        return _decorate_pipe(fn, fields, 'input', 'serialize', **pipe_opts)
 
     return wrap
 
 
-def processes(*fields, **kw):
+def processes(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     serialize pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import serialization
@@ -150,6 +154,6 @@ def processes(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'process', 'serialize')
+        return _decorate_pipe(fn, fields, 'process', 'serialize', **pipe_opts)
 
     return wrap

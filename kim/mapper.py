@@ -15,6 +15,7 @@ from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, Role
 from .utils import recursive_defaultdict
+from .pipelines.base import Pipe
 
 
 def mapper_is_defined(mapper_name):
@@ -168,9 +169,11 @@ class _MapperConfig(object):
             for p in pipes[field.name]:
                 opts = getattr(p, '__mapper_field_hook_opts', {})
                 if opts['marshal']:
-                    field.opts.extra_marshal_pipes[pipe_type].append(p)
+                    field.opts.extra_marshal_pipes[pipe_type] \
+                        .append(Pipe(p, **opts['pipe_opts']))
                 if opts['serialize']:
-                    field.opts.extra_serialize_pipes[pipe_type].append(p)
+                    field.opts.extra_serialize_pipes[pipe_type] \
+                        .append(Pipe(p), **opts['pipe_opts'])
 
             return field
 

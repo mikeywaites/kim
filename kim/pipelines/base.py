@@ -69,12 +69,13 @@ def pipe(**pipe_kwargs):
     return pipe_decorator
 
 
-def _decorate_pipe(fn, fields, pipe_type, pipeline_type):
+def _decorate_pipe(fn, fields, pipe_type, pipeline_type, **pipe_opts):
 
     fn.__mapper_field_hook = pipe_type
     fn.__mapper_field_hook_opts = {
         'serialize': pipeline_type == 'serialize',
         'marshal': pipeline_type == 'marshal',
+        'pipe_opts': pipe_opts
     }
     fn._field_names = fields
 
