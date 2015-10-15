@@ -92,6 +92,7 @@ class _MapperConfig(object):
         self.cls = cls_
 
         for base in reversed(self.cls.__mro__):
+            self._extract_defined_pipes(base)
             self._extract_fields(base)
             self._extract_roles(base)
 
@@ -116,6 +117,63 @@ class _MapperConfig(object):
             if getattr(self.cls, name, None):
                 delattr(self.cls, name)
 
+    def _extract_defined_pipes(self, base):
+        """Extract, process and store pipes defined using the decorator syntax
+        on this mapper
+
+        """
+        cls = self.cls
+        _validators = {}
+        _inputs = {}
+        _processors = {}
+        _outputs = {}
+
+        for name, obj in vars(base).items():
+
+            types = ['validation', 'process', 'output', 'input']
+            hook_type = getattr(obj, '__mapper_field_hook', None)
+
+            if not callable(obj) or hook_type not in types:
+                continue
+            elif hook_type == 'validation':
+                for name in obj._field_names:
+                    _validators.setdefault(name, [])
+                    _validators[name].append(obj)
+            elif hook_type == 'input':
+                for name in obj._field_names:
+                    _inputs.setdefault(name, [])
+                    _inputs[name].append(obj)
+            elif hook_type == 'process':
+                for name in obj._field_names:
+                    _processors.setdefault(name, [])
+                    _processors[name].append(obj)
+            elif hook_type == 'output':
+                for name in obj._field_names:
+                    _outputs.setdefault(name, [])
+                    _outputs[name].append(obj)
+
+        cls.defined_inputs = _inputs
+        cls.defined_validators = _validators
+        cls.defined_processors = _processors
+        cls.defined_outputs = _outputs
+
+    def _set_field_pipes(self, field, pipes, pipe_type):
+        """Populate a :class:``Field`` compute chains with pipes
+        extracted from mapper defenitions.
+
+        """
+
+        if field.name in pipes:
+
+            for p in pipes[field.name]:
+                opts = getattr(p, '__mapper_field_hook_opts', {})
+                if opts['input']:
+                    field.opts.extra_inputs[pipe_type].append(p)
+                if opts['output']:
+                    field.opts.extra_outputs[pipe_type].append(p)
+
+            return field
+
     def _extract_fields(self, base):
         """Cycle over attrs declared on ``base`` searching for a types that
         inherit from :class:`kim.field.Field`.  If a field type is found, store
@@ -137,7 +195,13 @@ class _MapperConfig(object):
                     obj.name
                 except FieldError:
                     obj.name = name
+
                 _fields.update({name: obj})
+
+                self._set_field_pipes(obj, cls.defined_inputs, 'input')
+                self._set_field_pipes(obj, cls.defined_validators, 'validation')
+                self._set_field_pipes(obj, cls.defined_processors, 'process')
+                self._set_field_pipes(obj, cls.defined_outputs, 'output')
 
         cls.fields = OrderedDict(
             sorted(_fields.items(), key=lambda o: o[1]._creation_order))

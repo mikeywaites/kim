@@ -8,9 +8,7 @@
 from .base import (
     pipe,
     Input, Output,
-    is_valid_choice,
-    marshal_input_pipe, serialize_input_pipe,
-    marshal_output_pipe, serialize_output_pipe)
+    is_valid_choice)
 
 
 @pipe()
@@ -29,16 +27,9 @@ def is_valid_string(session):
 
 class StringInput(Input):
 
-    input_pipes = marshal_input_pipe
-
-    validation_pipes = [
-        is_valid_string,
-        is_valid_choice
-    ]
-    output_pipes = marshal_output_pipe
+    validation_pipes = \
+        [is_valid_string, is_valid_choice] + Input.validation_pipes
 
 
 class StringOutput(Output):
-
-    input_pipes = serialize_input_pipe
-    output_pipes = serialize_output_pipe
+    pass

@@ -5,8 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (pipe, Input, Output, marshal_input_pipe, marshal_output_pipe,
-                   serialize_input_pipe, serialize_output_pipe)
+from .base import pipe, Input, Output
+
 from kim.utils import attr_or_key
 
 
@@ -76,15 +76,10 @@ def serialize_collection(session):
 
 class CollectionInput(Input):
 
-    input_pipes = marshal_input_pipe
-    validation_pipes = [is_list, ]
-    output_pipes = [marshall_collection] + marshal_output_pipe
+    validation_pipes = [is_list, ] + Input.validation_pipes
+    output_pipes = [marshall_collection, ] + Input.output_pipes
 
 
 class CollectionOutput(Output):
 
-    input_pipes = serialize_input_pipe
-    process_pipes = [
-        serialize_collection,
-    ]
-    output_pipes = serialize_output_pipe
+    process_pipes = [serialize_collection, ] + Output.process_pipes

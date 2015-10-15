@@ -1,9 +1,12 @@
 import pytest
 
+from six import get_unbound_function
+
 from kim.exception import MapperError, MappingInvalid
 from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
 from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
+from kim import pipelines
 
 
 class TestType(object):
@@ -962,3 +965,103 @@ def test_mapper_with_invalid_collection_fields_sets_errors():
         mapper.marshal()
 
     assert mapper.errors == {'users': {'id': 'This is a required field'}}
+
+
+def test_setting_validation_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @pipelines.validates('name')
+        def unique_name(self, session):
+            pass
+
+        @pipelines.validates('name', pipe_type='output')
+        def foo(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.unique_name)
+    output_func = get_unbound_function(UserMapper.foo)
+    assert input_func in mapper.fields['name'].opts.extra_inputs['validation']
+    assert output_func in mapper.fields['name'].opts.extra_outputs['validation']
+
+
+def test_setting_input_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @pipelines.inputs('name')
+        def foo(self, session):
+            pass
+
+        @pipelines.inputs('name', pipe_type='output')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_inputs['input']
+    assert output_func in mapper.fields['name'].opts.extra_outputs['input']
+
+
+def test_setting_process_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @pipelines.processes('name')
+        def foo(self, session):
+            pass
+
+        @pipelines.processes('name', pipe_type='output')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_inputs['process']
+    assert output_func in mapper.fields['name'].opts.extra_outputs['process']
+
+
+def test_setting_output_hooks():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = String(required=True)
+        name = String()
+
+        @pipelines.outputs('name')
+        def foo(self, session):
+            pass
+
+        @pipelines.outputs('name', pipe_type='output')
+        def foo_output(self, session):
+            pass
+
+    mapper = UserMapper(data={})
+
+    input_func = get_unbound_function(UserMapper.foo)
+    output_func = get_unbound_function(UserMapper.foo_output)
+    assert input_func in mapper.fields['name'].opts.extra_inputs['output']
+    assert output_func in mapper.fields['name'].opts.extra_outputs['output']

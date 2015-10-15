@@ -5,6 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+from collections import defaultdict
+
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
@@ -92,6 +94,9 @@ class FieldOpts(object):
         self.allow_none = opts.pop('allow_none', True)
         self.read_only = opts.pop('read_only', False)
         self.choices = opts.pop('choices', None)
+
+        self.extra_inputs = defaultdict(list)
+        self.extra_outputs = defaultdict(list)
 
         self.validate()
 

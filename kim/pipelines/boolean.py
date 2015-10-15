@@ -8,9 +8,7 @@
 from .base import (
     pipe,
     Input, Output,
-    is_valid_choice,
-    marshal_input_pipe, serialize_input_pipe,
-    marshal_output_pipe, serialize_output_pipe)
+    is_valid_choice)
 
 
 @pipe()
@@ -31,18 +29,9 @@ def coerce_to_boolean(session):
 
 class BooleanInput(Input):
 
-    input_pipes = marshal_input_pipe
-
-    validation_pipes = [
-        is_valid_choice,
-    ]
-    process_pipes = [
-        coerce_to_boolean,
-    ]
-    output_pipes = marshal_output_pipe
+    validation_pipes = [is_valid_choice, ] + Input.validation_pipes
+    process_pipes = [coerce_to_boolean, ] + Input.process_pipes
 
 
 class BooleanOutput(Output):
-
-    input_pipes = serialize_input_pipe
-    output_pipes = serialize_output_pipe
+    pass

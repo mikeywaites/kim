@@ -69,6 +69,120 @@ def pipe(**pipe_kwargs):
     return pipe_decorator
 
 
+def _decorate_pipe(fn, fields, hook_type, pipe_type):
+
+    fn.__mapper_field_hook = hook_type
+    fn.__mapper_field_hook_opts = {
+        'input': pipe_type == 'input',
+        'output': pipe_type == 'output',
+    }
+    fn._field_names = fields
+
+    return fn
+
+
+def validates(*fields, **kw):
+    """decorates a method on a mapper defining it as a valiadator of certain
+    fields specified by name.
+
+    :params fields: the name of the fields to apply this pipe too
+    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
+
+    eg::
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @pipeline.validates('name', pipe_type='input')
+            def unique_name(self, session)
+                ...
+    """
+
+    pipe_type = kw.pop('pipe_type', 'input')
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'validation', pipe_type)
+
+    return wrap
+
+
+def outputs(*fields, **kw):
+    """decorates a method on a mapper defining it as an output pipe of certain
+    fields specified by name.
+
+    :params fields: the name of the fields to apply this pipe too
+    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
+
+    eg::
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @pipeline.outputs('name', pipe_type='input')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    pipe_type = kw.pop('pipe_type', 'input')
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'output', pipe_type)
+
+    return wrap
+
+
+def inputs(*fields, **kw):
+    """decorates a method on a mapper defining it as an input pipe of certain
+    fields specified by name.
+
+    :params fields: the name of the fields to apply this pipe too
+    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
+
+    eg::
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @pipeline.inputs('name', pipe_type='input')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    pipe_type = kw.pop('pipe_type', 'input')
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'input', pipe_type)
+
+    return wrap
+
+
+def processes(*fields, **kw):
+    """decorates a method on a mapper defining it as a process pipe of certain
+    fields specified by name.
+
+    :params fields: the name of the fields to apply this pipe too
+    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
+
+    eg::
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @pipeline.processes('name', pipe_type='input')
+            def convert_to_dict(self, session)
+                ...
+    """
+
+    pipe_type = kw.pop('pipe_type', 'input')
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'process', pipe_type)
+
+    return wrap
+
+
 class Pipeline(object):
     """Pipelines provide a simple, extensible way of processing data.  Each
     pipeline provides 4 input groups, ``input_pipes``, ``validation_pipes``,
@@ -111,14 +225,6 @@ class Pipeline(object):
 
         except StopPipelineExecution:
             return session.output
-
-
-class Input(Pipeline):
-    pass
-
-
-class Output(Pipeline):
-    pass
 
 
 @pipe()
@@ -251,7 +357,107 @@ def update_output_to_source(session):
                              'key based set operations')
 
 
-marshal_input_pipe = [read_only, get_data_from_name]
-serialize_input_pipe = [get_data_from_source, ]
-marshal_output_pipe = [update_output_to_source, ]
-serialize_output_pipe = [update_output_to_name, ]
+def _run_extra_inputs(session, pipe_type):
+    for pipe in session.field.opts.extra_inputs.get(pipe_type, []):
+        pipe(session)
+
+
+def _run_extra_outputs(session, pipe_type):
+    for pipe in session.field.opts.extra_outputs.get(pipe_type, []):
+        pipe(session)
+
+
+def marshal_extra_inputs(session):
+    """call list of defined pipes from field.opts.extra_inputs['input']
+
+    .. seealso::
+        :func: _run_extra_inputs
+    """
+
+    _run_extra_inputs(session, 'input')
+
+
+def marshal_extra_validators(session):
+    """call list of defined pipes from field.opts.extra_inputs['validator']
+
+    .. seealso::
+        :func: _run_extra_inputs
+    """
+
+    _run_extra_inputs(session, 'validation')
+
+
+def marshal_extra_processors(session):
+    """call list of defined pipes from field.opts.extra_inputs['process']
+
+    .. seealso::
+        :func: _run_extra_inputs
+    """
+
+    _run_extra_inputs(session, 'process')
+
+
+def marshal_extra_outputs(session):
+    """call list of defined pipes from field.opts.extra_inputs['output']
+
+    .. seealso::
+        :func: _run_extra_inputs
+    """
+
+    _run_extra_inputs(session, 'output')
+
+
+def serialize_extra_inputs(session):
+    """call list of defined pipes from field.opts.extra_outputs['input']
+
+    .. seealso::
+        :func: _run_extra_outputs
+    """
+
+    _run_extra_outputs(session, 'input')
+
+
+def serialize_extra_validators(session):
+    """call list of defined pipes from field.opts.extra_outputs['validator']
+
+    .. seealso::
+        :func: _run_extra_outputs
+    """
+
+    _run_extra_outputs(session, 'validator')
+
+
+def serialize_extra_processors(session):
+    """call list of defined pipes from field.opts.extra_outputs['process']
+
+    .. seealso::
+        :func: _run_extra_outputs
+    """
+
+    _run_extra_outputs(session, 'process')
+
+
+def serialize_extra_outputs(session):
+    """call list of defined pipes from field.opts.extra_outputs['output']
+
+    .. seealso::
+        :func: _run_extra_outputs
+    """
+
+    _run_extra_outputs(session, 'output')
+
+
+class Input(Pipeline):
+
+    input_pipes = [read_only, get_data_from_name, marshal_extra_inputs]
+    validation_pipes = [marshal_extra_validators, ]
+    process_pipes = [marshal_extra_processors, ]
+    output_pipes = [update_output_to_source, marshal_extra_outputs]
+
+
+class Output(Pipeline):
+
+    input_pipes = [get_data_from_source, serialize_extra_inputs]
+    validation_pipes = []
+    process_pipes = [serialize_extra_processors, ]
+    output_pipes = [update_output_to_name, serialize_extra_outputs, ]
