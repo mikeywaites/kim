@@ -6,7 +6,7 @@ from kim.exception import MapperError, MappingInvalid
 from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
 from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
-from kim.pipelines import marshaling, serialization
+from kim.pipelines import marshaling, serialization, Pipe
 
 
 class TestType(object):
@@ -988,8 +988,11 @@ def test_setting_validation_hooks():
 
     input_func = get_unbound_function(UserMapper.unique_name)
     output_func = get_unbound_function(UserMapper.foo)
-    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['validation']
-    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['validation']
+
+    assert isinstance(mapper.fields['name'].opts.extra_marshal_pipes['validation'][0], Pipe)
+    assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['validation'][0], Pipe)
+    assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['validation'][0].func
+    assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['validation'][0].func
 
 
 def test_setting_input_hooks():
@@ -1013,8 +1016,11 @@ def test_setting_input_hooks():
 
     input_func = get_unbound_function(UserMapper.foo)
     output_func = get_unbound_function(UserMapper.foo_output)
-    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['input']
-    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['input']
+
+    assert isinstance(mapper.fields['name'].opts.extra_marshal_pipes['input'][0], Pipe)
+    assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['input'][0], Pipe)
+    assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['input'][0].func
+    assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['input'][0].func
 
 
 def test_setting_process_hooks():
@@ -1038,8 +1044,11 @@ def test_setting_process_hooks():
 
     input_func = get_unbound_function(UserMapper.foo)
     output_func = get_unbound_function(UserMapper.foo_output)
-    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['process']
-    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['process']
+
+    assert isinstance(mapper.fields['name'].opts.extra_marshal_pipes['process'][0], Pipe)
+    assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['process'][0], Pipe)
+    assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['process'][0].func
+    assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['process'][0].func
 
 
 def test_setting_output_hooks():
@@ -1063,5 +1072,8 @@ def test_setting_output_hooks():
 
     input_func = get_unbound_function(UserMapper.foo)
     output_func = get_unbound_function(UserMapper.foo_output)
-    assert input_func in mapper.fields['name'].opts.extra_marshal_pipes['output']
-    assert output_func in mapper.fields['name'].opts.extra_serialize_pipes['output']
+
+    assert isinstance(mapper.fields['name'].opts.extra_marshal_pipes['output'][0], Pipe)
+    assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['output'][0], Pipe)
+    assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['output'][0].func
+    assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['output'][0].func

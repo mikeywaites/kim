@@ -56,11 +56,12 @@ class MarshalPipeline(Pipeline):
     output_pipes = [update_output_to_source, marshal_extra_outputs]
 
 
-def validates(*fields, **kw):
+def validates(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     marshal pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import marshalling
@@ -76,16 +77,17 @@ def validates(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'validation', 'marshal')
+        return _decorate_pipe(fn, fields, 'validation', 'marshal', **pipe_opts)
 
     return wrap
 
 
-def outputs(*fields, **kw):
+def outputs(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     marshal pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import marshalling
@@ -101,16 +103,17 @@ def outputs(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'output', 'marshal')
+        return _decorate_pipe(fn, fields, 'output', 'marshal', **pipe_opts)
 
     return wrap
 
 
-def inputs(*fields, **kw):
+def inputs(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     marshal pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import marshalling
@@ -126,16 +129,17 @@ def inputs(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'input', 'marshal')
+        return _decorate_pipe(fn, fields, 'input', 'marshal', **pipe_opts)
 
     return wrap
 
 
-def processes(*fields, **kw):
+def processes(*fields, **pipe_opts):
     """decorates a method on mapper and its it to the specified fields
     marshal pipeline.
 
     :params fields: the name of the fields to apply this pipe too
+    :params pipe_opts: kwargs passed to newly constructued :class:``Pipe``
 
     eg::
         from kim.pipelines import marshalling
@@ -151,6 +155,6 @@ def processes(*fields, **kw):
     """
 
     def wrap(fn):
-        return _decorate_pipe(fn, fields, 'process', 'marshal')
+        return _decorate_pipe(fn, fields, 'process', 'marshal', **pipe_opts)
 
     return wrap
