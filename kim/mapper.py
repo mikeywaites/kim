@@ -173,7 +173,7 @@ class _MapperConfig(object):
                         .append(Pipe(p, **opts['pipe_opts']))
                 if opts['serialize']:
                     field.opts.extra_serialize_pipes[pipe_type] \
-                        .append(Pipe(p), **opts['pipe_opts'])
+                        .append(Pipe(p, **opts['pipe_opts']))
 
             return field
 

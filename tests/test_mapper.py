@@ -1036,7 +1036,7 @@ def test_setting_process_hooks():
         def foo(self, session):
             pass
 
-        @serialization.processes('name')
+        @serialization.processes('name', run_if_none=True)
         def foo_output(self, session):
             pass
 
@@ -1064,7 +1064,7 @@ def test_setting_output_hooks():
         def foo(self, session):
             pass
 
-        @serialization.outputs('name')
+        @serialization.outputs('name', run_if_none=True)
         def foo_output(self, session):
             pass
 
