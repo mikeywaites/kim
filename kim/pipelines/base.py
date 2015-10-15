@@ -69,118 +69,16 @@ def pipe(**pipe_kwargs):
     return pipe_decorator
 
 
-def _decorate_pipe(fn, fields, hook_type, pipe_type):
+def _decorate_pipe(fn, fields, pipe_type, pipeline_type):
 
-    fn.__mapper_field_hook = hook_type
+    fn.__mapper_field_hook = pipe_type
     fn.__mapper_field_hook_opts = {
-        'input': pipe_type == 'input',
-        'output': pipe_type == 'output',
+        'serialize': pipeline_type == 'serialize',
+        'marshal': pipeline_type == 'marshal',
     }
     fn._field_names = fields
 
     return fn
-
-
-def validates(*fields, **kw):
-    """decorates a method on a mapper defining it as a valiadator of certain
-    fields specified by name.
-
-    :params fields: the name of the fields to apply this pipe too
-    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
-
-    eg::
-        class UserMapper(Mapper):
-
-            name = field.String(required=True)
-
-            @pipeline.validates('name', pipe_type='input')
-            def unique_name(self, session)
-                ...
-    """
-
-    pipe_type = kw.pop('pipe_type', 'input')
-
-    def wrap(fn):
-        return _decorate_pipe(fn, fields, 'validation', pipe_type)
-
-    return wrap
-
-
-def outputs(*fields, **kw):
-    """decorates a method on a mapper defining it as an output pipe of certain
-    fields specified by name.
-
-    :params fields: the name of the fields to apply this pipe too
-    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
-
-    eg::
-        class UserMapper(Mapper):
-
-            name = field.String(required=True)
-
-            @pipeline.outputs('name', pipe_type='input')
-            def upper_case(self, session)
-                session.data.uppper()
-                return session.data
-    """
-
-    pipe_type = kw.pop('pipe_type', 'input')
-
-    def wrap(fn):
-        return _decorate_pipe(fn, fields, 'output', pipe_type)
-
-    return wrap
-
-
-def inputs(*fields, **kw):
-    """decorates a method on a mapper defining it as an input pipe of certain
-    fields specified by name.
-
-    :params fields: the name of the fields to apply this pipe too
-    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
-
-    eg::
-        class UserMapper(Mapper):
-
-            name = field.String(required=True)
-
-            @pipeline.inputs('name', pipe_type='input')
-            def upper_case(self, session)
-                session.data.uppper()
-                return session.data
-    """
-
-    pipe_type = kw.pop('pipe_type', 'input')
-
-    def wrap(fn):
-        return _decorate_pipe(fn, fields, 'input', pipe_type)
-
-    return wrap
-
-
-def processes(*fields, **kw):
-    """decorates a method on a mapper defining it as a process pipe of certain
-    fields specified by name.
-
-    :params fields: the name of the fields to apply this pipe too
-    :param pipe_type: Specify the pipe_type.  One of `input` or `output`
-
-    eg::
-        class UserMapper(Mapper):
-
-            name = field.String(required=True)
-
-            @pipeline.processes('name', pipe_type='input')
-            def convert_to_dict(self, session)
-                ...
-    """
-
-    pipe_type = kw.pop('pipe_type', 'input')
-
-    def wrap(fn):
-        return _decorate_pipe(fn, fields, 'process', pipe_type)
-
-    return wrap
 
 
 class Pipeline(object):

@@ -96,8 +96,8 @@ class FieldOpts(object):
         self.read_only = opts.pop('read_only', False)
         self.choices = opts.pop('choices', None)
 
-        self.extra_inputs = defaultdict(list)
-        self.extra_outputs = defaultdict(list)
+        self.extra_marshal_pipes = defaultdict(list)
+        self.extra_serialize_pipes = defaultdict(list)
 
         self.validate()
 

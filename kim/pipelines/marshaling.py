@@ -1,9 +1,10 @@
 from .base import (
-    Pipeline, read_only, get_data_from_name, update_output_to_source)
+    Pipeline, read_only, get_data_from_name, update_output_to_source,
+    _decorate_pipe)
 
 
 def _run_extra_inputs(session, pipe_type):
-    for pipe in session.field.opts.extra_inputs.get(pipe_type, []):
+    for pipe in session.field.opts.extra_marshal_pipes.get(pipe_type, []):
         pipe(session)
 
 
@@ -53,3 +54,103 @@ class MarshalPipeline(Pipeline):
     validation_pipes = [marshal_extra_validators, ]
     process_pipes = [marshal_extra_processors, ]
     output_pipes = [update_output_to_source, marshal_extra_outputs]
+
+
+def validates(*fields, **kw):
+    """decorates a method on mapper and its it to the specified fields
+    marshal pipeline.
+
+    :params fields: the name of the fields to apply this pipe too
+
+    eg::
+        from kim.pipelines import marshalling
+
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @marshalling.validates('name')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'validation', 'marshal')
+
+    return wrap
+
+
+def outputs(*fields, **kw):
+    """decorates a method on mapper and its it to the specified fields
+    marshal pipeline.
+
+    :params fields: the name of the fields to apply this pipe too
+
+    eg::
+        from kim.pipelines import marshalling
+
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @marshalling.outputs('name')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'output', 'marshal')
+
+    return wrap
+
+
+def inputs(*fields, **kw):
+    """decorates a method on mapper and its it to the specified fields
+    marshal pipeline.
+
+    :params fields: the name of the fields to apply this pipe too
+
+    eg::
+        from kim.pipelines import marshalling
+
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @marshalling.inputs('name')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'input', 'marshal')
+
+    return wrap
+
+
+def processes(*fields, **kw):
+    """decorates a method on mapper and its it to the specified fields
+    marshal pipeline.
+
+    :params fields: the name of the fields to apply this pipe too
+
+    eg::
+        from kim.pipelines import marshalling
+
+        class UserMapper(Mapper):
+
+            name = field.String(required=True)
+
+            @marshalling.processes('name')
+            def upper_case(self, session)
+                session.data.uppper()
+                return session.data
+    """
+
+    def wrap(fn):
+        return _decorate_pipe(fn, fields, 'process', 'marshal')
+
+    return wrap

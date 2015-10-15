@@ -2,7 +2,8 @@ import mock
 
 from kim.mapper import Mapper
 from kim.field import Integer, Collection
-from kim import pipelines
+from kim.pipelines import marshaling
+from kim.pipelines import serialization
 
 from .helpers import TestType
 
@@ -121,7 +122,7 @@ def test_marshal_with_input_validation_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.validates('score')
+        @marshaling.validates('score')
         def greater_than(session):
 
             hook_mock()
@@ -149,7 +150,7 @@ def test_serialize_with_validation_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.validates('score', pipe_type='output')
+        @serialization.validates('score', pipe_type='output')
         def greater_than(session):
 
             hook_mock()
@@ -175,7 +176,7 @@ def test_marshal_with_input_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.inputs('score')
+        @marshaling.inputs('score')
         def greater_than(session):
 
             hook_mock()
@@ -201,7 +202,7 @@ def test_serialize_with_input_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.inputs('score', pipe_type='output')
+        @serialization.inputs('score', pipe_type='output')
         def greater_than(session):
 
             hook_mock()
@@ -227,7 +228,7 @@ def test_marshal_with_proces_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.processes('score')
+        @marshaling.processes('score')
         def greater_than(session):
 
             hook_mock()
@@ -253,7 +254,7 @@ def test_serialize_with_process_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.processes('score', pipe_type='output')
+        @serialization.processes('score', pipe_type='output')
         def greater_than(session):
 
             hook_mock()
@@ -279,7 +280,7 @@ def test_marshal_with_output_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.outputs('score')
+        @marshaling.outputs('score')
         def greater_than(session):
 
             hook_mock()
@@ -305,7 +306,7 @@ def test_serialize_with_output_hooks():
 
         my_score = Integer(name='score')
 
-        @pipelines.outputs('score', pipe_type='output')
+        @serialization.outputs('score', pipe_type='output')
         def greater_than(session):
 
             hook_mock()

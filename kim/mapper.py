@@ -167,10 +167,10 @@ class _MapperConfig(object):
 
             for p in pipes[field.name]:
                 opts = getattr(p, '__mapper_field_hook_opts', {})
-                if opts['input']:
-                    field.opts.extra_inputs[pipe_type].append(p)
-                if opts['output']:
-                    field.opts.extra_outputs[pipe_type].append(p)
+                if opts['marshal']:
+                    field.opts.extra_marshal_pipes[pipe_type].append(p)
+                if opts['serialize']:
+                    field.opts.extra_serialize_pipes[pipe_type].append(p)
 
             return field
 
