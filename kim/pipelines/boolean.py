@@ -5,10 +5,9 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-from .base import (
-    pipe,
-    Input, Output,
-    is_valid_choice)
+from .base import pipe, is_valid_choice
+from .marshaling import MarshalPipeline
+from .serialization import SerializePipeline
 
 
 @pipe()
@@ -27,11 +26,11 @@ def coerce_to_boolean(session):
     return session.data
 
 
-class BooleanInput(Input):
+class BooleanMarshalPipeline(MarshalPipeline):
 
-    validation_pipes = [is_valid_choice, ] + Input.validation_pipes
-    process_pipes = [coerce_to_boolean, ] + Input.process_pipes
+    validation_pipes = [is_valid_choice, ] + MarshalPipeline.validation_pipes
+    process_pipes = [coerce_to_boolean, ] + MarshalPipeline.process_pipes
 
 
-class BooleanOutput(Output):
+class BooleanSerializePipeline(SerializePipeline):
     pass
