@@ -491,10 +491,29 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
                 # handle errors from nested mappers.
                 self.errors[field.name] = e.errors
 
+        # Call top level mapper validator for validations involving more
+        # than one field
+        try:
+            self.validate(output)
+        except FieldInvalid as e:
+            self.errors[field.name] = e.message
+        except MappingInvalid as e:
+            self.errors = e.errors
+
         if self.errors:
             raise MappingInvalid(self.errors)
 
         return output
+
+    def validate(self, output):
+        """Mappers may subclass this method to perform top-level validation
+        on multiple related fields, raising `FieldInvalid` or `MappingInvalid`
+        if any problems are found.
+
+        :raises: FieldInvalid
+        :raises: MappingInvalid
+        """
+        pass
 
 
 class MapperIterator(object):
