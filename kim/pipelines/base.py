@@ -109,10 +109,15 @@ class Pipeline(object):
         """ Iterate over all of the defined 'pipes' for this pipeline.
 
         """
+        parent = opts.get('parent_session', None)
+
+        parent_partial = parent.partial if parent else False
+        partial = opts.get('partial', parent_partial)
+
         session = Session(
             field, data, output,
-            parent=opts.get('parent_session', None),
-            partial=opts.get('partial', False))
+            parent=parent,
+            partial=partial)
 
         try:
 
