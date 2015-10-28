@@ -1085,13 +1085,13 @@ def test_mapper_top_level_validate_with_fieldinvalid():
 
         __type__ = TestType
 
-        password = String()
-        password_confirm = String(
+        password = String(
             error_msgs={'must_match': 'Passwords must match'})
+        password_confirm = String()
 
         def validate(self, output):
             if output.password != output.password_confirm:
-                self.fields['password_confirm'].invalid('must_match')
+                self.fields['password'].invalid('must_match')
 
     data = {'password': 'abc', 'password_confirm': 'abc'}
 
@@ -1104,7 +1104,7 @@ def test_mapper_top_level_validate_with_fieldinvalid():
     with pytest.raises(MappingInvalid):
         mapper.marshal()
 
-    assert mapper.errors == {'password_confirm': 'Passwords must match'}
+    assert mapper.errors == {'password': 'Passwords must match'}
 
 
 def test_mapper_top_level_validate_with_mappinginvalid():

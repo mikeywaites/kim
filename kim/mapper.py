@@ -496,7 +496,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         try:
             self.validate(output)
         except FieldInvalid as e:
-            self.errors[field.name] = e.message
+            self.errors[e.field.name] = e.message
         except MappingInvalid as e:
             self.errors = e.errors
 
