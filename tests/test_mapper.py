@@ -1077,3 +1077,60 @@ def test_setting_output_hooks():
     assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['output'][0], Pipe)
     assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['output'][0].func
     assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['output'][0].func
+
+
+def test_mapper_top_level_validate_with_fieldinvalid():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        password = String(
+            error_msgs={'must_match': 'Passwords must match'})
+        password_confirm = String()
+
+        def validate(self, output):
+            if output.password != output.password_confirm:
+                self.fields['password'].invalid('must_match')
+
+    data = {'password': 'abc', 'password_confirm': 'abc'}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    data = {'password': 'abc', 'password_confirm': 'xyz'}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {'password': 'Passwords must match'}
+
+
+def test_mapper_top_level_validate_with_mappinginvalid():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String()
+        age = Integer()
+
+        def validate(self, output):
+            if output.name == 'jack' and output.age != 36:
+                raise MappingInvalid(
+                    {'name': 'wrong age for jack', 'age': 'jack must be 36'})
+
+    data = {'name': 'jack', 'age': 36}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    data = {'name': 'jack', 'age': 25}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {
+        'name': 'wrong age for jack', 'age': 'jack must be 36'}

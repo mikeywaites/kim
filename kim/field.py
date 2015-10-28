@@ -211,7 +211,7 @@ class Field(object):
         :raises: FieldInvalid
         """
 
-        raise FieldInvalid(self.get_error(error_type))
+        raise FieldInvalid(self.get_error(error_type), field=self)
 
     @property
     def name(self):
