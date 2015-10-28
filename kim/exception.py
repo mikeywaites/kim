@@ -38,7 +38,9 @@ class FieldError(KimException):
 
 
 class FieldInvalid(KimException):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.field = kwargs.pop('field')
+        super(FieldInvalid, self).__init__(*args, **kwargs)
 
 
 class StopPipelineExecution(KimException):
