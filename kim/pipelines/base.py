@@ -151,7 +151,7 @@ def get_data_from_name(session):
     if session.partial and session.output:
         value = attr_or_key(session.data, session.field.name)
         if value is None:
-            value = attr_or_key(session.output, session.field.name)
+            value = attr_or_key(session.output, session.field.opts.source)
     else:
         value = attr_or_key(session.data, session.field.name)
 
