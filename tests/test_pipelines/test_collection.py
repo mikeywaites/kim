@@ -236,6 +236,33 @@ def test_marshal_collection_sets_parent_session_scope():
     mapper.marshal()
 
 
+def test_marshal_collection_inherits_parent_session_partial():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+    def assert_scope(session):
+
+        assert session.partial is True
+
+        return TestType(id=session.data['id'], name='foo')
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+
+        readers = field.Collection(field.Nested(UserMapper, getter=assert_scope))
+
+    data = {'id': '1', 'readers': [{'id': '1', 'name': 'mike'}]}
+
+    mapper = PostMapper(data=data, partial=True)
+    mapper.marshal()
+
+
 def test_serialize_collection_sets_parent_session_scope():
 
     class UserMapper(Mapper):
