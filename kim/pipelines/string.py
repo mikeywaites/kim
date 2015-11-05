@@ -5,6 +5,8 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+import six
+
 from .base import pipe, is_valid_choice
 from .marshaling import MarshalPipeline
 from .serialization import SerializePipeline
@@ -19,7 +21,7 @@ def is_valid_string(session):
     """
 
     try:
-        return str(session.data)
+        return six.text_type(session.data)
     except ValueError:
         raise session.field.invalid(error_type='type_error')
 
