@@ -1,3 +1,4 @@
+# encoding: utf-8
 import pytest
 
 from kim.field import FieldInvalid, String
@@ -46,6 +47,16 @@ def test_string_output():
     output = {}
     field.serialize(Foo(), output)
     assert output == {'name': 'value'}
+
+
+def test_string_input_unicode():
+    # TODO this requires fleshing out some more..
+
+    field = String(name='name', required=True)
+
+    output = {}
+    field.marshal({'name': u'unicöde'}, output)
+    assert output == {'name': u'unicöde'}
 
 
 def test_marshal_read_only_string():
