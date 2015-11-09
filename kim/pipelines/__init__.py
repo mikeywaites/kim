@@ -11,3 +11,4 @@ from .numeric import *
 from .nested import *
 from .collection import *
 from .boolean import *
+from .static import *
