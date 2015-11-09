@@ -11,6 +11,7 @@ from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
     StringMarshalPipeline, StringSerializePipeline,
+    StaticSerializePipeline,
     IntegerMarshalPipeline, IntegerSerializePipeline,
     NestedMarshalPipeline, NestedSerializePipeline,
     CollectionMarshalPipeline, CollectionSerializePipeline,
@@ -508,3 +509,38 @@ class Collection(Field):
     marshal_pipeline = CollectionMarshalPipeline
     serialize_pipeline = CollectionSerializePipeline
     opts_class = CollectionFieldOpts
+
+
+class StaticFieldOpts(FieldOpts):
+
+    def __init__(self, value, **kwargs):
+        """Construct a new instance of :class:`.StaticFieldOpts`
+
+        :param value: specify the static value to return when this field
+            is serialized.
+
+        """
+        self.value = value
+        super(StaticFieldOpts, self).__init__(**kwargs)
+        self.read_only = True
+
+
+class Static(Field):
+    """:class:`Static` represents a field that outputs a constant value.
+
+    This field is implicitly read_only and therefore is typically only used
+    during serialization flows.
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.String()
+            object_type = field.Static(value='user')
+    """
+    opts_class = StaticFieldOpts
+    serialize_pipeline = StaticSerializePipeline
