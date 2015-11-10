@@ -13,19 +13,6 @@ from kim.utils import attr_or_key
 
 
 @pipe()
-def is_list(session):
-    """pipe used to determine if a value can be iterated.
-
-    :param session: Kim pipeline session instance
-
-    :raises:  InvalidField
-    """
-
-    if not isinstance(session.data, list):
-        raise session.field.invalid(error_type='type_error')
-
-
-@pipe()
 def marshall_collection(session):
     """iterate over each item in ``data`` and marshal the item through the
     wrapped field defined for this collection
@@ -38,18 +25,21 @@ def marshall_collection(session):
 
     output = []
 
-    for i, datum in enumerate(session.data):
-        _output = {}
-        # If the object already exists, try to match up the existing elements
-        # with those in the input json
-        if existing_value is not None:
-            try:
-                _output[wrapped_field.opts.source] = existing_value[i]
-            except IndexError:
-                pass
-        wrapped_field.marshal(datum, _output, parent_session=session)
-        result = _output[wrapped_field.opts.source]
-        output.append(result)
+    try:
+        for i, datum in enumerate(session.data):
+            _output = {}
+            # If the object already exists, try to match up the existing elements
+            # with those in the input json
+            if existing_value is not None:
+                try:
+                    _output[wrapped_field.opts.source] = existing_value[i]
+                except IndexError:
+                    pass
+            wrapped_field.marshal(datum, _output, parent_session=session)
+            result = _output[wrapped_field.opts.source]
+            output.append(result)
+    except TypeError:
+        raise session.field.invalid('type_error')
 
     session.data = output
     return session.data
@@ -78,7 +68,6 @@ def serialize_collection(session):
 
 class CollectionMarshalPipeline(MarshalPipeline):
 
-    validation_pipes = [is_list, ] + MarshalPipeline.validation_pipes
     output_pipes = [marshall_collection, ] + MarshalPipeline.output_pipes
 
 

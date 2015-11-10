@@ -1,7 +1,7 @@
 import pytest
 
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -53,6 +53,14 @@ class User(Base):
         return False
 
 
+class PostReader(Base):
+
+    __tablename__ = 'post_reader'
+
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    post_id = Column(Integer, ForeignKey('posts.id'), primary_key=True)
+
+
 class Post(Base):
 
     __tablename__ = 'posts'
@@ -61,7 +69,11 @@ class Post(Base):
     title = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
-    user = relationship(User)
+    user = relationship(User, backref=backref('posts', lazy='dynamic'))
+    readers = relationship(
+        User,
+        secondary=PostReader.__table__,
+        lazy='dynamic')
 
 
 @pytest.fixture(scope='session')
@@ -317,3 +329,41 @@ def test_marshal_nested_mapper_allow_updates_in_place(db_session):
 
     assert obj.user == user
     assert obj.user.name == 'new name'
+
+
+def test_marshal_collection_appender_query(db_session):
+
+    class UserMapper(Mapper):
+
+        __type__ = User
+
+        name = field.String()
+
+    def foo_getter(session):
+        return session.data
+
+    class PostMapper(Mapper):
+
+        __type__ = Post
+
+        title = field.String()
+        user = field.Nested('UserMapper', required=False,
+                            allow_updates_in_place=True)
+        readers = field.Collection(
+            field.Nested('PostMapper', getter=foo_getter), required=False)
+
+    user1 = User(id=1, name='mike')
+    user2 = User(id=2, name='jack')
+    instance = Post(title='my post', user=user1, readers=[user1])
+
+    db_session.add(user1)
+    db_session.add(user2)
+    db_session.add(instance)
+    db_session.flush()
+    data = {
+        'title': 'new title',
+    }
+
+    mapper = PostMapper(data=data, obj=instance, partial=True)
+    obj = mapper.marshal()
+    assert obj.title == 'new title'
