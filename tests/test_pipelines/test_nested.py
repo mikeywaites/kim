@@ -4,6 +4,8 @@ from kim.mapper import Mapper, MapperError
 from kim.field import FieldInvalid
 from kim import field
 
+from ..conftest import get_mapper_session
+
 
 def test_nested_defers_mapper_checks():
     """ensure that instantiating a nested field with an invalid mapper
@@ -68,7 +70,8 @@ def test_marshal_nested():
     test_field = field.Nested('UserMapper', name='user', allow_create=True)
 
     output = {}
-    test_field.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
 
@@ -85,7 +88,8 @@ def test_serialise_nested():
     test_field = field.Nested('UserMapper', name='user')
 
     output = {}
-    test_field.serialize(data, output)
+    mapper_session = get_mapper_session(obj=data, output=output)
+    test_field.serialize(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
 
@@ -106,7 +110,8 @@ def test_serialise_nested_with_role():
     test_field = field.Nested('UserMapper', name='user', role='public')
 
     output = {}
-    test_field.serialize(data, output)
+    mapper_session = get_mapper_session(obj=data, output=output)
+    test_field.serialize(mapper_session)
     assert output == {'user': {'name': 'mike'}}
 
 
@@ -128,7 +133,8 @@ def test_marshal_nested_with_role():
                               allow_create=True)
 
     output = {}
-    test_field.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'name': 'mike'}}
 
 
@@ -145,7 +151,8 @@ def test_marshal_nested_with_read_only_field():
     test_field = field.Nested('UserMapper', name='user', allow_create=True)
 
     output = {}
-    test_field.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'name': 'mike'}}
 
 
@@ -162,7 +169,8 @@ def test_marshal_read_only_nested_mapper():
     test_field = field.Nested('UserMapper', name='user', read_only=True)
 
     output = {}
-    test_field.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    test_field.marshal(mapper_session)
     assert output == {}
 
 
@@ -187,12 +195,14 @@ def test_marshal_nested_with_getter():
 
     data1 = {'id': 2, 'name': 'bob', 'user': {'id': '1'}}
     output = {}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
     data2 = {'id': 2, 'name': 'bob', 'user': {'id': '2'}}
     output = {}
-    test_field.marshal(data2, output)
+    mapper_session = get_mapper_session(data=data2, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '2', 'name': 'jack'}}
 
 
@@ -212,8 +222,9 @@ def test_marshal_nested_with_getter_failure():
 
     data = {'id': 2, 'name': 'bob', 'user': {'id': '1'}}
     output = {}
+    mapper_session = get_mapper_session(data=data, output=output)
     with pytest.raises(FieldInvalid):
-        test_field.marshal(data, output)
+        test_field.marshal(mapper_session)
 
 
 def test_marshal_nested_with_defaults():
@@ -236,7 +247,8 @@ def test_marshal_nested_with_defaults():
     data1 = {'id': 2, 'name': 'bob', 'user': {
         'id': '1', 'name': 'this should be ignored'}}
     output = {}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
     assert user['name'] == 'mike'
@@ -264,15 +276,17 @@ def test_marshal_nested_with_allow_updates():
     data1 = {'id': 2, 'name': 'bob', 'user': {
         'id': '1', 'name': 'a new name'}}
     output = {}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'a new name'}}
     assert user['name'] == 'a new name'
 
     data2 = {'id': 2, 'name': 'bob', 'user': {
         'id': '2', 'name': 'should not allow this to be created'}}
     output = {}
+    mapper_session = get_mapper_session(data=data2, output=output)
     with pytest.raises(FieldInvalid):
-        test_field.marshal(data2, output)
+        test_field.marshal(mapper_session)
 
 
 def test_marshal_nested_with_allow_create_only():
@@ -297,7 +311,8 @@ def test_marshal_nested_with_allow_create_only():
     data1 = {'id': 2, 'name': 'bob', 'user': {
         'id': '1', 'name': 'this should be ignored'}}
     output = {}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'mike'}}
 
     assert user['name'] == 'mike'
@@ -305,7 +320,8 @@ def test_marshal_nested_with_allow_create_only():
     data2 = {'id': 2, 'name': 'bob', 'user': {
         'id': '2', 'name': 'jack'}}
     output = {}
-    test_field.marshal(data2, output)
+    mapper_session = get_mapper_session(data=data2, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '2', 'name': 'jack'}}
 
 
@@ -332,14 +348,16 @@ def test_marshal_nested_with_allow_create_and_allow_updates():
     data1 = {'id': 2, 'name': 'bob', 'user': {
         'id': '1', 'name': 'a new name'}}
     output = {}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'a new name'}}
     assert user['name'] == 'a new name'
 
     data2 = {'id': 2, 'name': 'bob', 'user': {
         'id': '2', 'name': 'jack'}}
     output = {}
-    test_field.marshal(data2, output)
+    mapper_session = get_mapper_session(data=data2, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '2', 'name': 'jack'}}
 
 
@@ -359,6 +377,7 @@ def test_marshal_nested_with_allow_updates_in_place():
                               allow_updates_in_place=True)
 
     data1 = {'id': 2, 'name': 'bob', 'user': {'name': 'a new name'}}
-    test_field.marshal(data1, output)
+    mapper_session = get_mapper_session(data=data1, output=output)
+    test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'a new name'}}
     assert user['name'] == 'a new name'

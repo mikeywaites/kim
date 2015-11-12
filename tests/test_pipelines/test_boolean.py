@@ -1,5 +1,6 @@
 import pytest
 
+from ..conftest import get_mapper_session
 from kim.field import FieldInvalid, Boolean
 from kim.pipelines.base import Session, is_valid_choice
 
@@ -66,16 +67,28 @@ def test_boolean_input():
     field = Boolean(name='is_active', required=True)
 
     output = {}
-    field.marshal({'is_active': False, 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'is_active': False, 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
     assert output == {'is_active': False}
 
-    field.marshal({'is_active': 'false', 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'is_active': 'false', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
     assert output == {'is_active': False}
 
-    field.marshal({'is_active': True, 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'is_active': True, 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
     assert output == {'is_active': True}
 
-    field.marshal({'is_active': 'true', 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'is_active': 'true', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
     assert output == {'is_active': True}
 
 
@@ -84,7 +97,10 @@ def test_boolean_input_with_allow_none():
     field = Boolean(name='is_active', required=False, allow_none=True)
 
     output = {}
-    field.marshal({'is_active': None, 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'is_active': None, 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
     assert output == {'is_active': None}
 
 
@@ -96,5 +112,6 @@ def test_boolean_output():
     field = Boolean(name='is_active', required=True)
 
     output = {}
-    field.serialize(Foo(), output)
+    mapper_session = get_mapper_session(obj=Foo(), output=output)
+    field.serialize(mapper_session)
     assert output == {'is_active': True}

@@ -9,13 +9,7 @@ def empty_registry():
     _MapperConfig.MAPPER_REGISTRY.clear()
 
 
-def marshal_mapper_session(data, output):
+def get_mapper_session(data=None, obj=None, output=None):
 
-    mapper = Mapper(data=data)
-    return mapper.get_mapper_session(data, output)
-
-
-def serialize_mapper_session(obj, output):
-
-    mapper = Mapper(obj=obj)
-    return mapper.get_mapper_session(obj, output)
+    mapper = Mapper(data=data, obj=obj)
+    return mapper.get_mapper_session(data or obj, output)

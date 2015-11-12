@@ -1,7 +1,7 @@
 # encoding: utf-8
 import pytest
 
-from ..conftest import marshal_mapper_session, serialize_mapper_session
+from ..conftest import get_mapper_session
 
 from kim.field import FieldInvalid, String
 from kim.pipelines.base import Session
@@ -34,8 +34,8 @@ def test_string_input():
     field = String(name='name', required=True)
 
     output = {}
-    mapper_session = marshal_mapper_session(
-        {'name': 'foo', 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output=output)
 
     field.marshal(mapper_session)
     assert output == {'name': 'foo'}
@@ -50,7 +50,7 @@ def test_string_output():
     field = String(name='name', required=True)
 
     output = {}
-    mapper_session = serialize_mapper_session(Foo(), output)
+    mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
     assert output == {'name': 'value'}
 
@@ -61,7 +61,7 @@ def test_string_input_unicode():
     field = String(name='name', required=True)
 
     output = {}
-    mapper_session = marshal_mapper_session({'name': u'unicöde'}, output)
+    mapper_session = get_mapper_session(data={'name': u'unicöde'}, output=output)
     field.marshal(mapper_session)
     assert output == {'name': u'unicöde'}
 
@@ -71,8 +71,8 @@ def test_marshal_read_only_string():
     field = String(name='name', read_only=True, required=True)
 
     output = {}
-    mapper_session = marshal_mapper_session(
-        {'name': 'foo', 'email': 'mike@mike.com'}, output)
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output=output)
     field.marshal(mapper_session)
     assert output == {}
 
@@ -81,10 +81,10 @@ def test_is_valid_choice():
 
     field = String(name='type', choices=['one', 'two'])
     output = {}
-    mapper_session = marshal_mapper_session({'type': 'three'}, output)
+    mapper_session = get_mapper_session(data={'type': 'three'}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = marshal_mapper_session({'type': 'one'}, output)
+    mapper_session = get_mapper_session(data={'type': 'one'}, output=output)
     field.marshal(mapper_session)
     assert output == {'type': 'one'}

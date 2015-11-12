@@ -3,6 +3,7 @@ import pytest
 from kim import Mapper, field
 from kim.field import FieldInvalid
 
+from ..conftest import get_mapper_session
 from ..helpers import TestType
 
 
@@ -32,21 +33,10 @@ def test_marshal_collection_requires_list():
 
     f = field.Collection(field.Integer(), name='post_ids')
     output = {}
-    data = {'post_ids': 1}
 
+    mapper_session = get_mapper_session(data={'post_ids': 1}, output=output)
     with pytest.raises(field.FieldInvalid):
-        f.marshal(data, output)
-
-
-def test_serialize_collection_requires_list():
-
-    f = field.Collection(field.Integer(), name='post_ids')
-    output = {}
-    data = {'post_ids': 1}
-
-    with pytest.raises(field.FieldInvalid):
-        f.marshal(data, output)
-        f.serialize(data, output)
+        f.marshal(mapper_session)
 
 
 def test_marshal_flat_collection():
@@ -56,7 +46,8 @@ def test_marshal_flat_collection():
     data = {
         'post_ids': [2, 1]
     }
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {'posts': [2, 1]}
 
 
@@ -67,7 +58,8 @@ def test_serialize_flat_collection():
     data = {
         'posts': [2, 1]
     }
-    f.serialize(data, output)
+    mapper_session = get_mapper_session(obj=data, output=output)
+    f.serialize(mapper_session)
     assert output == {'post_ids': [2, 1]}
 
 
@@ -78,7 +70,8 @@ def test_marshal_read_only_collection():
     data = {
         'post_ids': [2, 1]
     }
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {}
 
 
@@ -95,7 +88,8 @@ def test_marshal_nested_collection_allow_create():
     f = field.Collection(field.Nested('UserMapper', allow_create=True),
                          name='users')
     output = {}
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {'users': [TestType(id='1', name='mike')]}
 
 
@@ -119,7 +113,8 @@ def test_marshal_nested_collection_default():
     f = field.Collection(field.Nested('UserMapper', getter=getter),
                          name='users')
     output = {}
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {'users': [user]}
     assert user.name == 'mike'
 
@@ -143,7 +138,8 @@ def test_marshal_nested_collection_allow_updates():
     f = field.Collection(field.Nested('UserMapper', getter=getter,
                          allow_updates=True), name='users')
     output = {}
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {'users': [user]}
     assert user.name == 'new name'
 
@@ -162,7 +158,8 @@ def test_marshal_nested_collection_allow_updates_in_place():
     f = field.Collection(field.Nested('UserMapper',
                          allow_updates_in_place=True), name='users')
     output = {'users': [user]}
-    f.marshal(data, output)
+    mapper_session = get_mapper_session(data=data, output=output)
+    f.marshal(mapper_session)
     assert output == {'users': [user]}
     assert user.name == 'new name'
 
@@ -184,8 +181,9 @@ def test_marshal_nested_collection_allow_updates_in_place_too_many():
     f = field.Collection(field.Nested('UserMapper',
                          allow_updates_in_place=True), name='users')
     output = {'users': [user]}
+    mapper_session = get_mapper_session(data=data, output=output)
     with pytest.raises(FieldInvalid):
-        f.marshal(data, output)
+        f.marshal(mapper_session)
 
 
 def test_serialize_nested_collection():
@@ -202,7 +200,8 @@ def test_serialize_nested_collection():
 
     output = {}
     f = field.Collection(field.Nested('UserMapper'), name='users')
-    f.serialize(post, output)
+    mapper_session = get_mapper_session(obj=post, output=output)
+    f.serialize(mapper_session)
 
     assert output == {'users': [{'id': '1', 'name': 'mike'},
                                 {'id': '2', 'name': 'jack'}]}
