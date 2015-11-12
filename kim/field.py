@@ -247,7 +247,7 @@ class Field(object):
         """
         self.opts.set_name(name)
 
-    def marshal(self, data, output, **opts):
+    def marshal(self, mapper_session, **opts):
         """Run the input pipeline for this field for the given `data` and
         update `output` in place.
 
@@ -256,9 +256,9 @@ class Field(object):
         :returns: None
         """
 
-        self.marshal_pipeline().run(self, data, output, **opts)
+        self.marshal_pipeline(mapper_session, self).run(**opts)
 
-    def serialize(self, obj, output, **opts):
+    def serialize(self, mapper_session, **opts):
         """Run the output pipeline for this field for the given `data` and
         update `output` in place.
 
@@ -267,7 +267,7 @@ class Field(object):
         :returns: None
         """
 
-        self.serialize_pipeline().run(self, obj, output, **opts)
+        self.serialize_pipeline(mapper_session, self).run(**opts)
 
 
 class String(Field):

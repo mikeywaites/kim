@@ -42,14 +42,19 @@ class Session(object):
 
     """
 
-    def __init__(self, field, data, output,
-                 partial=False, parent=None, **kwargs):
+    def __init__(self, field=None, data=None, output=None,
+                 partial=False, parent=None, mapper_session=None):
 
         self.field = field
         self.data = data
         self.output = output
         self.partial = partial
         self.parent = parent
+        self.mapper_session = mapper_session
+
+    @property
+    def mapper(self):
+        return self.mapper_session.mapper
 
 
 def pipe(**pipe_kwargs):
@@ -105,17 +110,23 @@ class Pipeline(object):
     process_pipes = []
     output_pipes = []
 
-    def run(self, field, data, output, **opts):
+    def __init__(self, mapper_session, field):
+
+        self.field = field
+        self.mapper_session = mapper_session
+
+    def run(self, **opts):
         """ Iterate over all of the defined 'pipes' for this pipeline.
 
         """
         parent = opts.get('parent_session', None)
 
         parent_partial = parent.partial if parent else False
-        partial = opts.get('partial', parent_partial)
+        partial = self.mapper_session.partial or parent_partial
 
         session = Session(
-            field, data, output,
+            self.field, self.mapper_session.data, self.mapper_session.output,
+            mapper_session=self.mapper_session,
             parent=parent,
             partial=partial)
 

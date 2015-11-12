@@ -1,8 +1,8 @@
-import pytest
-
-from kim.field import FieldInvalid, Static
+from kim.field import Static
 from kim.pipelines.base import Session
 from kim.pipelines.static import get_static_value
+
+from ..conftest import get_mapper_session
 
 
 def test_get_static_value():
@@ -30,5 +30,6 @@ def test_static_output():
     field = Static('foo', name='name', required=True)
 
     output = {}
-    field.serialize(Foo(), output)
+    mapper_session = get_mapper_session(obj=Foo(), output=output)
+    field.serialize(mapper_session)
     assert output == {'name': 'foo'}

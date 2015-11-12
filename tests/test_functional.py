@@ -1,7 +1,8 @@
 import mock
 
+from kim.exception import MappingInvalid
 from kim.mapper import Mapper
-from kim.field import Integer, Collection
+from kim.field import Integer, Collection, Nested
 from kim.pipelines import marshaling
 from kim.pipelines import serialization
 
@@ -294,6 +295,35 @@ def test_marshal_with_output_hooks():
 
     assert hook_mock.called
     assert hook_mock.call_count == 1
+
+
+def test_marshal_raise_error_for_different_field():
+
+    class OtherMapper(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+
+        @marshaling.validates('id')
+        def valid_id(session):
+
+            raise session.mapper.fields['data_points'].invalid('not_found')
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        my_score = Integer(name='score')
+        data_points = Collection(Nested('OtherMapper'))
+
+    data = {'score': 5, 'data_points': [{'id': 1}]}
+
+    mapper = MapperBase(data=data)
+    try:
+        mapper.marshal()
+    except MappingInvalid as e:
+        print(e.errors)
 
 
 def test_serialize_with_output_hooks():
