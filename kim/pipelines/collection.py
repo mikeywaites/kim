@@ -25,21 +25,24 @@ def marshall_collection(session):
 
     output = []
 
-    try:
-        for i, datum in enumerate(session.data):
-            _output = {}
-            # If the object already exists, try to match up the existing elements
-            # with those in the input json
-            if existing_value is not None:
-                try:
-                    _output[wrapped_field.opts.source] = existing_value[i]
-                except IndexError:
-                    pass
-            wrapped_field.marshal(datum, _output, parent_session=session)
-            result = _output[wrapped_field.opts.source]
-            output.append(result)
-    except TypeError:
+    if not hasattr(session.data, '__iter__'):
         raise session.field.invalid('type_error')
+
+    for i, datum in enumerate(session.data):
+        _output = {}
+        # If the object already exists, try to match up the existing elements
+        # with those in the input json
+        if existing_value is not None:
+            try:
+                _output[wrapped_field.opts.source] = existing_value[i]
+            except IndexError:
+                pass
+
+        mapper_session = session.mapper.get_mapper_session(datum, _output)
+        wrapped_field.marshal(mapper_session, parent_session=session)
+
+        result = _output[wrapped_field.opts.source]
+        output.append(result)
 
     session.data = output
     return session.data
@@ -58,7 +61,8 @@ def serialize_collection(session):
 
     for datum in session.data:
         _output = {}
-        wrapped_field.serialize(datum, _output, parent_session=session)
+        mapper_session = session.mapper.get_mapper_session(datum, _output)
+        wrapped_field.serialize(mapper_session, parent_session=session)
         result = _output[wrapped_field.name]
         output.append(result)
 

@@ -249,6 +249,16 @@ class MapperMeta(type):
         type.__init__(cls, classname, bases, dict_)
 
 
+class MapperSession(object):
+
+    def __init__(self, mapper, data, output, partial=None):
+
+        self.mapper = mapper
+        self.data = data
+        self.output = output
+        self.partial = partial
+
+
 class Mapper(six.with_metaclass(MapperMeta, object)):
     """Mappers are the building blocks of Kim - they define how JSON output
     should look and how input JSON should be expected to look.
@@ -448,6 +458,15 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return self._remove_none(output)
 
+    def get_mapper_session(self, data, output):
+        """populate and return a new instance of :class:``MapperSession``
+
+        :param data: data being Mapped
+        :param output: obj mapper is mapping too
+        """
+
+        return MapperSession(self, data, output, partial=self.partial)
+
     def serialize(self, role='__default__', raw=False):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
@@ -469,7 +488,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             data = self._get_obj()
 
         for field in self._get_fields(role):
-            field.serialize(data, output, partial=self.partial)
+            field.serialize(self.get_mapper_session(data, output))
 
         return output
 
@@ -481,10 +500,11 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         """
 
         output = self._get_obj()
+        data = self.data
 
         for field in self._get_fields(role):
             try:
-                field.marshal(self.data, output, partial=self.partial)
+                field.marshal(self.get_mapper_session(data, output))
             except FieldInvalid as e:
                 self.errors[field.name] = e.message
             except MappingInvalid as e:
