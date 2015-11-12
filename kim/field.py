@@ -256,7 +256,7 @@ class Field(object):
         :returns: None
         """
 
-        self.marshal_pipeline(mapper_session).run(self, **opts)
+        self.marshal_pipeline(mapper_session, self).run(**opts)
 
     def serialize(self, mapper_session, **opts):
         """Run the output pipeline for this field for the given `data` and
@@ -267,7 +267,7 @@ class Field(object):
         :returns: None
         """
 
-        self.serialize_pipeline(mapper_session).run(self, **opts)
+        self.serialize_pipeline(mapper_session, self).run(**opts)
 
 
 class String(Field):
