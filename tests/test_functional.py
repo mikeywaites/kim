@@ -297,35 +297,6 @@ def test_marshal_with_output_hooks():
     assert hook_mock.call_count == 1
 
 
-def test_marshal_raise_error_for_different_field():
-
-    class OtherMapper(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-
-        @marshaling.validates('id')
-        def valid_id(session):
-
-            raise session.mapper.fields['data_points'].invalid('not_found')
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        my_score = Integer(name='score')
-        data_points = Collection(Nested('OtherMapper'))
-
-    data = {'score': 5, 'data_points': [{'id': 1}]}
-
-    mapper = MapperBase(data=data)
-    try:
-        mapper.marshal()
-    except MappingInvalid as e:
-        assert e.errors == {'data_points': 'data_points not found'}
-
-
 def test_serialize_with_output_hooks():
 
     hook_mock = mock.Mock()
