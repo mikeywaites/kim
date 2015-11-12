@@ -323,7 +323,7 @@ def test_marshal_raise_error_for_different_field():
     try:
         mapper.marshal()
     except MappingInvalid as e:
-        print(e.errors)
+        assert e.errors == {'data_points': 'data_points not found'}
 
 
 def test_serialize_with_output_hooks():
