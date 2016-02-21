@@ -1,5 +1,13 @@
-python:
-  volumes:
-   - .:/usr/src/app
+py2:
+  build: .
   command: python setup.py test
-  build: Dockerfile
+  dockerfile: Dockerfile.py2
+  volumes:
+    - .:/opt/code
+
+py3:
+  build: .
+  command: python setup.py test
+  dockerfile: Dockerfile.py3
+  volumes:
+    - .:/opt/code

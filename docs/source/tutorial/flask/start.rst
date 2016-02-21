@@ -1,5 +1,5 @@
 ======================
-Kim tutorial - Flask
+Kim tutorial
 ======================
 
 This Kim tutorial series is going to take you through creating a fully featured, working rest api using flask which will aim to demonstrate all the features Kim has to offer.

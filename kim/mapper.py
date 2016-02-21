@@ -1,5 +1,5 @@
 # kim/mapper.py
-# Copyright (C) 2014-2015 the Kim authors and contributors
+# Copyright (C) 2014-2016 the Kim authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of Kim and is released under
