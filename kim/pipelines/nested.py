@@ -22,7 +22,7 @@ def _call_getter(session):
 def marshal_nested(session):
     """Marshal data using the nested mapper defined on this field.
 
-    There are 5 possible scenarios, depending on the security setters and
+    There are 6 possible scenarios, depending on the security setters and
     presence of a getter function:
     1. Getter function returns an object and no updates are allowed.
        Return the object immediately
@@ -36,6 +36,9 @@ def marshal_nested(session):
        Call the nested mapper to create a new object
     5. Getter function returns None/does not exist and creation of new objects
        is not allowed, nor are in place updates. Raise an exception.
+    6. Object already exists, getter function returns None/does not exist and
+       partial updates are allowed.
+       Call the nested mapper with the existing object to update it
 
     :param session: Kim pipeline session instance
 
@@ -43,15 +46,18 @@ def marshal_nested(session):
 
     resolved = _call_getter(session)
 
+    partial = session.mapper_session.partial
+
     if resolved is not None:
         if session.field.opts.allow_updates:
             nested_mapper = session.field.get_mapper(
-                data=session.data, obj=resolved, partial=session.partial)
+                data=session.data, obj=resolved, partial=partial)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             session.data = resolved
     else:
-        if session.field.opts.allow_updates_in_place:
+        if session.field.opts.allow_updates_in_place or \
+                session.field.opts.allow_partial_updates:
             existing_value = attr_or_key(session.output, session.field.name)
             # If no existing value is found in the output, this is probably
             # a nested collection with more objects in the json input
@@ -59,11 +65,11 @@ def marshal_nested(session):
             if not existing_value:
                 raise session.field.invalid('invalid_collection_length')
             nested_mapper = session.field.get_mapper(
-                data=session.data, obj=existing_value, partial=session.partial)
+                data=session.data, obj=existing_value, partial=partial)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         elif session.field.opts.allow_create:
             nested_mapper = session.field.get_mapper(
-                data=session.data, partial=session.partial)
+                data=session.data, partial=partial)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             raise session.field.invalid(error_type='not_found')

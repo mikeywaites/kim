@@ -1134,3 +1134,68 @@ def test_mapper_top_level_validate_with_mappinginvalid():
 
     assert mapper.errors == {
         'name': 'wrong age for jack', 'age': 'jack must be 36'}
+
+
+def test_mapper_marshal_partial():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'name': 'bob'}
+    obj = TestType(id=2, unrelated_attribute='test')
+
+    mapper = MapperBase(obj=obj, data=data, partial=True)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_marshal_partial_with_name():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String(name='my_name', source='name')
+
+    data = {'my_name': 'bob'}
+    obj = TestType(id=2, unrelated_attribute='test')
+
+    mapper = MapperBase(obj=obj, data=data, partial=True)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_marshal_partial_with_role():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        ignore_this = String()
+
+    data = {'name': 'bob', 'ignore_this': 'should be ignored'}
+    obj = TestType(id=2, unrelated_attribute='test', ignore_this='unchanged')
+
+    mapper = MapperBase(obj=obj, data=data, partial=True)
+    result = mapper.marshal(role=blacklist('ignore_this'))
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.ignore_this == 'unchanged'
+    assert result.unrelated_attribute == 'test'

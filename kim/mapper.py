@@ -502,7 +502,22 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         output = self._get_obj()
         data = self.data
 
-        for field in self._get_fields(role):
+        fields = self._get_fields(role)
+
+        # If this is a partial update, rather than going through all fields
+        # in the role, select those fields which are actually present in
+        # the data - as long as they're also present in the role.
+        if self.partial:
+            marshal_fields = []
+            for key in data.keys():
+                for field in fields:
+                    if key == field.name:
+                        marshal_fields.append(field)
+                        break
+        else:
+            marshal_fields = fields
+
+        for field in marshal_fields:
             try:
                 field.marshal(self.get_mapper_session(data, output))
             except FieldInvalid as e:

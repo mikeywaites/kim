@@ -47,42 +47,6 @@ def test_get_data_from_name_pipe():
     assert get_data_from_name(session) == 0
 
 
-def test_partial():
-
-    class MyObj(object):
-
-        id = 'id'
-        name = 'bar'
-
-    data = {
-        'id': 'baz',
-    }
-
-    field = Field(name='name', required=True)
-    session = Session(field, data, MyObj(), partial=True)
-
-    name = get_data_from_name(session)
-    assert name == 'bar'
-
-
-def test_partial_with_source():
-
-    class MyObj(object):
-
-        id = 'id'
-        full_name = 'bar'
-
-    data = {
-        'id': 'baz',
-    }
-
-    field = Field(name='name', source='full_name', required=True)
-    session = Session(field, data, MyObj(), partial=True)
-
-    name = get_data_from_name(session)
-    assert name == 'bar'
-
-
 def test_get_data_from_source_pipe():
     data = {
         'name': 'mike'

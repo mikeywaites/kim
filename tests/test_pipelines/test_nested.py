@@ -381,3 +381,33 @@ def test_marshal_nested_with_allow_updates_in_place():
     test_field.marshal(mapper_session)
     assert output == {'user': {'id': '1', 'name': 'a new name'}}
     assert user['name'] == 'a new name'
+
+
+def test_marshal_nested_partial():
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user',
+                            allow_partial_updates=True)
+
+    obj = {'id': 2, 'name': 'my document', 'user': {
+        'id': '1', 'name': 'existing name'}}
+
+    data = {'name': 'new name', 'user': {'name': 'new user name'}}
+
+    mapper = DocumentMapper(obj=obj, data=data, partial=True)
+
+    mapper.marshal()
+
+    assert obj['name'] == 'new name'
+    assert obj['user']['name'] == 'new user name'
