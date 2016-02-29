@@ -374,7 +374,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
                 return True
         return False
 
-    def _get_fields(self, name_or_role):
+    def _get_fields(self, name_or_role, for_marshal=False):
         """Returns a list of :class:`.Field` instances providing they are
         registered in the specified :class:`Role`.
 
@@ -389,7 +389,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         fields = [f for name, f in six.iteritems(self.fields) if name in role]
 
-        if self.partial:
+        if self.partial and for_marshal:
             # If this is a partial update, rather than going through all fields
             # in the role, select those fields which are actually present in
             # the data - as long as they're also present in the role.
@@ -518,7 +518,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         output = self._get_obj()
         data = self.data
 
-        fields = self._get_fields(role)
+        fields = self._get_fields(role, for_marshal=True)
 
         for field in fields:
             try:
