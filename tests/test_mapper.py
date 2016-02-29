@@ -1199,3 +1199,21 @@ def test_mapper_marshal_partial_with_role():
     assert result.name == 'bob'
     assert result.ignore_this == 'unchanged'
     assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_serialize_partial():
+    # partial=True should have no effect on serializing
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj=obj, partial=True)
+    result = mapper.serialize()
+
+    assert result == {'id': 2, 'name': 'bob'}
