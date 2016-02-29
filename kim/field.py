@@ -381,6 +381,8 @@ class NestedFieldOpts(FieldOpts):
         self.allow_updates = kwargs.pop('allow_updates', False)
         self.allow_updates_in_place = kwargs.pop(
             'allow_updates_in_place', False)
+        self.allow_partial_updates = kwargs.pop(
+            'allow_partial_updates', False)
         self.allow_create = kwargs.pop('allow_create', False)
         super(NestedFieldOpts, self).__init__(**kwargs)
 

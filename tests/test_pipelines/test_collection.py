@@ -246,7 +246,7 @@ def test_marshal_collection_inherits_parent_session_partial():
 
     def assert_scope(session):
 
-        assert session.partial is True
+        assert session.mapper_session.partial is True
 
         return TestType(id=session.data['id'], name='foo')
 

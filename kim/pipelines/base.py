@@ -43,12 +43,11 @@ class Session(object):
     """
 
     def __init__(self, field=None, data=None, output=None,
-                 partial=False, parent=None, mapper_session=None):
+                 parent=None, mapper_session=None):
 
         self.field = field
         self.data = data
         self.output = output
-        self.partial = partial
         self.parent = parent
         self.mapper_session = mapper_session
 
@@ -121,14 +120,10 @@ class Pipeline(object):
         """
         parent = opts.get('parent_session', None)
 
-        parent_partial = parent.partial if parent else False
-        partial = self.mapper_session.partial or parent_partial
-
         session = Session(
             self.field, self.mapper_session.data, self.mapper_session.output,
             mapper_session=self.mapper_session,
-            parent=parent,
-            partial=partial)
+            parent=parent)
 
         try:
 
@@ -159,12 +154,7 @@ def get_data_from_name(session):
     if session.field.opts._is_wrapped:
         return session.data
 
-    if session.partial and session.output:
-        value = attr_or_key(session.data, session.field.name)
-        if value is None:
-            value = attr_or_key(session.output, session.field.opts.source)
-    else:
-        value = attr_or_key(session.data, session.field.name)
+    value = attr_or_key(session.data, session.field.name)
 
     if value is None:
         if session.field.opts.required and session.field.opts.default is None:
