@@ -368,6 +368,12 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             raise MapperError('role must be string or Role instance, got %s'
                               % type(name_or_role))
 
+    def _field_in_data(self, field):
+        for key in self.data.keys():
+            if key == field.name:
+                return True
+        return False
+
     def _get_fields(self, name_or_role):
         """Returns a list of :class:`.Field` instances providing they are
         registered in the specified :class:`Role`.
@@ -380,7 +386,17 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         """
 
         role = self._get_role(name_or_role)
-        return [f for name, f in six.iteritems(self.fields) if name in role]
+
+        fields = [f for name, f in six.iteritems(self.fields) if name in role]
+
+        if self.partial:
+            # If this is a partial update, rather than going through all fields
+            # in the role, select those fields which are actually present in
+            # the data - as long as they're also present in the role.
+            return [f for f in fields if self._field_in_data(f)]
+        else:
+            return fields
+
 
     def _data_supports_transform(self, data):
         """return a boolean indicating if the given data object supports key
@@ -504,20 +520,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         fields = self._get_fields(role)
 
-        # If this is a partial update, rather than going through all fields
-        # in the role, select those fields which are actually present in
-        # the data - as long as they're also present in the role.
-        if self.partial:
-            marshal_fields = []
-            for key in data.keys():
-                for field in fields:
-                    if key == field.name:
-                        marshal_fields.append(field)
-                        break
-        else:
-            marshal_fields = fields
-
-        for field in marshal_fields:
+        for field in fields:
             try:
                 field.marshal(self.get_mapper_session(data, output))
             except FieldInvalid as e:
