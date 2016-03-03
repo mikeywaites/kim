@@ -2,3 +2,19 @@
   padding-top: 0;
   background-color: #fff;
 }
+
+.section p {
+    font-family: Georgia,Cambria,"Times New Roman",Times,serif;
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1.58em;
+    letter-spacing: -.003em;
+}
+
+.section li {
+    font-family: Georgia,Cambria,"Times New Roman",Times,serif;
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1.58em;
+    letter-spacing: -.003em;
+}

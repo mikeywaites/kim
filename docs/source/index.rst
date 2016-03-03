@@ -7,22 +7,7 @@
    :hidden:
    :maxdepth: 1
 
-   installation
-   mapper
-   fields
-   roles
+   tutorial/step_1
 
 
-
-Kim is a framework for orchestrating the structure and flow of JSON data in to and out of your REST API.
-
-
-**1** :ref:`Install kim <installation>` via pip
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. sourcecode:: shell
-
-  $ pip install py-kim
-
-
-.. automodule:: kim
+.. include:: intro.rst

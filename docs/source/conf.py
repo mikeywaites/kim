@@ -204,7 +204,7 @@ html_theme_path.append(sphinx_bootstrap_theme.get_html_theme_path()[0])
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['_static/kim.css']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -220,10 +220,10 @@ html_static_path = ['_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    'index': ['mainsidebar.html'],
-    '**': ['sidebar.html']
-}
+#html_sidebars = {
+#    'index': ['mainsidebar.html'],
+#    '**': ['sidebar.html']
+#}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
