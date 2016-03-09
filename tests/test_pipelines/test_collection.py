@@ -2,6 +2,7 @@ import pytest
 
 from kim import Mapper, field
 from kim.field import FieldInvalid
+from kim.pipelines import marshaling
 
 from ..conftest import get_mapper_session
 from ..helpers import TestType
@@ -289,3 +290,39 @@ def test_serialize_collection_sets_parent_session_scope():
 
     mapper = PostMapper(obj=post)
     mapper.serialize()
+
+
+def test_marshal_nested_collection_sets_mapper_parent():
+
+    data = {'id': '1', 'readers': [{'id': '1', 'name': 'mike'}]}
+
+    called = {'called': False}
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+
+        @marshaling.validates('name')
+        def assert_parent(session):
+            called['called'] = True
+            assert session.mapper.parent is not None
+            assert isinstance(session.mapper.parent, PostMapper)
+            assert session.mapper.parent.data == data
+
+    def user_getter(session):
+
+        return TestType(id=session.data['id'], name='foo')
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+
+        readers = field.Collection(
+            field.Nested(UserMapper, getter=user_getter, allow_updates=True))
+
+    mapper = PostMapper(data=data)
+    mapper.marshal()
+    assert called['called']
