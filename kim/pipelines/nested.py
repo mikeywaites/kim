@@ -47,11 +47,13 @@ def marshal_nested(session):
     resolved = _call_getter(session)
 
     partial = session.mapper_session.partial
+    parent = session.mapper
 
     if resolved is not None:
         if session.field.opts.allow_updates:
             nested_mapper = session.field.get_mapper(
-                data=session.data, obj=resolved, partial=partial)
+                data=session.data, obj=resolved, partial=partial,
+                parent=parent)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             session.data = resolved
@@ -65,11 +67,12 @@ def marshal_nested(session):
             if not existing_value:
                 raise session.field.invalid('invalid_collection_length')
             nested_mapper = session.field.get_mapper(
-                data=session.data, obj=existing_value, partial=partial)
+                data=session.data, obj=existing_value, partial=partial,
+                parent=parent)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         elif session.field.opts.allow_create:
             nested_mapper = session.field.get_mapper(
-                data=session.data, partial=partial)
+                data=session.data, partial=partial, parent=parent)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             raise session.field.invalid(error_type='not_found')

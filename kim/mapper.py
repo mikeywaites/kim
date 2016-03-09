@@ -295,7 +295,8 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperIterator(cls, **mapper_params)
 
-    def __init__(self, obj=None, data=None, partial=False, raw=False):
+    def __init__(self, obj=None, data=None, partial=False, raw=False,
+                 parent=None):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
@@ -322,6 +323,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.errors = {}
         self.raw = raw
         self.partial = partial
+        self.parent = parent
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
