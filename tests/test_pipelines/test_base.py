@@ -150,6 +150,22 @@ def test_update_output_to_source_with_object():
     assert output.source == 'mike'
 
 
+def test_update_output_to_source_with_object_dot_notiation():
+
+    class MyObject(object):
+        pass
+
+    output = MyObject()
+    output.nested = MyObject()
+
+    field = Field(source='nested.source', required=True)
+    session = Session(field, {'name': 'mike'}, output)
+    session.data = 'mike'
+
+    update_output_to_source(session)
+    assert output.nested.source == 'mike'
+
+
 def test_update_output_to_source_with_dict():
 
     data = {
