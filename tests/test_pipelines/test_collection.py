@@ -187,6 +187,32 @@ def test_marshal_nested_collection_allow_updates_in_place_too_many():
         f.marshal(mapper_session)
 
 
+def test_marshal_nested_collection_allow_updates_in_place_too_many_with_allow_create():
+    # We're updating in place, there are more users in the input data
+    # but allow_create is also enabled, so a new user should be added
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        name = field.String()
+
+    user = TestType(id='1', name='mike')
+    data = {'id': 2, 'name': 'bob', 'users': [
+        {'name': 'name1'}, {'name': 'name2'}]}
+
+    f = field.Collection(field.Nested('UserMapper',
+                         allow_updates_in_place=True, allow_create=True),
+                         name='users')
+    output = {'users': [user]}
+    mapper_session = get_mapper_session(data=data, output=output)
+
+    f.marshal(mapper_session)
+
+    assert output == {
+        'users': [TestType(id='1', name='name1'), TestType(name='name2')]}
+
+
 def test_serialize_nested_collection():
 
     class UserMapper(Mapper):
