@@ -29,6 +29,13 @@ def _attr_or_key(obj, name):
         return getattr(obj, name, None)
 
 
+def _set_attr_or_key(obj, name, value):
+    if isinstance(obj, dict):
+        obj[name] = value
+    else:
+        setattr(obj, name, value)
+
+
 def attr_or_key(obj, name):
     """attempt to use getattr to access an attribute of obj, if that fails
     assume obj support key based look ups like a dict.
@@ -39,6 +46,18 @@ def attr_or_key(obj, name):
     for component in components:
         obj = _attr_or_key(obj, component)
     return obj
+
+
+def set_attr_or_key(obj, name, value):
+    """attempt to use getattr to access an attribute of obj, if that fails
+    assume obj support key based look ups like a dict.
+
+    Supports dot syntax to span nested objects/dicts eg 'foo.bar.baz'
+    """
+    components = name.split('.')
+    for component in components[:-1]:
+        obj = _attr_or_key(obj, component)
+    _set_attr_or_key(obj, components[-1], value)
 
 
 def recursive_defaultdict():
