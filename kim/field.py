@@ -356,10 +356,6 @@ class NestedFieldOpts(FieldOpts):
 
     """
 
-    extra_error_msgs = {
-        'invalid_collection_length': 'invalid number of {name}s'
-    }
-
     def __init__(self, mapper_or_mapper_name, **kwargs):
         """Construct a new instance of :class:`.NestedFieldOpts`
 

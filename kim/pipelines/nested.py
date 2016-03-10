@@ -58,14 +58,10 @@ def marshal_nested(session):
         else:
             session.data = resolved
     else:
-        if session.field.opts.allow_updates_in_place or \
-                session.field.opts.allow_partial_updates:
-            existing_value = attr_or_key(session.output, session.field.name)
-            # If no existing value is found in the output, this is probably
-            # a nested collection with more objects in the json input
-            # than already exist
-            if not existing_value:
-                raise session.field.invalid('invalid_collection_length')
+        existing_value = attr_or_key(session.output, session.field.name)
+        if (session.field.opts.allow_updates_in_place or
+                session.field.opts.allow_partial_updates) and \
+                existing_value is not None:
             nested_mapper = session.field.get_mapper(
                 data=session.data, obj=existing_value, partial=partial,
                 parent=parent)
