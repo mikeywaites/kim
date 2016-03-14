@@ -22,6 +22,34 @@ def test_field_opts_correctly_set_for_field():
     assert new_field.opts.name == 'other_field'
 
 
+def test_field_extra_marshal_pipes_set():
+
+    foo = lambda x: 'foo'
+
+    new_field = Field(
+        required=True,
+        default='bar',
+        source='new_field',
+        name='other_field',
+        extra_marshal_pipes={'output': [foo]})
+
+    assert new_field.opts.extra_marshal_pipes == {'output': [foo]}
+
+
+def test_field_extra_serialize_pipes_set():
+
+    foo = lambda x: 'foo'
+
+    new_field = Field(
+        required=True,
+        default='bar',
+        source='new_field',
+        name='other_field',
+        extra_serialize_pipes={'output': [foo]})
+
+    assert new_field.opts.extra_serialize_pipes == {'output': [foo]}
+
+
 def test_field_name_defaults_to_attribute_name():
     new_field = Field(
         required=True,
