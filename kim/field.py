@@ -15,7 +15,9 @@ from .pipelines import (
     IntegerMarshalPipeline, IntegerSerializePipeline,
     NestedMarshalPipeline, NestedSerializePipeline,
     CollectionMarshalPipeline, CollectionSerializePipeline,
-    BooleanMarshalPipeline, BooleanSerializePipeline
+    BooleanMarshalPipeline, BooleanSerializePipeline,
+    DateTimeSerializePipeline, DateTimeMarshalPipeline,
+    DateMarshalPipeline, DateSerializePipeline,
 )
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
@@ -544,3 +546,41 @@ class Static(Field):
     """
     opts_class = StaticFieldOpts
     serialize_pipeline = StaticSerializePipeline
+
+
+class DateTime(Field):
+    """:class:`.DateTime` represents an iso8601 encoded date time
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            created_at = field.DateTime(required=True)
+
+    """
+
+    marshal_pipeline = DateTimeMarshalPipeline
+    serialize_pipeline = DateTimeSerializePipeline
+
+
+class Date(Field):
+    """:class:`.DateTime` represents an iso8601 encoded date
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            signup_date = field.Date(required=True)
+
+    """
+
+    marshal_pipeline = DateMarshalPipeline
+    serialize_pipeline = DateSerializePipeline
