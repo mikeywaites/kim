@@ -18,6 +18,7 @@ from .pipelines import (
     BooleanMarshalPipeline, BooleanSerializePipeline,
     DateTimeSerializePipeline, DateTimeMarshalPipeline,
     DateMarshalPipeline, DateSerializePipeline,
+    DecimalSerializePipeline, DecimalMarshalPipeline,
 )
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
@@ -312,6 +313,38 @@ class Integer(Field):
 
     marshal_pipeline = IntegerMarshalPipeline
     serialize_pipeline = IntegerSerializePipeline
+
+
+class DecimalFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Decimal`.
+
+    """
+
+    def __init__(self, **kwargs):
+        self.precision = kwargs.pop('precision', 5)
+        super(DecimalFieldOpts, self).__init__(**kwargs)
+
+
+class Decimal(Field):
+    """:class:`.Decimal` represents a value that must be valid
+    when passed to decimal.Decimal()
+
+    .. code-block:: python
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            score = field.Decimal(precision=4)
+
+    """
+
+    opts_class = DecimalFieldOpts
+    marshal_pipeline = DecimalMarshalPipeline
+    serialize_pipeline = DecimalSerializePipeline
 
 
 class BooleanFieldOpts(FieldOpts):
