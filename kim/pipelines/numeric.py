@@ -67,11 +67,11 @@ class DecimalMarshalPipeline(MarshalPipeline):
 
 @pipe()
 def to_string(session):
-    if session.data:
+    if session.data is not None:
         session.data = str(session.data)
         return session.data
 
 
 class DecimalSerializePipeline(SerializePipeline):
 
-    process_pipes = [to_string] + SerializePipeline.process_pipes
+    process_pipes = [coerce_to_decimal, to_string] + SerializePipeline.process_pipes

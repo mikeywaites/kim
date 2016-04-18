@@ -163,4 +163,4 @@ def test_decimal_output():
     output = {}
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
-    assert output == {'name': '2.52'}
+    assert output == {'name': '2.52000'}
