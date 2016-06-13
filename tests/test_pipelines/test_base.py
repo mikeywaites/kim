@@ -79,6 +79,17 @@ def test_get_data_from_source_pipe_dot_syntax():
     assert get_data_from_source(session) == 'mike'
 
 
+def test_get_data_from_source_pipe_self():
+    data = {
+        'name': 'mike'
+    }
+    output = {}
+
+    field = Field(source='__self__')
+    session = Session(field, data, output)
+    assert get_data_from_source(session) is data
+
+
 def test_update_output_to_name_with_object():
 
     data = {
