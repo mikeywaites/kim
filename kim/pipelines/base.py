@@ -181,12 +181,14 @@ def get_data_from_source(session):
 
     """
 
+    source = session.field.opts.source
+
     # If the field is wrapped by another field then the relevant data
     # will have already been pulled from the source.
-    if session.field.opts._is_wrapped:
+    if session.field.opts._is_wrapped or source == '__self__':
         return session.data
 
-    value = attr_or_key(session.data, session.field.opts.source)
+    value = attr_or_key(session.data, source)
     session.data = value
     return session.data
 
