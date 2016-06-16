@@ -9,7 +9,7 @@ from itertools import chain
 from functools import wraps
 
 from kim.exception import StopPipelineExecution, FieldError
-from kim.utils import attr_or_key, set_attr_or_key, merge
+from kim.utils import attr_or_key, set_attr_or_key, attr_or_key_update
 
 
 class Pipe(object):
@@ -258,7 +258,7 @@ def update_output_to_source(session):
     source = session.field.opts.source
     try:
         if source == '__self__':
-            merge(session.output, session.data)
+            attr_or_key_update(session.output, session.data)
         else:
             set_attr_or_key(session.output, session.field.opts.source, session.data)
     except (TypeError, AttributeError):

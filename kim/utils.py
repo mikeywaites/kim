@@ -60,7 +60,7 @@ def set_attr_or_key(obj, name, value):
     _set_attr_or_key(obj, components[-1], value)
 
 
-def merge(obj, value):
+def attr_or_key_update(obj, value):
     """If obj is a dict, add keys from value to it with update(),
     otherwise use setattr to set every attribute from value on obj
     """
