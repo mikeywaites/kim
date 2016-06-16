@@ -9,7 +9,7 @@ from itertools import chain
 from functools import wraps
 
 from kim.exception import StopPipelineExecution, FieldError
-from kim.utils import attr_or_key, set_attr_or_key
+from kim.utils import attr_or_key, set_attr_or_key, merge
 
 
 class Pipe(object):
@@ -255,8 +255,12 @@ def update_output_to_source(session):
     :returns: None
     """
 
+    source = session.field.opts.source
     try:
-        set_attr_or_key(session.output, session.field.opts.source, session.data)
+        if source == '__self__':
+            merge(session.output, session.data)
+        else:
+            set_attr_or_key(session.output, session.field.opts.source, session.data)
     except (TypeError, AttributeError):
         raise FieldError('output does not support attribute or '
                          'key based set operations')

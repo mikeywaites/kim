@@ -60,6 +60,18 @@ def set_attr_or_key(obj, name, value):
     _set_attr_or_key(obj, components[-1], value)
 
 
+def merge(obj, value):
+    """If obj is a dict, add keys from value to it with update(),
+    otherwise use setattr to set every attribute from value on obj
+    """
+    if obj is not None and value is not None:
+        if isinstance(obj, dict):
+            obj.update(value)
+        else:
+            for k, v in value.items():
+                setattr(obj, k, v)
+
+
 def recursive_defaultdict():
     """A simple recurrsive version of ``collections.defaultdict``
 
