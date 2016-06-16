@@ -448,3 +448,22 @@ def test_marshal_nested_sets_mapper_parent():
     mapper = PostMapper(data=data)
     mapper.marshal()
     assert called['called']
+
+
+def test_self_nesting_marshal():
+    class Inner(Mapper):
+        __type__ = dict
+
+        name = field.String(source='user_name')
+
+    class Outer(Mapper):
+        __type__ = dict
+
+        user = field.Nested(Inner, source='__self__', allow_create=True)
+        status = field.Integer()
+
+    data = {'user': {'name': 'jack'}, 'status': 200}
+
+    result = Outer(data=data).marshal()
+
+    assert result == {'user_name': 'jack', 'status': 200}
