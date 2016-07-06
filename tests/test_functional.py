@@ -575,7 +575,7 @@ def test_marshal_polymorphic_mapper_directly():
 
 def test_serialize_polymorphic_mapper_with_role():
 
-    obj = TestType(id=2, name='bob', object_type='event')
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
 
     mapper = SchedulableMapper(obj=obj)
     data = mapper.serialize(role='public')
@@ -585,3 +585,26 @@ def test_serialize_polymorphic_mapper_with_role():
         'id': 2,
         'location': 'London'
     }
+
+
+def test_serialize_polymorphic_mapper_many():
+
+    obj1 = TestType(id=2, name='bob', location='London', object_type='event')
+    obj2 = TestType(id=3, name='fred', status='Done', object_type='task')
+
+    result = SchedulableMapper.many().serialize([obj1, obj2], role='public')
+
+    assert result == [
+        {
+            'id': 2,
+            'name': 'bob',
+            'object_type': 'event',
+            'location': 'London'
+        },
+        {
+            'id': 3,
+            'name': 'fred',
+            'object_type': 'task',
+            'status': 'Done'
+        }
+    ]
