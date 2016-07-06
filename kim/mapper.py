@@ -14,7 +14,7 @@ from collections import OrderedDict, defaultdict
 from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, Role
-from .utils import recursive_defaultdict
+from .utils import recursive_defaultdict, attr_or_key
 from .pipelines.base import Pipe
 
 
@@ -92,10 +92,17 @@ class _MapperConfig(object):
         self.dict = dict_
         self.cls = cls_
 
+        mapper_args = getattr(self.cls, '__mapper_args__', {})
+        is_polymorphic_base = 'polymorphic_on' in mapper_args
+
+        if is_polymorphic_base:
+            self.cls._polymorphic_identities = {}
+
         for base in reversed(self.cls.__mro__):
             self._extract_defined_pipes(base)
             self._extract_fields(base)
             self._extract_roles(base)
+            self._configure_polymorphism(base)
 
         # If a __default__ role is found in the cls.__roles__ property, assume
         # the user is looking to override the default role and dont create one
@@ -106,6 +113,25 @@ class _MapperConfig(object):
 
         self._remove_fields()
         add_class_to_registry(classname, self.cls)
+
+    def _configure_polymorphism(self, base):
+
+        mapper_args = getattr(base, '__mapper_args__', {})
+        if 'polymorphic_name' in mapper_args:
+
+            def _set_polymorphic_identity(parent, mapper):
+
+                parent._polymorphic_identities.update({
+                    mapper.__mapper_args__['polymorphic_name']:
+                    mapper
+                })
+
+            # find the base polymorphic mapper
+            for mapper in reversed(base.__mro__):
+                _mapper_args = getattr(mapper, '__mapper_args__', {})
+                if 'polymorphic_on' in _mapper_args:
+                    _set_polymorphic_identity(mapper, base)
+                    break
 
     def _remove_fields(self):
         """Cycle through the list of ``fields`` and remove those
@@ -296,7 +322,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return MapperIterator(cls, **mapper_params)
 
     def __init__(self, obj=None, data=None, partial=False, raw=False,
-                 parent=None):
+                 parent=None, initial_errors=None):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
@@ -324,6 +350,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.raw = raw
         self.partial = partial
         self.parent = parent
+        self.initial_errors = initial_errors
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
@@ -398,7 +425,6 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             return [f for f in fields if self._field_in_data(f)]
         else:
             return fields
-
 
     def _data_supports_transform(self, data):
         """return a boolean indicating if the given data object supports key
@@ -517,6 +543,11 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :returns: Object of ``__type__`` populated with data
         """
 
+        # Polymorphic mappers do some validation on incoming data.
+        # if we have any initial_errors present, dont' bother continuing.
+        if self.initial_errors:
+            raise MappingInvalid(self.errors)
+
         output = self._get_obj()
         data = self.data
 
@@ -554,6 +585,68 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :raises: MappingInvalid
         """
         pass
+
+
+class PolymorphicMapper(Mapper):
+    """
+    """
+
+    def __new__(cls, data=None, obj=None, *args, **kwargs):
+        """
+        """
+
+        if 'initial_errors' in kwargs:
+            return object.__new__(cls, data=data, obj=obj, *args, **kwargs)
+
+        mapper_args = getattr(cls, '__mapper_args__', {})
+        if ('polymorphic_on' in mapper_args
+                and not kwargs.get('initial_errors', None)):
+
+            try:
+                key = cls.get_polymorphic_key(obj=obj, data=data)
+                return cls.get_polymorphic_identity(key)(
+                    data=data, obj=obj, *args, **kwargs)
+            except FieldInvalid as e:
+                kwargs['initial_errors'] = {
+                    cls.__mapper_args__['polymorphic_on'].opts.source:
+                    e.message
+                }
+                return object.__new__(cls, data=data, obj=obj, *args, **kwargs)
+
+        return super(PolymorphicMapper, cls).__new__(cls, *args, **kwargs)
+
+    @classmethod
+    def get_polymorphic_key(cls, obj=None, data=None):
+        """
+        """
+
+        field = cls.__mapper_args__['polymorphic_on']
+        key_name = field.opts.source
+        allow_create = cls.__mapper_args__.get(
+            'allow_polymorphic_marshal', False)
+
+        key = attr_or_key(obj, key_name)
+        if key is not None:
+            return key
+
+        key = attr_or_key(data, key_name)
+        if key is not None and allow_create:
+            return key
+        elif key and not allow_create:
+            raise MappingInvalid('PolymorphicMapper does not allow marshaling')
+        else:
+            raise field.invalid('required')
+
+    @classmethod
+    def get_polymorphic_identity(cls, key):
+        """
+        """
+
+        try:
+            return cls._polymorphic_identities[key]
+        except KeyError:
+            raise MapperError('invalid polymorphic_identity %s'
+                              ' is not a valid identity' % key)
 
 
 class MapperIterator(object):

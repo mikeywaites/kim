@@ -3,10 +3,13 @@ import pytest
 from six import get_unbound_function
 
 from kim.exception import MapperError, MappingInvalid
-from kim.mapper import Mapper, _MapperConfig, get_mapper_from_registry
+from kim.mapper import (
+    Mapper, _MapperConfig, get_mapper_from_registry, PolymorphicMapper)
 from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
 from kim.pipelines import marshaling, serialization, Pipe
+
+from .fixtures import SchedulableMapper, EventMapper, TaskMapper
 
 
 class TestType(object):
@@ -846,6 +849,28 @@ def test_mapper_registered_in_class_registry():
     assert 'MapperBase' in _MapperConfig.MAPPER_REGISTRY
 
 
+def test_polymorphic_mapper_sets_identities():
+
+    assert SchedulableMapper._polymorphic_identities == {
+        'event': EventMapper,
+        'task': TaskMapper
+    }
+
+
+def test_polymorphic_mapper_returns_correct_mapper():
+
+    obj = TestType(id=2, name='bob', object_type='event')
+    mapper = SchedulableMapper(obj=obj)
+    assert isinstance(mapper, EventMapper)
+
+
+def test_polymorphic_mapper_missing_identity():
+
+    obj = TestType(id=2, name='bob', object_type='review')
+    with pytest.raises(MapperError):
+        SchedulableMapper(obj=obj)
+
+
 def test_mapper_already_registered():
 
     class MapperOne(Mapper):
@@ -1077,143 +1102,3 @@ def test_setting_output_hooks():
     assert isinstance(mapper.fields['name'].opts.extra_serialize_pipes['output'][0], Pipe)
     assert input_func == mapper.fields['name'].opts.extra_marshal_pipes['output'][0].func
     assert output_func == mapper.fields['name'].opts.extra_serialize_pipes['output'][0].func
-
-
-def test_mapper_top_level_validate_with_fieldinvalid():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        password = String(
-            error_msgs={'must_match': 'Passwords must match'})
-        password_confirm = String()
-
-        def validate(self, output):
-            if output.password != output.password_confirm:
-                self.fields['password'].invalid('must_match')
-
-    data = {'password': 'abc', 'password_confirm': 'abc'}
-
-    mapper = MapperBase(data=data)
-    mapper.marshal()
-
-    data = {'password': 'abc', 'password_confirm': 'xyz'}
-
-    mapper = MapperBase(data=data)
-    with pytest.raises(MappingInvalid):
-        mapper.marshal()
-
-    assert mapper.errors == {'password': 'Passwords must match'}
-
-
-def test_mapper_top_level_validate_with_mappinginvalid():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        name = String()
-        age = Integer()
-
-        def validate(self, output):
-            if output.name == 'jack' and output.age != 36:
-                raise MappingInvalid(
-                    {'name': 'wrong age for jack', 'age': 'jack must be 36'})
-
-    data = {'name': 'jack', 'age': 36}
-
-    mapper = MapperBase(data=data)
-    mapper.marshal()
-
-    data = {'name': 'jack', 'age': 25}
-
-    mapper = MapperBase(data=data)
-    with pytest.raises(MappingInvalid):
-        mapper.marshal()
-
-    assert mapper.errors == {
-        'name': 'wrong age for jack', 'age': 'jack must be 36'}
-
-
-def test_mapper_marshal_partial():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-        name = String()
-
-    data = {'name': 'bob'}
-    obj = TestType(id=2, unrelated_attribute='test')
-
-    mapper = MapperBase(obj=obj, data=data, partial=True)
-    result = mapper.marshal()
-
-    assert isinstance(result, TestType)
-    assert result.id == 2
-    assert result.name == 'bob'
-    assert result.unrelated_attribute == 'test'
-
-
-def test_mapper_marshal_partial_with_name():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-        name = String(name='my_name', source='name')
-
-    data = {'my_name': 'bob'}
-    obj = TestType(id=2, unrelated_attribute='test')
-
-    mapper = MapperBase(obj=obj, data=data, partial=True)
-    result = mapper.marshal()
-
-    assert isinstance(result, TestType)
-    assert result.id == 2
-    assert result.name == 'bob'
-    assert result.unrelated_attribute == 'test'
-
-
-def test_mapper_marshal_partial_with_role():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-        name = String()
-        ignore_this = String()
-
-    data = {'name': 'bob', 'ignore_this': 'should be ignored'}
-    obj = TestType(id=2, unrelated_attribute='test', ignore_this='unchanged')
-
-    mapper = MapperBase(obj=obj, data=data, partial=True)
-    result = mapper.marshal(role=blacklist('ignore_this'))
-
-    assert isinstance(result, TestType)
-    assert result.id == 2
-    assert result.name == 'bob'
-    assert result.ignore_this == 'unchanged'
-    assert result.unrelated_attribute == 'test'
-
-
-def test_mapper_serialize_partial():
-    # partial=True should have no effect on serializing
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-        name = String()
-
-    obj = TestType(id=2, name='bob')
-
-    mapper = MapperBase(obj=obj, partial=True)
-    result = mapper.serialize()
-
-    assert result == {'id': 2, 'name': 'bob'}

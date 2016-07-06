@@ -193,6 +193,15 @@ def get_data_from_source(session):
     return session.data
 
 
+@pipe(run_if_none=True)
+def get_field_if_required(session):
+
+    if session.data is None:
+        session.data = session.field.opts.default
+
+    return session.data
+
+
 @pipe()
 def read_only(session):
     """End processing of a pipeline if a Field is marked as read_only.
