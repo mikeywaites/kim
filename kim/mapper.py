@@ -545,7 +545,8 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         # Polymorphic mappers do some validation on incoming data.
         # if we have any initial_errors present, dont' bother continuing.
-        if self.initial_errors:
+        if self.initial_errors is not None:
+            import ipdb; ipdb.set_trace()
             raise MappingInvalid(self.errors)
 
         output = self._get_obj()
@@ -595,9 +596,6 @@ class PolymorphicMapper(Mapper):
         """
         """
 
-        if 'initial_errors' in kwargs:
-            return object.__new__(cls, data=data, obj=obj, *args, **kwargs)
-
         mapper_args = getattr(cls, '__mapper_args__', {})
         if ('polymorphic_on' in mapper_args
                 and not kwargs.get('initial_errors', None)):
@@ -607,13 +605,15 @@ class PolymorphicMapper(Mapper):
                 return cls.get_polymorphic_identity(key)(
                     data=data, obj=obj, *args, **kwargs)
             except FieldInvalid as e:
-                kwargs['initial_errors'] = {
+                initial_errors = {
                     cls.__mapper_args__['polymorphic_on'].opts.source:
                     e.message
                 }
-                return object.__new__(cls, data=data, obj=obj, *args, **kwargs)
+                _obj = super(PolymorphicMapper, cls).__new__(cls)
+                _obj.initial_errors = initial_errors
+                return _obj
 
-        return super(PolymorphicMapper, cls).__new__(cls, *args, **kwargs)
+        return super(PolymorphicMapper, cls).__new__(cls)
 
     @classmethod
     def get_polymorphic_key(cls, obj=None, data=None):

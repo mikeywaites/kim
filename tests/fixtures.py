@@ -31,7 +31,7 @@ class SchedulableMapper(PolymorphicMapper):
     __type__ = TestType
     id = field.Integer(read_only=True)
     name = field.String()
-    object_type = field.String(choices=['event', 'task'])
+    object_type = field.String(choices=['event', 'task'], read_only=True)
 
     __mapper_args__ = {
         'polymorphic_on': object_type,

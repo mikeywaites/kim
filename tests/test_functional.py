@@ -489,7 +489,7 @@ def test_marshal_polymorphic_mapper_polymorphic_key_missing():
     }
     mapper = SchedulableMapper(data=data)
 
-    with pytest.raises(FieldInvalid):
+    with pytest.raises(MappingInvalid):
         data = mapper.marshal()
 
 
