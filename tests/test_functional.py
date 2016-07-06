@@ -1,7 +1,7 @@
 import pytest
 import mock
 
-from kim.exception import MappingInvalid, FieldInvalid
+from kim.exception import MappingInvalid, MapperError
 from kim.mapper import Mapper, PolymorphicMapper
 from kim.role import blacklist
 from kim.field import Integer, Collection, String
@@ -9,7 +9,7 @@ from kim.pipelines import marshaling
 from kim.pipelines import serialization
 
 from .helpers import TestType
-from .fixtures import SchedulableMapper
+from .fixtures import SchedulableMapper, EventMapper
 
 
 def test_field_serialize_from_source():
@@ -478,7 +478,6 @@ def test_marshal_polymorphic_mapper():
 
     assert data.name == 'Test Event'
     assert data.location == 'London'
-    assert data.object_type == 'event'
 
 
 def test_marshal_polymorphic_mapper_polymorphic_key_missing():
@@ -524,13 +523,6 @@ def test_marshal_polymorphic_mapper_marshal_disabled():
 
 def test_serialize_polymorphic_mapper():
 
-    data = {
-        'object_type': 'event',
-        'name': 'Test Event',
-        'location': 'London',
-    }
-    mapper = SchedulableMapper(data=data)
-    data = mapper.marshal()
     obj = TestType(id=2, name='bob', location='London', object_type='event')
 
     mapper = SchedulableMapper(obj=obj)
@@ -542,3 +534,40 @@ def test_serialize_polymorphic_mapper():
         'object_type': 'event',
         'location': 'London'
     }
+
+
+def test_serialize_polymorphic_invalid_polymorphic_key():
+
+    obj = TestType(id=2, name='bob', location='London', object_type='unknown')
+
+    with pytest.raises(MapperError):
+        SchedulableMapper(obj=obj)
+
+
+def test_serialize_polymorphic_type_directly():
+
+    obj = TestType(id=2, name='bob', location='London', object_type='event')
+
+    mapper = EventMapper(obj=obj)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'object_type': 'event',
+        'location': 'London'
+    }
+
+
+def test_marshal_polymorphic_mapper_directly():
+
+    data = {
+        'object_type': 'event',
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = EventMapper(data=data)
+    data = mapper.marshal()
+
+    assert data.name == 'Test Event'
+    assert data.location == 'London'

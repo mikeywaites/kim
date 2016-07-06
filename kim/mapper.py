@@ -322,7 +322,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return MapperIterator(cls, **mapper_params)
 
     def __init__(self, obj=None, data=None, partial=False, raw=False,
-                 parent=None, initial_errors=None):
+                 parent=None):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
@@ -350,7 +350,11 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.raw = raw
         self.partial = partial
         self.parent = parent
-        self.initial_errors = initial_errors
+
+    @property
+    def initial_errors(self):
+
+        return getattr(self, '_initial_errors', None)
 
     def _get_mapper_type(self):
         """Return the spefified type for this Mapper.  If no ``__type__`` is
@@ -546,8 +550,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         # Polymorphic mappers do some validation on incoming data.
         # if we have any initial_errors present, dont' bother continuing.
         if self.initial_errors is not None:
-            import ipdb; ipdb.set_trace()
-            raise MappingInvalid(self.errors)
+            raise MappingInvalid(self.initial_errors)
 
         output = self._get_obj()
         data = self.data
@@ -610,7 +613,7 @@ class PolymorphicMapper(Mapper):
                     e.message
                 }
                 _obj = super(PolymorphicMapper, cls).__new__(cls)
-                _obj.initial_errors = initial_errors
+                setattr(_obj, '_initial_errors', initial_errors)
                 return _obj
 
         return super(PolymorphicMapper, cls).__new__(cls)
