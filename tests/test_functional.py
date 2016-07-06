@@ -571,3 +571,17 @@ def test_marshal_polymorphic_mapper_directly():
 
     assert data.name == 'Test Event'
     assert data.location == 'London'
+
+
+def test_serialize_polymorphic_mapper_with_role():
+
+    obj = TestType(id=2, name='bob', object_type='event')
+
+    mapper = SchedulableMapper(obj=obj)
+    data = mapper.serialize(role='public')
+
+    assert data == {
+        'name': 'bob',
+        'id': 2,
+        'location': 'London'
+    }
