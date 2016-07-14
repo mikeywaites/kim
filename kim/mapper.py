@@ -92,17 +92,10 @@ class _MapperConfig(object):
         self.dict = dict_
         self.cls = cls_
 
-        mapper_args = getattr(self.cls, '__mapper_args__', {})
-        is_polymorphic_base = 'polymorphic_on' in mapper_args
-
-        if is_polymorphic_base:
-            self.cls._polymorphic_identities = {}
-
         for base in reversed(self.cls.__mro__):
             self._extract_defined_pipes(base)
             self._extract_fields(base)
             self._extract_roles(base)
-            self._configure_polymorphism(base)
 
         # If a __default__ role is found in the cls.__roles__ property, assume
         # the user is looking to override the default role and dont create one
@@ -112,7 +105,42 @@ class _MapperConfig(object):
                 whitelist(*self.cls.fields.keys())
 
         self._remove_fields()
+
+        for base in reversed(self.cls.__mro__):
+            self._set_polymorphic_base(base)
+
+        for base in reversed(self.cls.__mro__):
+            self._configure_polymorphism(base)
+
         add_class_to_registry(classname, self.cls)
+
+    def _set_polymorphic_base(self, base):
+
+        mapper_args = getattr(base, '__mapper_args__', {})
+        is_polymorphic_base = 'polymorphic_on' in mapper_args
+
+        if is_polymorphic_base:
+
+            # User may set the polymorphic_on field using a field
+            # instance or as a string.  As MapperConfig eventually removes
+            # All the field attrs, we need to use the newly created cls.fields
+            # dict otherwise _polymorphic_on will be unset when the fields
+            # are removed due to garbage collection.
+            field_or_field_name = mapper_args['polymorphic_on']
+            if isinstance(field_or_field_name, Field):
+                field_name = field_or_field_name.name
+            else:
+                field_name = field_or_field_name
+
+            self.cls._polymorphic_base = True
+            self.cls._polymorphic_opts = {
+                'polymorphic_on': self.cls.fields.get(field_name),
+                'allow_polymorphic_marshal':
+                mapper_args.get('allow_polymorphic_marshal', False)
+            }
+            self.cls._polymorphic_identities = {}
+        else:
+            self.cls._polymorphic_base = False
 
     def _configure_polymorphism(self, base):
 
@@ -128,8 +156,7 @@ class _MapperConfig(object):
 
             # find the base polymorphic mapper
             for mapper in reversed(base.__mro__):
-                _mapper_args = getattr(mapper, '__mapper_args__', {})
-                if 'polymorphic_on' in _mapper_args:
+                if getattr(mapper, '_polymorphic_base', False):
                     _set_polymorphic_identity(mapper, base)
                     break
 
@@ -595,12 +622,21 @@ class PolymorphicMapper(Mapper):
     """
     """
 
+    @classmethod
+    def is_polymorphic_base(cls):
+
+        return getattr(cls, '_polymorphic_base', False)
+
+    @classmethod
+    def _get_polymorphic_on(cls):
+
+        return cls._polymorphic_opts['polymorphic_on']
+
     def __new__(cls, data=None, obj=None, *args, **kwargs):
         """
         """
 
-        mapper_args = getattr(cls, '__mapper_args__', {})
-        if ('polymorphic_on' in mapper_args
+        if (cls.is_polymorphic_base()
                 and not kwargs.get('initial_errors', None)):
 
             try:
@@ -609,7 +645,7 @@ class PolymorphicMapper(Mapper):
                     data=data, obj=obj, *args, **kwargs)
             except FieldInvalid as e:
                 initial_errors = {
-                    cls.__mapper_args__['polymorphic_on'].opts.source:
+                    cls._get_polymorphic_on().opts.source:
                     e.message
                 }
                 _obj = super(PolymorphicMapper, cls).__new__(cls)
@@ -623,9 +659,9 @@ class PolymorphicMapper(Mapper):
         """
         """
 
-        field = cls.__mapper_args__['polymorphic_on']
+        field = cls._get_polymorphic_on()
         key_name = field.opts.source
-        allow_create = cls.__mapper_args__.get(
+        allow_create = cls._polymorphic_opts.get(
             'allow_polymorphic_marshal', False)
 
         key = attr_or_key(obj, key_name)

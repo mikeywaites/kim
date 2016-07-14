@@ -4,7 +4,7 @@ import mock
 from kim.exception import MappingInvalid, MapperError
 from kim.mapper import Mapper, PolymorphicMapper
 from kim.role import blacklist
-from kim.field import Integer, Collection, String
+from kim.field import Integer, Collection, String, Field
 from kim.pipelines import marshaling
 from kim.pipelines import serialization
 
@@ -425,29 +425,6 @@ def test_mapper_marshal_partial_with_name():
     assert result.unrelated_attribute == 'test'
 
 
-def test_mapper_marshal_partial_with_role():
-
-    class MapperBase(Mapper):
-
-        __type__ = TestType
-
-        id = Integer()
-        name = String()
-        ignore_this = String()
-
-    data = {'name': 'bob', 'ignore_this': 'should be ignored'}
-    obj = TestType(id=2, unrelated_attribute='test', ignore_this='unchanged')
-
-    mapper = MapperBase(obj=obj, data=data, partial=True)
-    result = mapper.marshal(role=blacklist('ignore_this'))
-
-    assert isinstance(result, TestType)
-    assert result.id == 2
-    assert result.name == 'bob'
-    assert result.ignore_this == 'unchanged'
-    assert result.unrelated_attribute == 'test'
-
-
 def test_mapper_serialize_partial():
     # partial=True should have no effect on serializing
 
@@ -559,6 +536,18 @@ def test_serialize_polymorphic_type_directly():
     }
 
 
+def test_marshal_with_mapper_directly_doesnt_require_polymorphic_key():
+
+    data = {
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = EventMapper(data=data)
+
+    data = mapper.marshal()
+    print(data)
+
+
 def test_marshal_polymorphic_mapper_directly():
 
     data = {
@@ -598,13 +587,11 @@ def test_serialize_polymorphic_mapper_many():
         {
             'id': 2,
             'name': 'bob',
-            'object_type': 'event',
             'location': 'London'
         },
         {
             'id': 3,
             'name': 'fred',
-            'object_type': 'task',
             'status': 'Done'
         }
     ]

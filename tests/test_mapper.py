@@ -871,6 +871,30 @@ def test_polymorphic_mapper_missing_identity():
         SchedulableMapper(obj=obj)
 
 
+def test_polymorphic_on_with_string():
+
+    class MapperA(PolymorphicMapper):
+
+        __type__ = TestType
+        id = Integer()
+        name = String()
+        object_type = String()
+
+        __mapper_args__ = {
+            'polymorphic_on': 'object_type',
+        }
+
+    class MapperB(PolymorphicMapper):
+
+        __mapper_args__ = {
+            'polymorphic_name': 'B',
+        }
+
+    mapper = MapperA(data={})
+    assert isinstance(
+        mapper._polymorphic_opts['polymorphic_on'], Field)
+
+
 def test_mapper_already_registered():
 
     class MapperOne(Mapper):
