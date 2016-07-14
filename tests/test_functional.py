@@ -1,12 +1,15 @@
+import pytest
 import mock
 
-from kim.exception import MappingInvalid
-from kim.mapper import Mapper
-from kim.field import Integer, Collection, Nested
+from kim.exception import MappingInvalid, MapperError
+from kim.mapper import Mapper, PolymorphicMapper
+from kim.role import blacklist
+from kim.field import Integer, Collection, String, Field
 from kim.pipelines import marshaling
 from kim.pipelines import serialization
 
 from .helpers import TestType
+from .fixtures import SchedulableMapper, EventMapper
 
 
 def test_field_serialize_from_source():
@@ -321,3 +324,274 @@ def test_serialize_with_output_hooks():
 
     assert hook_mock.called
     assert hook_mock.call_count == 1
+
+
+def test_mapper_top_level_validate_with_fieldinvalid():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        password = String(
+            error_msgs={'must_match': 'Passwords must match'})
+        password_confirm = String()
+
+        def validate(self, output):
+            if output.password != output.password_confirm:
+                self.fields['password'].invalid('must_match')
+
+    data = {'password': 'abc', 'password_confirm': 'abc'}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    data = {'password': 'abc', 'password_confirm': 'xyz'}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {'password': 'Passwords must match'}
+
+
+def test_mapper_top_level_validate_with_mappinginvalid():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String()
+        age = Integer()
+
+        def validate(self, output):
+            if output.name == 'jack' and output.age != 36:
+                raise MappingInvalid(
+                    {'name': 'wrong age for jack', 'age': 'jack must be 36'})
+
+    data = {'name': 'jack', 'age': 36}
+
+    mapper = MapperBase(data=data)
+    mapper.marshal()
+
+    data = {'name': 'jack', 'age': 25}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    assert mapper.errors == {
+        'name': 'wrong age for jack', 'age': 'jack must be 36'}
+
+
+def test_mapper_marshal_partial():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = {'name': 'bob'}
+    obj = TestType(id=2, unrelated_attribute='test')
+
+    mapper = MapperBase(obj=obj, data=data, partial=True)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_marshal_partial_with_name():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String(name='my_name', source='name')
+
+    data = {'my_name': 'bob'}
+    obj = TestType(id=2, unrelated_attribute='test')
+
+    mapper = MapperBase(obj=obj, data=data, partial=True)
+    result = mapper.marshal()
+
+    assert isinstance(result, TestType)
+    assert result.id == 2
+    assert result.name == 'bob'
+    assert result.unrelated_attribute == 'test'
+
+
+def test_mapper_serialize_partial():
+    # partial=True should have no effect on serializing
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    obj = TestType(id=2, name='bob')
+
+    mapper = MapperBase(obj=obj, partial=True)
+    result = mapper.serialize()
+
+    assert result == {'id': 2, 'name': 'bob'}
+
+
+def test_marshal_polymorphic_mapper():
+
+    data = {
+        'object_type': 'event',
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = SchedulableMapper(data=data)
+    data = mapper.marshal()
+
+    assert data.name == 'Test Event'
+    assert data.location == 'London'
+
+
+def test_marshal_polymorphic_mapper_polymorphic_key_missing():
+
+    data = {
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = SchedulableMapper(data=data)
+
+    with pytest.raises(MappingInvalid):
+        data = mapper.marshal()
+
+
+def test_marshal_polymorphic_mapper_marshal_disabled():
+
+    class MapperA(PolymorphicMapper):
+
+        id = Integer(read_only=True)
+        name = String()
+        object_type = String(choices=['event', 'task'])
+
+        __mapper_args__ = {
+            'polymorphic_on': object_type,
+            'allow_polymorphic_marshal': False,
+        }
+
+    class MapperB(MapperA):
+
+        __mapper_args__ = {
+            'polymorphic_name': 'task'
+        }
+
+    data = {
+        'object_type': 'event',
+        'name': 'Test Event',
+        'location': 'London',
+    }
+
+    with pytest.raises(MappingInvalid):
+        MapperA(data=data)
+
+
+def test_serialize_polymorphic_mapper():
+
+    obj = TestType(id=2, name='bob', location='London', object_type='event')
+
+    mapper = SchedulableMapper(obj=obj)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'object_type': 'event',
+        'location': 'London'
+    }
+
+
+def test_serialize_polymorphic_invalid_polymorphic_key():
+
+    obj = TestType(id=2, name='bob', location='London', object_type='unknown')
+
+    with pytest.raises(MapperError):
+        SchedulableMapper(obj=obj)
+
+
+def test_serialize_polymorphic_type_directly():
+
+    obj = TestType(id=2, name='bob', location='London', object_type='event')
+
+    mapper = EventMapper(obj=obj)
+    result = mapper.serialize()
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'object_type': 'event',
+        'location': 'London'
+    }
+
+
+def test_marshal_with_mapper_directly_doesnt_require_polymorphic_key():
+
+    data = {
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = EventMapper(data=data)
+
+    data = mapper.marshal()
+    print(data)
+
+
+def test_marshal_polymorphic_mapper_directly():
+
+    data = {
+        'object_type': 'event',
+        'name': 'Test Event',
+        'location': 'London',
+    }
+    mapper = EventMapper(data=data)
+    data = mapper.marshal()
+
+    assert data.name == 'Test Event'
+    assert data.location == 'London'
+
+
+def test_serialize_polymorphic_mapper_with_role():
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = SchedulableMapper(obj=obj)
+    data = mapper.serialize(role='public')
+
+    assert data == {
+        'name': 'bob',
+        'id': 2,
+        'location': 'London'
+    }
+
+
+def test_serialize_polymorphic_mapper_many():
+
+    obj1 = TestType(id=2, name='bob', location='London', object_type='event')
+    obj2 = TestType(id=3, name='fred', status='Done', object_type='task')
+
+    result = SchedulableMapper.many().serialize([obj1, obj2], role='public')
+
+    assert result == [
+        {
+            'id': 2,
+            'name': 'bob',
+            'location': 'London'
+        },
+        {
+            'id': 3,
+            'name': 'fred',
+            'status': 'Done'
+        }
+    ]
