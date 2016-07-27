@@ -1,6 +1,7 @@
 import pytest
 
 from kim import Mapper, field
+from kim.exception import MappingInvalid
 from kim.field import FieldInvalid
 from kim.pipelines import marshaling
 
@@ -352,3 +353,38 @@ def test_marshal_nested_collection_sets_mapper_parent():
     mapper = PostMapper(data=data)
     mapper.marshal()
     assert called['called']
+
+
+def test_marshal_collection_unique_on():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True)
+        name = field.String()
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+
+        readers = field.Collection(
+            field.Nested(UserMapper, allow_create=True),
+            unique_on='id')
+
+    data = {
+        'readers': [{'id': '1', 'name': 'jack'}, {'id': '1', 'name': 'jack'}]
+    }
+
+    mapper = PostMapper(data=data)
+
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+    # Check error not raised with valid data
+    data = {
+        'readers': [{'id': '1', 'name': 'jack'}, {'id': '2', 'name': 'mike'}]
+    }
+
+    mapper = PostMapper(data=data)
+    mapper.marshal()

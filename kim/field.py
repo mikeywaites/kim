@@ -29,6 +29,7 @@ DEFAULT_ERROR_MSGS = {
     'not_found': '{name} not found',
     'none_not_allowed': 'This field cannot be null',
     'invalid_choice': 'invalid choice',
+    'duplicates': 'duplicates found',
 }
 
 
@@ -489,6 +490,9 @@ class CollectionFieldOpts(FieldOpts):
                              'not be passed to a wrapped field.')
 
         self.field.opts._is_wrapped = True
+
+        self.unique_on = kwargs.pop('unique_on', None)
+
         super(CollectionFieldOpts, self).__init__(**kwargs)
 
     def set_name(self, *args, **kwargs):
