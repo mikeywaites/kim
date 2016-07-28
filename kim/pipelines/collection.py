@@ -71,9 +71,20 @@ def serialize_collection(session):
     return session.data
 
 
-class CollectionMarshalPipeline(MarshalPipeline):
+@pipe()
+def check_duplicates(session):
+    data = session.data
+    key = session.field.opts.unique_on
+    if key:
+        keys = [attr_or_key(a, key) for a in data]
+        if len(keys) != len(set(keys)):
+            raise session.field.invalid(error_type='duplicates')
+    return data
 
-    output_pipes = [marshall_collection, ] + MarshalPipeline.output_pipes
+
+class CollectionMarshalPipeline(MarshalPipeline):
+    input_pipes = MarshalPipeline.input_pipes + [check_duplicates, marshall_collection]
+    # output_pipes =  + MarshalPipeline.output_pipes
 
 
 class CollectionSerializePipeline(SerializePipeline):
