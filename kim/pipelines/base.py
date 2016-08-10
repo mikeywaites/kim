@@ -137,7 +137,7 @@ class Pipeline(object):
             return session.output
 
 
-@pipe()
+@pipe(run_if_none=True)
 def get_data_from_name(session):
     """extracts a specific key from data using field.name.  This pipe is
     typically used as the entry point to a chain of input pipes.

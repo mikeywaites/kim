@@ -30,6 +30,7 @@ DEFAULT_ERROR_MSGS = {
     'none_not_allowed': 'This field cannot be null',
     'invalid_choice': 'invalid choice',
     'duplicates': 'duplicates found',
+    'out_of_bounds': 'value out of allowed range',
 }
 
 
@@ -296,6 +297,18 @@ class String(Field):
     serialize_pipeline = StringSerializePipeline
 
 
+class IntegerFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`.Integer`.
+
+    """
+
+    def __init__(self, **kwargs):
+        self.max = kwargs.pop('max', None)
+        self.min = kwargs.pop('min', None)
+        super(IntegerFieldOpts, self).__init__(**kwargs)
+
+
 class Integer(Field):
     """:class:`.Integer` represents a value that must be valid
     when passed to int()
@@ -312,6 +325,7 @@ class Integer(Field):
 
     """
 
+    opts_class = IntegerFieldOpts
     marshal_pipeline = IntegerMarshalPipeline
     serialize_pipeline = IntegerSerializePipeline
 

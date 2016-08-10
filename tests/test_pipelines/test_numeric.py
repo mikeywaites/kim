@@ -81,6 +81,17 @@ def test_marshal_read_only_integer():
     assert output == {}
 
 
+def test_marshal_default():
+
+    field = Integer(name='name', default=5)
+
+    output = {}
+    mapper_session = get_mapper_session(data={}, output=output)
+
+    field.marshal(mapper_session)
+    assert output == {'name': 5}
+
+
 def test_is_valid_choice():
 
     field = Integer(name='type', choices=[1, 2])
@@ -92,6 +103,24 @@ def test_is_valid_choice():
     mapper_session = get_mapper_session(data={'type': 1}, output=output)
     field.marshal(mapper_session)
     assert output == {'type': 1}
+
+
+def test_min_max():
+
+    field = Integer(name='age', min=20, max=35)
+    output = {}
+
+    mapper_session = get_mapper_session(data={'age': 15}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 40}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 25}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': 25}
 
 
 def test_is_valid_decimal_pipe():

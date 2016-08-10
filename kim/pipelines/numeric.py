@@ -28,10 +28,29 @@ def is_valid_integer(session):
         raise session.field.invalid(error_type='type_error')
 
 
+@pipe()
+def bounds_check(session):
+    """pipe used to determine if a value can be coerced to an int
+
+    :param session: Kim pipeline session instance
+
+    """
+
+    max_ = session.field.opts.max
+    min_ = session.field.opts.min
+
+    if max_ is not None and session.data > max_:
+        raise session.field.invalid(error_type='out_of_bounds')
+    if min_ is not None and session.data < min_:
+        raise session.field.invalid(error_type='out_of_bounds')
+
+    return session.data
+
+
 class IntegerMarshalPipeline(MarshalPipeline):
 
     validation_pipes = \
-        [is_valid_integer, is_valid_choice] + MarshalPipeline.validation_pipes
+        [is_valid_integer, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
 
 
 class IntegerSerializePipeline(SerializePipeline):
