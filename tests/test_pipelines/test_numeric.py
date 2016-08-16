@@ -46,6 +46,12 @@ def test_integer_input():
     field.marshal(mapper_session)
     assert output == {'name': 2}
 
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': '2', 'email': 'mike@mike.com'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'name': 2}
+
 
 def test_integer_field_invalid_type():
 
@@ -119,6 +125,10 @@ def test_min_max():
         field.marshal(mapper_session)
 
     mapper_session = get_mapper_session(data={'age': 25}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': 25}
+
+    mapper_session = get_mapper_session(data={'age': '25'}, output=output)
     field.marshal(mapper_session)
     assert output == {'age': 25}
 
