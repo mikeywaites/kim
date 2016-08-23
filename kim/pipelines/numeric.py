@@ -21,11 +21,12 @@ def is_valid_integer(session):
     """
 
     try:
-        return int(session.data)
+        session.data = int(session.data)
     except TypeError:
         raise session.field.invalid(error_type='type_error')
     except ValueError:
         raise session.field.invalid(error_type='type_error')
+    return session.data
 
 
 @pipe()
