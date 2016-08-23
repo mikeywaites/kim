@@ -1,14 +1,33 @@
-# Kim
+``Kim``
+=============
 
-Kim is a framework for orchestrating the structure and flow of JSON data in to and out of your REST API.
+Kim is a serialization and marshaling framework for orchestrating the structure and flow of JSON data into and out of your REST API.
 
 
-## Contributing
+Example
+-------
+.. code-block:: python
 
+    class UserMapper(Mapper):
+        __type__ = User
+
+        id = field.String(read_only=True)
+        name = field.String()
+        password = field.String()
+        is_admin = field.Boolean(required=False, default=False)
+
+        __roles__ = {
+            'public': whitelist('name', 'id', 'is_admin')
+        }
+
+
+Contributing
+-------------
 Kim comes bundled with two Dockerfiles for py2 and py3.  Running the test suite is expalined briefly below.
 
 
-### Mac OSX
+Mac OSX
+-------
 
 Firstly install docker-toolbox available [here](https://www.docker.com/products/docker-toolbox). Once toolbox is installed we need to create a machine using `docker-machine`.
 
