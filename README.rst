@@ -13,11 +13,12 @@ Example
 
         id = field.String(read_only=True)
         name = field.String()
-        password = field.String()
+        age = field.Integer(min=18)
         is_admin = field.Boolean(required=False, default=False)
+        company = field.Nested(CompanyMapper)
 
         __roles__ = {
-            'public': whitelist('name', 'id', 'is_admin')
+            'overview': whitelist('id', 'name', 'is_admin')
         }
 
 
