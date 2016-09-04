@@ -21,6 +21,7 @@ Example
             'overview': whitelist('id', 'name', 'is_admin')
         }
 
+To get started, see quickstart_.
 
 Contributing
 -------------
