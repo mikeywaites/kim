@@ -65,7 +65,7 @@ flag is passed. If a required field is missing, an error will be raised. If a
 field is not required and has not been passed, a ``default`` can be set. These
 parameters are used with the ``is_admin`` field.
 
-The ``id`` field is marked as ``ready_only=True``. This means that it cannot
+The ``id`` field is marked as ``read_only=True``. This means that it cannot
 be changed when marshaling and will be ignored if it is passed to an API.
 
 We'll add more fields to our User mapper later.
@@ -80,7 +80,7 @@ Let's define a flask view to get a user object:
     import json
 
     @app.route('/users/<string:user_id>')
-    def user_detail(request, user_id):
+    def user_detail(user_id):
         # Retrieve user from DB
         user = db.session.query(User).get(user_id)
 
@@ -103,10 +103,10 @@ This API outputs:
 
 .. code-block:: rest
 
-    GET /users/36
+    GET /users/1
 
     {
-        "id": 36,
+        "id": 1,
         "name": "Bob Smith",
         "is_admin": false
     }
@@ -119,24 +119,24 @@ Now, let's edit our detail API to accept PUT requests allowing users to be updat
 .. code-block:: python
 
     from kim.exception import MappingInvalid
+    from flask import request
 
-    @app.route('/users/<string:user_id>')
-    def user_detail(request, user_id):
+    @app.route('/users/<string:user_id>', methods=['GET', 'PUT'])
+    def user_detail(user_id):
         # Retrieve user from DB
         user = db.session.query(User).get(user_id)
 
         if request.method == 'PUT':
 
             # Instatiate the mapper and pass the request data
-            mapper = UserMapper(obj=user, data=json.loads(request.data))
+            mapper = UserMapper(obj=user, data=request.json)
 
             try:
                 # Validate the data and get a new User object back
                 user = mapper.marshal()
             except MappingInvalid as e:
                 # If data did not validate, return a 400
-                msg = ' '.join(["%s: %s" % k, v for k, v in e.errors])
-                return e.message, 400
+                return json.dumps(e.errors), 400
 
             # Save the updated User object
             db.session.add(user)
@@ -188,7 +188,9 @@ so that a JSON representation of the new state of the object is returned.
         "is_admin": true
     }
 
-    name: This field is required
+    {
+        "name": This field is required
+    }
 
 
 Partial Updates
@@ -204,8 +206,8 @@ This is achieved by passing the ``partial=True`` flag to the Mapper.
 
     from kim.exception import MappingInvalid
 
-    @app.route('/users/<string:user_id>')
-    def user_detail(request, user_id):
+    @app.route('/users/<string:user_id>', methods=['GET', 'PUT', 'PATCH'])
+    def user_detail(user_id):
         # Retrieve user from DB
         user = db.session.query(User).get(user_id)
 
@@ -215,16 +217,15 @@ This is achieved by passing the ``partial=True`` flag to the Mapper.
             partial = request.method == 'PATCH'
 
             # Instatiate the mapper and pass the request data
-            mapper = UserMapper(obj=user, data=json.loads(request.data),
-                                partial=True)
+            mapper = UserMapper(obj=user, data=request.json,
+                                partial=partial)
 
             try:
                 # Validate the data and get a new User object back
                 user = mapper.marshal()
             except MappingInvalid as e:
                 # If data did not validate, return a 400
-                msg = ' '.join(["%s: %s" % k, v for k, v in e.errors])
-                return e.message, 400
+                return json.dumps(e.errors), 400
 
             # Save the updated User object
             db.session.add(user)
@@ -240,7 +241,7 @@ This is achieved by passing the ``partial=True`` flag to the Mapper.
         return json.dumps(serialised), 200
 
 
-This works exactly the same as a PUT request, but if ``partial==True``, an
+This works exactly the same as a PUT but if ``partial==True``, an
 exception will not be raised if fields are missing.
 
 .. code-block:: rest
@@ -387,6 +388,24 @@ This is all you need to work with nested objects when marshaling:
         }
     }
 
+But we can't send a company ID that does not exist:
+
+.. code-block:: rest
+
+    PUT /users/36
+    {
+        "name": "Bob Smith",
+        "is_admin": true,
+        "company": {
+            "id": 999
+        }
+    }
+
+    {
+        "company": "company not found"
+    }
+
+
 Nested objects are very powerful. With additional options, it is also possible
 to update the nested object (eg change the company name), create a new object
 (create a new company on demand) and use collections of nested objects (allow
@@ -405,7 +424,7 @@ method:
     import json
 
     @app.route('/users')
-    def user_list(request, user_id):
+    def user_list():
         # Retrieve all users from DB
         users = db.session.query(User).all()
 
@@ -476,7 +495,7 @@ First, add the role to the mapper:
 
     from kim.mapper import Mapper
     from kim import field
-    from kim.roles import whitelist
+    from kim.role import whitelist
 
     class UserMapper(Mapper):
         __type__ = User
@@ -484,7 +503,7 @@ First, add the role to the mapper:
         id = field.Integer(read_only=True)
         name = field.String()
         is_admin = field.Boolean(required=False, default=False)
-        company = field.Nested(CompanyMapper)
+        company = field.Nested(CompanyMapper, getter=company_getter)
 
         __roles__ = {
             'overview': whitelist('id', 'name')
@@ -501,23 +520,21 @@ Now we can use the role in our view:
     import json
 
     @app.route('/users')
-    def user_list(request, user_id):
+    def user_list():
         # Retrieve all users from DB
         users = db.session.query(User).all()
 
-        # Create a many-instance of UserMapper, with the overview role
-        mapper = UserMapper.many(role='overview')
+        # Create a many-instance of UserMapper
+        mapper = UserMapper.many()
 
-        # Get a list of dicts representing each user
-        serialised = mapper.serialize(users)
+        # Get a list of dicts representing each user in overview role
+        serialised = mapper.serialize(users, role='overview')
 
         # Convert it to json and return it as the response
         return json.dumps(serialised), 200
 
-The only change is to pass the role argument to ``UserMapper.many()``. If this
-was a single object view, role would be passed directly to ``UserMapper()``.
-
-This results in a list with fewer fields:
+The only change is to pass the role argument to ``serialize()``.  This results
+in a list with fewer fields:
 
 .. code-block:: rest
 
@@ -548,20 +565,19 @@ to ``/users``. We can do this by editing our list API:
 
     import json
 
-    @app.route('/users')
-    def user_list(request, user_id):
+    @app.route('/users', methods=['GET', 'POST'])
+    def user_list():
         if request.method == 'POST':
             # Instatiate the mapper and pass the request data.
             # Do not pass an obj - causes a new User to be created
-            mapper = UserMapper(data=json.loads(request.data))
+            mapper = UserMapper(data=request.json)
 
             try:
                 # Validate the data and get a new User object back
                 user = mapper.marshal()
             except MappingInvalid as e:
                 # If data did not validate, return a 400
-                msg = ' '.join(["%s: %s" % k, v for k, v in e.errors])
-                return e.message, 400
+                return json.dumps(e.errors), 400
 
             # Save the updated User object
             db.session.add(user)
@@ -578,11 +594,11 @@ to ``/users``. We can do this by editing our list API:
             # Retrieve all users from DB
             users = db.session.query(User).all()
 
-            # Create a many-instance of UserMapper, with the overview role
-            mapper = UserMapper.many(role='overview')
+            # Create a many-instance of UserMapper
+            mapper = UserMapper.many()
 
-            # Get a list of dicts representing each user
-            serialised = mapper.serialize(users)
+            # Get a list of dicts representing each user in overview role
+            serialised = mapper.serialize(users, role='overview')
 
             # Convert it to json and return it as the response
             return json.dumps(serialised), 200
