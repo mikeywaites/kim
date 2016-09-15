@@ -88,3 +88,13 @@ def test_is_valid_choice():
     mapper_session = get_mapper_session(data={'type': 'one'}, output=output)
     field.marshal(mapper_session)
     assert output == {'type': 'one'}
+
+
+def test_string_input_cast():
+
+    field = String(name='name', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'name': 123}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'name': '123'}
