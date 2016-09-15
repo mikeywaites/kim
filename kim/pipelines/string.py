@@ -21,7 +21,8 @@ def is_valid_string(session):
     """
 
     try:
-        return six.text_type(session.data)
+        session.data = six.text_type(session.data)
+        return session.data
     except ValueError:
         raise session.field.invalid(error_type='type_error')
 
