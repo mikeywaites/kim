@@ -733,6 +733,7 @@ class MapperIterator(object):
 
         self.mapper = mapper
         self.mapper_params = mapper_params
+        self._changes = []
 
     def get_mapper(self, data=None, obj=None):
         """return a new instance of the provided mapper.
@@ -776,6 +777,14 @@ class MapperIterator(object):
 
         output = []  # TODO should this be user defined?
         for datum in data:
-            output.append(self.get_mapper(data=datum).marshal(role=role))
+            mapper = self.get_mapper(data=datum)
+            output.append(mapper.marshal(role=role))
+            self._changes.append(mapper.get_changes())
 
         return output
+
+    def get_changes(self):
+        """return the list of changes from each mapper
+        """
+
+        return self._changes

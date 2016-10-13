@@ -527,6 +527,30 @@ def test_mapper_marshal_many():
     assert (res2.name, res2.id) == ('bob', 2)
 
 
+def test_mapper_marshal_many_mapper_changes():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+
+    data = [{'name': 'mike', 'id': 1}, {'name': 'bob', 'id': 2}]
+
+    mapper = MapperBase.many()
+    mapper.marshal(data)
+
+    assert mapper.get_changes() == [
+        {
+            'id': {'old_value': None, 'new_value': 1},
+            'name': {'old_value': None, 'new_value': 'mike'}},
+        {
+            'id': {'old_value': None, 'new_value': 2},
+            'name': {'old_value': None, 'new_value': 'bob'}},
+    ]
+
+
 def test_mapper_marshal_many_with_role():
 
     class MapperBase(Mapper):
