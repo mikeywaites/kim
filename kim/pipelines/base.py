@@ -267,16 +267,23 @@ def update_output_to_source(session):
     source = session.field.opts.source
     old_value = attr_or_key(session.output, source)
 
+    session.field.set_new_value(
+        new_value=session.data, old_value=old_value)
+
     try:
+
         if source == '__self__':
             attr_or_key_update(session.output, session.data)
         else:
-            session.field.set_old_value(old_value, session.data)
+            session.field.set_old_value(
+                old_value=old_value, new_value=session.data)
             set_attr_or_key(session.output,
                             session.field.opts.source,
                             session.data)
-            session.field.set_new_value(session.data, old_value)
 
     except (TypeError, AttributeError):
         raise FieldError('output does not support attribute or '
                          'key based set operations')
+
+    session.field.set_new_value(
+        new_value=session.data, old_value=old_value)

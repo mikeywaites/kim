@@ -626,6 +626,7 @@ def test_self_nesting_marshal():
 
     data = {'user': {'name': 'jack'}, 'status': 200}
 
-    result = Outer(data=data).marshal()
+    mapper = Outer(data=data)
+    result = mapper.marshal()
 
     assert result == {'user_name': 'jack', 'status': 200}

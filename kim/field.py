@@ -278,17 +278,17 @@ class Field(object):
 
         self.serialize_pipeline(mapper_session, self).run(**opts)
 
-    def set_old_value(self, data, new_value):
+    def set_old_value(self, old_value=None, new_value=None):
         """Store the existing value for this field.  This method assumes the
         field handles a scalar type.
         """
-        self._old_value = data if data != new_value else None
+        self._old_value = old_value if old_value != new_value else None
 
-    def set_new_value(self, data, old_value):
+    def set_new_value(self, new_value=None, old_value=None):
         """Store the existing value for this field.  This method assumes the
         field handles a scalar type.
         """
-        self._new_value = data if data != old_value else None
+        self._new_value = new_value if new_value != old_value else None
 
     def get_changes(self):
         """returns a dict of containing the changes that occurred for this
