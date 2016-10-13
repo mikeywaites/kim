@@ -41,6 +41,66 @@ def test_string_input():
     assert output == {'name': 'foo'}
 
 
+def test_string_memoize_no_existing_value():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    field = String(name='name', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is 'foo'
+
+
+def test_string_memoize_no_change():
+    """ensure field sets no changes when the field value remains the same
+    """
+
+    field = String(name='name', required=True)
+
+    output = {'name': 'foo'}
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is None
+
+
+def test_string_memoize_new_value():
+    """ensure field sets both old value and new value when the field has an
+    existing value and a new value is provided.
+    """
+
+    field = String(name='name', required=True)
+
+    output = {'name': 'old'}
+    mapper_session = get_mapper_session(
+        data={'name': 'new', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value == 'old'
+    assert field._new_value == 'new'
+
+
+def test_string_new_value_n():
+
+    field = String(name='name', required=True)
+
+    output = {'name': 'foo'}
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is None
+
+
 def test_string_output():
     # TODO this requires fleshing out some more..
 

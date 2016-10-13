@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from iso8601.iso8601 import Utc
 
+import arrow
 import pytest
 
 from kim.field import FieldInvalid, DateTime, Date
@@ -49,6 +50,56 @@ def test_datetime_input():
         output=output)
     field.marshal(mapper_session)
     assert output == {'date': datetime(2015, 6, 29, 8, 0, 12, tzinfo=Utc())}
+
+
+def test_datetime_memoize_no_existing_value():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    field = DateTime(name='date', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'date': '2015-06-29T08:00:12Z', 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value == arrow.get('2015-06-29T08:00:12Z')
+
+
+def test_datetime_memoize_no_change():
+    """ensure field sets no changes when the field value remains the same
+    """
+
+    field = DateTime(name='date', required=True)
+
+    output = {'date': arrow.get('2015-06-29T08:00:12Z')}
+    mapper_session = get_mapper_session(
+        data={'date': '2015-06-29T08:00:12Z', 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is None
+
+
+def test_datetime_memoize_new_value():
+    """ensure field sets both old value and new value when the field has an
+    existing value and a new value is provided.
+    """
+
+    field = DateTime(name='date', required=True)
+
+    output = {'date': arrow.get('2014-06-29T08:00:12Z')}
+    mapper_session = get_mapper_session(
+        data={'date': '2015-06-29T08:00:12Z', 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value == arrow.get('2014-06-29T08:00:12Z')
+    assert field._new_value == arrow.get('2015-06-29T08:00:12Z')
 
 
 def test_datetime_field_invalid_type():

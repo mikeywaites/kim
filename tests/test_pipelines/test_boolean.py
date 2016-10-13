@@ -92,6 +92,56 @@ def test_boolean_input():
     assert output == {'is_active': True}
 
 
+def test_boolean_memoize_no_existing_value():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    field = Boolean(name='is_active', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'is_active': True, 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is True
+
+
+def test_boolean_memoize_no_change():
+    """ensure field sets no changes when the field value remains the same
+    """
+
+    field = Boolean(name='is_active', required=True)
+
+    output = {'is_active': False}
+    mapper_session = get_mapper_session(
+        data={'is_active': False, 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is None
+    assert field._new_value is None
+
+
+def test_boolean_memoize_new_value():
+    """ensure field sets both old value and new value when the field has an
+    existing value and a new value is provided.
+    """
+
+    field = Boolean(name='is_active', required=True)
+
+    output = {'is_active': False}
+    mapper_session = get_mapper_session(
+        data={'is_active': True, 'email': 'mike@mike.com'},
+        output=output)
+
+    field.marshal(mapper_session)
+    assert field._old_value is False
+    assert field._new_value is True
+
+
 def test_boolean_input_with_allow_none():
 
     field = Boolean(name='is_active', required=False, allow_none=True)
