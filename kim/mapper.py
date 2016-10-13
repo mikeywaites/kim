@@ -377,6 +377,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.raw = raw
         self.partial = partial
         self.parent = parent
+        self._changes = {}
 
     @property
     def initial_errors(self):
@@ -542,6 +543,18 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperSession(self, data, output, partial=self.partial)
 
+    def set_field_changes(self, field_name, changes):
+        """Store a change object for a field at ``field_name`` inside the
+        mappers changes object.
+        """
+
+        self._changes[field_name] = changes
+
+    def get_changes(self):
+        """return all the field change objects for this mapper
+        """
+        return self._changes
+
     def serialize(self, role='__default__', raw=False):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
@@ -592,6 +605,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             except MappingInvalid as e:
                 # handle errors from nested mappers.
                 self.errors[field.name] = e.errors
+
+            if field.has_changed():
+                self.set_field_changes(field.name, field.get_changes())
 
         # Call top level mapper validator for validations involving more
         # than one field

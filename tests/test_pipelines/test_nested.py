@@ -117,6 +117,168 @@ def test_serialise_nested_with_role():
     assert output == {'user': {'name': 'mike'}}
 
 
+def test_nested_memoize_no_existing_value():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+        address = field.String()
+
+        __roles__ = {
+            'public': ['name', ]
+        }
+
+    def user_getter(session):
+        if session.data['id'] == 'xyz':
+            return TestType(id='xyz', name='mike', address='london')
+        if session.data['id'] == 'zyx':
+            return TestType(id='zyx', name='jack', address='stevenage')
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', role='public',
+                            getter=user_getter)
+
+    output = TestType(**{
+        'name': 'my post',
+    })
+
+    data = {
+        'name': 'my post',
+        'user': {
+            'id': 'zyx',
+            'name': 'jack',
+            'address': 'london',
+        }
+    }
+
+    mapper = PostMapper(obj=output, data=data)
+    mapper.marshal()
+    old, new = (mapper.get_changes()['user']['old_value'],
+                mapper.get_changes()['user']['new_value'])
+
+    assert old is None
+    assert new == TestType(id='zyx', name='jack', address='stevenage')
+
+
+def test_nested_memoize_no_change():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+        address = field.String()
+
+        __roles__ = {
+            'public': ['name', ]
+        }
+
+    def user_getter(session):
+        if session.data['id'] == 'xyz':
+            return TestType(id='xyz', name='mike', address='london')
+        if session.data['id'] == 'zyx':
+            return TestType(id='zyx', name='jack', address='stevenage')
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', role='public',
+                            getter=user_getter)
+
+    output = TestType(**{
+        'name': 'my post',
+        'user': TestType(**{
+            'id': 'xyz',
+            'name': 'mike',
+            'address': 'london',
+        })
+    })
+
+    data = {
+        'name': 'my post',
+        'user': {
+            'id': 'xyz',
+            'name': 'mike',
+            'address': 'london',
+        }
+    }
+
+    mapper = PostMapper(obj=output, data=data)
+    mapper.marshal()
+    assert 'user' not in mapper.get_changes()
+
+
+def test_nested_memoize_new_value():
+    """ensure field sets only the new_value when the field has no
+    exsiting value.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True, read_only=True)
+        name = field.String()
+        address = field.String()
+
+        __roles__ = {
+            'public': ['name', ]
+        }
+
+    def user_getter(session):
+        if session.data['id'] == 'xyz':
+            return TestType(id='xyz', name='mike', address='london')
+        if session.data['id'] == 'zyx':
+            return TestType(id='zyx', name='jack', address='stevenage')
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', role='public',
+                            getter=user_getter)
+
+    output = TestType(**{
+        'name': 'my post',
+        'user': TestType(**{
+            'id': 'xyz',
+            'name': 'mike',
+            'address': 'london',
+        })
+    })
+
+    data = {
+        'name': 'my post',
+        'user': {
+            'id': 'zyx',
+            'name': 'jack',
+            'address': 'stevenage',
+        }
+    }
+
+    mapper = PostMapper(obj=output, data=data)
+    mapper.marshal()
+    old, new = (mapper.get_changes()['user']['old_value'],
+                mapper.get_changes()['user']['new_value'])
+
+    assert old == TestType(id='xyz', name='mike', address='london')
+    assert new == TestType(id='zyx', name='jack', address='stevenage')
+
+
 def test_marshal_nested_with_role():
 
     class UserMapper(Mapper):
@@ -464,6 +626,7 @@ def test_self_nesting_marshal():
 
     data = {'user': {'name': 'jack'}, 'status': 200}
 
-    result = Outer(data=data).marshal()
+    mapper = Outer(data=data)
+    result = mapper.marshal()
 
     assert result == {'user_name': 'jack', 'status': 200}

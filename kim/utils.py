@@ -35,6 +35,8 @@ def _set_attr_or_key(obj, name, value):
     else:
         setattr(obj, name, value)
 
+    return value
+
 
 def attr_or_key(obj, name):
     """attempt to use getattr to access an attribute of obj, if that fails
@@ -57,7 +59,7 @@ def set_attr_or_key(obj, name, value):
     components = name.split('.')
     for component in components[:-1]:
         obj = _attr_or_key(obj, component)
-    _set_attr_or_key(obj, components[-1], value)
+    return _set_attr_or_key(obj, components[-1], value)
 
 
 def attr_or_key_update(obj, value):
