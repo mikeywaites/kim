@@ -39,28 +39,6 @@ def marshall_collection(session):
             except IndexError:
                 pass
 
-        """
-        TODO(mike) Kill is_wrapped with Bale Fire.
-
-        Create a new session using the data from the array[i] object.
-        We then call marshal() on the wrapped field passing the new
-        session.  We use the session of the mapper the collection is attached
-        too.  This is weird in the case a collection of Nested fields where
-        you'd expect to use the Nested fields mapper.
-
-        The reason for this is the Field._is_wrapped is used
-        in :func:`get_data_from_name` to specify that the data has
-        already been resolved by the collection.  This allows
-        collection to wrap any field.  Nested will later
-        instantiate its mapper using the data passed from collection.
-
-        This solution is A) extremely confusing and hard to follow B) weird and
-        probably quite brittle.
-
-        ..seealso:
-            :func: `pipelines.base.get_data_from_name`
-            :func: `pipelines.nested.marshal_nested`
-        """
         mapper_session = session.mapper.get_mapper_session(datum, _output)
         wrapped_field.marshal(mapper_session, parent_session=session)
 
