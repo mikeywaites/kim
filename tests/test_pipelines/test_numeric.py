@@ -53,53 +53,6 @@ def test_integer_input():
     assert output == {'name': 2}
 
 
-def test_numeric_memoize_no_existing_value():
-    """ensure field sets only the new_value when the field has no
-    exsiting value.
-    """
-
-    field = Integer(name='num', required=True)
-
-    output = {}
-    mapper_session = get_mapper_session(
-        data={'num': 2, 'email': 'mike@mike.com'}, output=output)
-
-    field.marshal(mapper_session)
-    assert field._old_value is None
-    assert field._new_value is 2
-
-
-def test_numeric_memoize_no_change():
-    """ensure field sets no changes when the field value remains the same
-    """
-
-    field = Integer(name='num', required=True)
-
-    output = {'num': 2}
-    mapper_session = get_mapper_session(
-        data={'num': 2, 'email': 'mike@mike.com'}, output=output)
-
-    field.marshal(mapper_session)
-    assert field._old_value is None
-    assert field._new_value is None
-
-
-def test_numeric_memoize_new_value():
-    """ensure field sets both old value and new value when the field has an
-    existing value and a new value is provided.
-    """
-
-    field = Integer(name='num', required=True)
-
-    output = {'num': 2}
-    mapper_session = get_mapper_session(
-        data={'num': 3, 'email': 'mike@mike.com'}, output=output)
-
-    field.marshal(mapper_session)
-    assert field._old_value == 2
-    assert field._new_value == 3
-
-
 def test_integer_field_invalid_type():
 
     field = Integer(name='name')

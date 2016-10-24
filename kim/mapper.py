@@ -377,7 +377,6 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         self.raw = raw
         self.partial = partial
         self.parent = parent
-        self._changes = {}
 
     @property
     def initial_errors(self):
@@ -543,18 +542,6 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperSession(self, data, output, partial=self.partial)
 
-    def set_field_changes(self, field_name, changes):
-        """Store a change object for a field at ``field_name`` inside the
-        mappers changes object.
-        """
-
-        self._changes[field_name] = changes
-
-    def get_changes(self):
-        """return all the field change objects for this mapper
-        """
-        return self._changes
-
     def serialize(self, role='__default__', raw=False):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
@@ -605,9 +592,6 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             except MappingInvalid as e:
                 # handle errors from nested mappers.
                 self.errors[field.name] = e.errors
-
-            if field.has_changed():
-                self.set_field_changes(field.name, field.get_changes())
 
         # Call top level mapper validator for validations involving more
         # than one field
@@ -733,7 +717,6 @@ class MapperIterator(object):
 
         self.mapper = mapper
         self.mapper_params = mapper_params
-        self._changes = []
 
     def get_mapper(self, data=None, obj=None):
         """return a new instance of the provided mapper.
@@ -777,14 +760,6 @@ class MapperIterator(object):
 
         output = []  # TODO should this be user defined?
         for datum in data:
-            mapper = self.get_mapper(data=datum)
-            output.append(mapper.marshal(role=role))
-            self._changes.append(mapper.get_changes())
+            output.append(self.get_mapper(data=datum).marshal(role=role))
 
         return output
-
-    def get_changes(self):
-        """return the list of changes from each mapper
-        """
-
-        return self._changes

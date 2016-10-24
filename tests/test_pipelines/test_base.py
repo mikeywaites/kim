@@ -1,6 +1,5 @@
 import pytest
 
-from kim.mapper import Mapper, MapperSession
 from kim.field import Field, FieldInvalid, FieldError
 from kim.pipelines.base import (
     Session,
@@ -153,14 +152,9 @@ def test_update_output_to_source_with_object():
     class MyObject(object):
         pass
 
-    class MyMapper(Mapper):
-        pass
-
     output = MyObject()
     field = Field(source='source', required=True)
-    mapper_session = MapperSession(
-        MyMapper(data=data), data=data, output=output)
-    session = Session(field, data, output, mapper_session=mapper_session)
+    session = Session(field, data, output)
     session.data = data['source']
 
     update_output_to_source(session)
@@ -172,18 +166,12 @@ def test_update_output_to_source_with_object_dot_notiation():
     class MyObject(object):
         pass
 
-    class MyMapper(Mapper):
-        pass
-
     output = MyObject()
     output.nested = MyObject()
-    data = {'name': 'mike'}
 
     field = Field(source='nested.source', required=True)
-    mapper_session = MapperSession(
-        MyMapper(data=data), data=data, output=output)
-    session = Session(field, data, output, mapper_session=mapper_session)
-    session.data = data['name']
+    session = Session(field, {'name': 'mike'}, output)
+    session.data = 'mike'
 
     update_output_to_source(session)
     assert output.nested.source == 'mike'
@@ -197,15 +185,10 @@ def test_update_output_to_source_with_dict():
         'nested': {'foo': 'bar'}
     }
 
-    class MyMapper(Mapper):
-        pass
-
     output = {}
 
     field = Field(source='source', required=True)
-    mapper_session = MapperSession(
-        MyMapper(data=data), data=data, output=output)
-    session = Session(field, data, output, mapper_session=mapper_session)
+    session = Session(field, data, output)
     session.data = data['source']
     update_output_to_source(session)
     assert output == {'source': 'mike'}
@@ -219,13 +202,8 @@ def test_update_output_to_source_invalid_output_type():
         'nested': {'foo': 'bar'}
     }
 
-    class MyMapper(Mapper):
-        pass
-
     output = 1
     field = Field(source='source', required=True)
-    mapper_session = MapperSession(
-        MyMapper(data=data), data=data, output=output)
-    session = Session(field, data, output, mapper_session=mapper_session)
+    session = Session(field, data, output)
     with pytest.raises(FieldError):
         update_output_to_source(session)
