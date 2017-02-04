@@ -453,11 +453,8 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         # If deferred_role is not None, return the intersection of the
         # role and the deffered_role
-        if deferred_role:
-            if isinstance(deferred_role, Role) and deferred_role.whitelist is False:
-                warnings.warn('using blacklist for deferred_role is '
-                              'not properly supported', UserWarning)
-            elif not isinstance(deferred_role, Role):
+        if deferred_role is not None:
+            if not isinstance(deferred_role, Role):
                 raise MapperError('deferred_role must be instance of Role')
 
             return role & deferred_role

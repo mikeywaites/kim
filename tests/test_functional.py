@@ -649,14 +649,27 @@ def test_serialize_polymorphic_child_mapper_deferred_role_blacklist():
     obj = TestType(id=2, name='bob', object_type='event', location='London')
 
     mapper = SchedulableMapper(obj=obj)
-    with pytest.warns(UserWarning):
-        data = mapper.serialize(
-            role='public', deferred_role=blacklist('id'))
+    data = mapper.serialize(
+        role='public', deferred_role=blacklist('id'))
 
-        # the blacklist role will act as normal set intersection...
-        assert data == {
-            'id': 2
-        }
+    assert data == {
+        'name': 'bob',
+        'location': 'London',
+    }
+
+
+def test_serialize_polymorphic_child_mapper_existing_blacklist_with_deferred():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = SchedulableMapper(obj=obj)
+    data = mapper.serialize(
+        role='event_blacklist', deferred_role=whitelist('id'))
+
+    assert data == {
+        'id': 2,
+    }
 
 
 def test_serialize_polymorphic_child_mapper_deferred_role_requires_role():
