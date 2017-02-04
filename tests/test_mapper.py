@@ -237,6 +237,49 @@ def test_new_mapper_sets_roles():
     }
 
 
+def test_polymorphic_mappers_role_inheritance():
+
+    class MapperA(PolymorphicMapper):
+
+        __type__ = TestType
+        id = Integer()
+        name = String()
+        object_type = String()
+
+        __roles__ = {
+            '__default__': whitelist('id'),
+            'overview': whitelist('id', 'name', 'object_type'),
+        }
+
+        __mapper_args__ = {
+            'polymorphic_on': 'object_type',
+        }
+
+    class MapperB(MapperA):
+
+        __roles__ = {
+            '__default__': whitelist('id', 'name'),
+            'type': whitelist('object_type'),
+        }
+
+        __mapper_args__ = {
+            'polymorphic_name': 'B',
+        }
+
+    mapper = MapperA(data={})
+    assert mapper.roles == {
+        '__default__': whitelist('id'),
+        'overview': whitelist('id', 'name', 'object_type')
+    }
+
+    mapperb = MapperB(data={})
+    assert mapperb.roles == {
+        '__default__': whitelist('id', 'name'),
+        'overview': whitelist('id', 'name', 'object_type'),
+        'type': whitelist('object_type'),
+    }
+
+
 def test_mapper_sets_field_names():
 
     class MapperBase(Mapper):
@@ -884,7 +927,7 @@ def test_polymorphic_on_with_string():
             'polymorphic_on': 'object_type',
         }
 
-    class MapperB(PolymorphicMapper):
+    class MapperB(MapperA):
 
         __mapper_args__ = {
             'polymorphic_name': 'B',

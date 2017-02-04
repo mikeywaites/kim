@@ -3,8 +3,8 @@ import mock
 
 from kim.exception import MappingInvalid, MapperError
 from kim.mapper import Mapper, PolymorphicMapper
-from kim.role import blacklist
-from kim.field import Integer, Collection, String, Field
+from kim.role import whitelist, blacklist
+from kim.field import Integer, Collection, String
 from kim.pipelines import marshaling
 from kim.pipelines import serialization
 
@@ -576,6 +576,100 @@ def test_serialize_polymorphic_mapper_with_role():
     }
 
 
+def test_serialize_polymorphic_child_mapper_with_role():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = EventMapper(obj=obj)
+    data = mapper.serialize(role='event_only_role')
+
+    assert data == {
+        'id': 2,
+        'location': 'London'
+    }
+
+
+def test_serialize_polymorphic_child_mapper_with_deferred_role():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = EventMapper(obj=obj)
+    data = mapper.serialize(role='event_only_role', deferred_role=whitelist('id'))
+
+    assert data == {
+        'id': 2,
+    }
+
+
+def test_serialize_polymorphic_child_mapper_deferred_role_fields_across_types():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+    obj2 = TestType(id=3, name='bob', object_type='task', status='failed')
+
+    mapper = SchedulableMapper(obj=obj)
+    data = mapper.serialize(
+        role='public', deferred_role=whitelist('id', 'status', 'location'))
+
+    assert data == {
+        'id': 2,
+        'location': 'London'
+    }
+
+    mapper = SchedulableMapper(obj=obj2)
+    data = mapper.serialize(
+        role='public', deferred_role=whitelist('id', 'status', 'location'))
+
+    assert data == {
+        'id': 3,
+        'status': 'failed'
+    }
+
+
+def test_serialize_polymorphic_child_mapper_deferred_role_disallowed_fields():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+    obj2 = TestType(id=3, name='bob', object_type='task', status='failed')
+
+    mapper = SchedulableMapper(obj=obj)
+    data = mapper.serialize(
+        role='name_only', deferred_role=whitelist('id', 'name'))
+
+    assert data == {
+        'name': 'bob'
+    }
+
+
+def test_serialize_polymorphic_child_mapper_deferred_role_blacklist():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = SchedulableMapper(obj=obj)
+    with pytest.warns(UserWarning):
+        data = mapper.serialize(
+            role='public', deferred_role=blacklist('id'))
+
+        # the blacklist role will act as normal set intersection...
+        assert data == {
+            'id': 2
+        }
+
+
+def test_serialize_polymorphic_child_mapper_deferred_role_requires_role():
+
+
+    obj = TestType(id=2, name='bob', object_type='event', location='London')
+
+    mapper = SchedulableMapper(obj=obj)
+    with pytest.raises(MapperError):
+        mapper.serialize(role='public', deferred_role='foo')
+
+
+
 def test_serialize_polymorphic_mapper_many():
 
     obj1 = TestType(id=2, name='bob', location='London', object_type='event')
@@ -593,5 +687,23 @@ def test_serialize_polymorphic_mapper_many():
             'id': 3,
             'name': 'fred',
             'status': 'Done'
+        }
+    ]
+
+
+def test_serialize_polymorphic_mapper_many_with_deferred_role():
+
+    obj1 = TestType(id=2, name='bob', location='London', object_type='event')
+    obj2 = TestType(id=3, name='fred', status='Done', object_type='task')
+
+    result = SchedulableMapper.many().serialize(
+        [obj1, obj2], role='public', deferred_role=whitelist('id'))
+
+    assert result == [
+        {
+            'id': 2,
+        },
+        {
+            'id': 3,
         }
     ]
