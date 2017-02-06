@@ -5,6 +5,7 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
+import warnings
 import weakref
 import six
 import inspect
@@ -13,7 +14,7 @@ from collections import OrderedDict, defaultdict
 
 from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
-from .role import whitelist, Role
+from .role import whitelist, blacklist, Role
 from .utils import recursive_defaultdict, attr_or_key
 from .pipelines.base import Pipe
 
@@ -407,10 +408,32 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         else:
             return self._get_mapper_type()()
 
-    def _get_role(self, name_or_role):
+    def _get_role(self, name_or_role, deferred_role=None):
         """Resolve a string to a role and check it exists, or check a
         directly passed role is a Role instance and return it.
 
+        You may also affect the fields returned from a role at read time
+        using ``deferred_role``.  deferred_role is used to provide the intersection
+        between the role specified at ``name_or_role`` and the ``deferred_role``.
+
+            class FooMapper(Mapper):
+                __type__ = dict
+                name = field.String()
+                id = field.String()
+                secret = field.String()
+
+                __roles__ = {
+                    'overview': whitelist('id', 'name'),
+                }
+
+            mapper._get_role('overview', deferred_role=whitelist('id'))
+
+        Deferred roles can be used for things like allowing end users to provide a list
+        of fields they want back from your API but only if they appear in a role you've
+        specified.
+
+        :param deferred_role: provide a role containing fields to dynamically change the
+            permitted fields for the role specified in ``name_or_role``
         :param name_or_role: role name as a string or a Role instance
 
         :raises: :class:`.MapperError`
@@ -418,15 +441,25 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         """
         if isinstance(name_or_role, six.string_types):
             try:
-                return self.roles[name_or_role]
+                role = self.roles[name_or_role]
             except KeyError:
                 raise MapperError("Role '%s' not found on %s" % (
                                   name_or_role, self.__class__.__name__))
         elif isinstance(name_or_role, Role):
-            return name_or_role
+            role = name_or_role
         else:
             raise MapperError('role must be string or Role instance, got %s'
                               % type(name_or_role))
+
+        # If deferred_role is not None, return the intersection of the
+        # role and the deffered_role
+        if deferred_role is not None:
+            if not isinstance(deferred_role, Role):
+                raise MapperError('deferred_role must be instance of Role')
+
+            return role & deferred_role
+        else:
+            return role
 
     def _field_in_data(self, field):
         for key in self.data.keys():
@@ -434,7 +467,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
                 return True
         return False
 
-    def _get_fields(self, name_or_role, for_marshal=False):
+    def _get_fields(self, name_or_role, deferred_role=None, for_marshal=False):
         """Returns a list of :class:`.Field` instances providing they are
         registered in the specified :class:`Role`.
 
@@ -445,7 +478,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :returns: list of :class:`.Field`
         """
 
-        role = self._get_role(name_or_role)
+        role = self._get_role(name_or_role, deferred_role=deferred_role)
 
         fields = [f for name, f in six.iteritems(self.fields) if name in role]
 
@@ -542,7 +575,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperSession(self, data, output, partial=self.partial)
 
-    def serialize(self, role='__default__', raw=False):
+    def serialize(self, role='__default__', raw=False, deferred_role=None):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
 
@@ -562,7 +595,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         else:
             data = self._get_obj()
 
-        for field in self._get_fields(role):
+        for field in self._get_fields(role, deferred_role=deferred_role):
             field.serialize(self.get_mapper_session(data, output))
 
         return output
@@ -734,7 +767,7 @@ class MapperIterator(object):
         })
         return self.mapper(**self.mapper_params)
 
-    def serialize(self, objs, role='__default__'):
+    def serialize(self, objs, role='__default__', deferred_role=None):
         """Serializes each item in ``objs`` creating a new mapper each time.
 
         :param objs: iterable of objects to serialize
@@ -745,7 +778,9 @@ class MapperIterator(object):
 
         output = []  # TODO should this be user defined?
         for obj in objs:
-            output.append(self.get_mapper(obj=obj).serialize(role=role))
+            output.append(self.get_mapper(obj=obj).serialize(
+                role=role,
+                deferred_role=deferred_role))
 
         return output
 
