@@ -388,3 +388,29 @@ def test_marshal_collection_unique_on():
 
     mapper = PostMapper(data=data)
     mapper.marshal()
+
+
+def test_marshal_collection_required_false():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = field.String(required=True)
+        name = field.String()
+
+    class PostMapper(Mapper):
+
+        __type__ = TestType
+
+        readers = field.Collection(
+            field.Nested(UserMapper, allow_create=True),
+            required=False)
+
+    data = {}
+
+    mapper = PostMapper(data=data)
+
+    output = mapper.marshal()
+
+    assert output.readers == []
