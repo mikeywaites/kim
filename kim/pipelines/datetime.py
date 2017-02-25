@@ -30,6 +30,8 @@ def is_valid_datetime(session):
 
 @pipe()
 def format_datetime(session):
+    """convert datetime object to isoformat() datetime str
+    """
     if session.data is not None:
         session.data = session.data.isoformat()
     return session.data
@@ -47,6 +49,8 @@ class DateTimeSerializePipeline(SerializePipeline):
 
 @pipe()
 def cast_to_date(session):
+    """cast session.data datetime object to a date() instance
+    """
     if session.data is not None:
         session.data = session.data.date()
     return session.data

@@ -11,6 +11,8 @@ from .serialization import SerializePipeline
 
 @pipe(run_if_none=True)
 def get_static_value(session):
+    """return the static value specified in FieldOpts
+    """
 
     session.data = session.field.opts.value
 

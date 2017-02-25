@@ -12,12 +12,12 @@ class Role(set):
     """Roles are a fundamental feature of Kim.  Its very common to need
     to provide a different view of your data or to only require a selection of
     fields when marshaling data.  ``Roles`` in Kim allow users
-    to shape their data at runtime in a simple yet powerfuly flexible manor.
+    to shape their data at runtime in a simple yet flexible manor.
 
     ``Roles`` are added to your :py:class:`~.Mapper` declarations
     using the ``__roles__`` attribute.
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper, whitelist, field
 
@@ -35,7 +35,7 @@ class Role(set):
     """
 
     def __init__(self, *args, **kwargs):
-        """initialise a new ``Role``.
+        """initialise a new :class:`Role`.
 
         :param whitelist:  pass a boolean indicating wether this
             role is a whitelist
@@ -62,19 +62,18 @@ class Role(set):
         If the role is defined as whitelist=True the normal membership test
         is applied ie::
 
-            >>>'name' in whitelist('name')
+            >>> 'name' in whitelist('name')
             True
 
         For blacklist the test is flipped as we are aiming to ensure the field
         name is not present in the role::
 
-            >>>'other_name' in blacklist('name')
+            >>> 'other_name' in blacklist('name')
             True
-            >>>'name' in blacklist('name')
+            >>> 'name' in blacklist('name')
             False
 
-        :param str field_name: name of a field to test for membership
-
+        :param field_name: name of a field to test for membership
         :rtype: boolean
         :returns: boolean indicating wether field_name is found in the role
         """
@@ -90,23 +89,21 @@ class Role(set):
         This overloading allows users to produce the union of two roles that
         may, on one side, want to allow fields and on the other exclude them.
 
-        .. codeblock:: python
+        Usage::
 
-            >>>from kim.role import whitelist, blacklist
-            >>>my_role = whitelist('foo', 'bar') | blacklist('foo', 'baz')
-            >>>my_role
+            >>> from kim.role import whitelist, blacklist
+            >>> my_role = whitelist('foo', 'bar') | blacklist('foo', 'baz')
+            >>> my_role
             Role('bar')
 
-        :param other: another instance of :py:class:``.Role``
-        :raises: :py:class:`.RoleError``
-
-        :rtype: :py:class:``.Role``
-        :returns: a new :py:class:``.Role`` containng the set of field names
+        :param other: another instance of :class:`kim.role.Role`
+        :raises: :class:`kim.exception.RoleError`
+        :rtype: :class:`kim.role.Role`
+        :returns: a new :class:`kim.role.Role` containng the set of field names
 
         """
         if not isinstance(other, Role):
-            raise RoleError('union of built types is '
-                            'not supported with roles')
+            raise RoleError('union of built in types is not supported with roles')
 
         whitelist = True
 
@@ -123,7 +120,8 @@ class Role(set):
             # Same as above, except we are keeping the fields from other
             result = other.__sub__(self)
 
-        else:  # both roles are blacklist, union them and set whitelist=False
+        else:
+            # both roles are blacklist, union them and set whitelist=False
             whitelist = False
             result = super(Role, self).__or__(other)
 
@@ -138,7 +136,7 @@ class whitelist(Role):
     the ``id_only`` role is used **only** the ``id`` field should be
     considered in the input/output data.
 
-    .. code-block:: python
+    Usage::
 
         from kim import whitelist
 
@@ -166,7 +164,7 @@ class blacklist(Role):
     that contained the field name ``id`` would instruct kim that every
     field defined on the mapper should be considered except ``id``.
 
-    .. code-block:: python
+    Usage::
 
         from kim import whitelist
 

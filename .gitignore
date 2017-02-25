@@ -40,3 +40,6 @@ nosetests.xml
 .DS_Store
 
 .vagrant
+
+.cache
+Close

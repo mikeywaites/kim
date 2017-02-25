@@ -6,5 +6,8 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 
+__version__ = '1.0.0'
+
+
 from .mapper import Mapper
 from .field import Field

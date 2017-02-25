@@ -158,18 +158,18 @@ class FieldOpts(object):
 class Field(object):
     """Field, as it's name suggests, represents a single key or 'field'
     inside of your mappings.  Much like columns in a database or a csv,
-    they provide a way to represent different data types when pusing data
+    they provide a way to represent different data types when pushing data
     into and out of your Mappers.
 
     A core concept of Kims architecture is that of Pipelines.
-    Every Field makes use both an Input and Output pipeline which afford users
+    Every Field makes use of both an Input and Output pipeline which affords users
     a great level of flexibility when it comes to handling data.
 
     Kim provides a collection of default Field implementations,
     for more complex cases extending Field to create new field types
     couldn't be easier.
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
@@ -180,14 +180,28 @@ class Field(object):
             name = field.String(required=True)
     """
 
+    #: The :class:`FieldOpts` field config class to use for the Field.
     opts_class = FieldOpts
+
+    #: The Fields marshaling pipeline
     marshal_pipeline = MarshalPipeline
+
+    #: The Fields serialization pipeline
     serialize_pipeline = SerializePipeline
 
     def __init__(self, *args, **field_opts):
-        """Construct a new instance of field.  Each field accepts a set of
+        """Constructs a new instance of Field.  Each Field accepts a set of
         kwargs that will be passed directly to the fields
-        defined ``opts_class``.
+        defined :class:`FieldOpts`.
+
+        :param args: list of arguments passed to the field
+        :param kwargs: keyword arguments typically passed to the FieldOpts class attached
+            to this Field.
+        :raises: :class:`FieldOptsError`
+        :returns: None
+
+        .. seealso::
+            :class:`FieldOpts`
         """
 
         try:
@@ -200,9 +214,12 @@ class Field(object):
         set_creation_order(self)
 
     def get_error(self, error_type):
-        """Return the error message for an ``error_type``.
+        """Return the error message for ``error_type`` from the error messages defined on
+        the fields opts class.
 
         :param error_type: the key of the error found in self.error_msgs
+        :returns: Error message
+        :rtype: string
         """
 
         parse_opts = {
@@ -211,26 +228,36 @@ class Field(object):
         return self.opts.error_msgs[error_type].format(**parse_opts)
 
     def invalid(self, error_type):
-        """Raise an Exception using the provided ``message``.  This method
-        is typically used by pipes to allow :py:class:``~.Field`` to control
+        """Raise an Exception using the provided error_type for the error message.
+        This method is typically used by pipes to allow :class:`Field` to control
         how its errors are handled.
 
-        :param message: A string message used when outputting field errors
-        :raises: FieldInvalid
+        Usage::
+
+            @pipe()
+            def validate_name(session):
+                if session.data and session.data != 'Mike Waites':
+                    raise session.fied.invalid('not_mike')
+
+        :param error_type: The key of the error being raised.
+        :raises: :class:`FieldInvalid`
+
+        .. seealso::
+            :class:`FieldOpts` for an explanation on defining error messags
         """
 
         raise FieldInvalid(self.get_error(error_type), field=self)
 
     @property
     def name(self):
-        """proxy access to the :py:class:`.FieldOpts` defined for this field.
+        """Proxy access to the :class:`FieldOpts` defined for this field.
 
         :rtype: str
         :returns: The value of get_name from FieldOpts
-        :raises: :py:class:`.FieldError`
+        :raises: :class:`FieldError`
 
         .. seealso::
-            :meth:`.FieldOpts.get_name`
+            :meth:`kim.field.FieldOpts.get_name`
         """
 
         field_name = self.opts.get_name()
@@ -244,44 +271,52 @@ class Field(object):
 
     @name.setter
     def name(self, name):
-        """proxy setting the name property via :meth:`.FieldOpts.set_name`
+        """Proxy setting the name property via :py:meth:`kim.field.FieldOpts.set_name`
 
-        :param name: the value to set against FieldOpts.name
+        :param name: the value to set against FieldOpts name property
         :returns: None
 
         .. seealso::
-            :meth:`.FieldOpts.set_name`
+            :meth:`kim.field.FieldOpts.set_name`
         """
         self.opts.set_name(name)
 
     def marshal(self, mapper_session, **opts):
-        """Run the input pipeline for this field for the given `data` and
-        update `output` in place.
+        """Run the marshal :class:`Pipeline` for this field for the given ``data`` and
+        update the output for this field inside of the mapper_session.
 
-        :param data: the full data object the field should be run against
-        :param output: the full object the field should output to, in place
+        :param mapper_session: The Mappers marshaling session this field is being
+            run inside of.
+        :opts: kwargs passed to the marshal pipelines run method.
         :returns: None
+
+        .. seealso::
+            :meth:`kim.mapper.Mapper.marshal`
         """
 
         self.marshal_pipeline(mapper_session, self).run(**opts)
 
     def serialize(self, mapper_session, **opts):
-        """Run the output pipeline for this field for the given `data` and
-        update `output` in place.
+        """Run the serialize :class:`Pipeline` for this field for the given `data` and
+        update `output` in for this field inside of the mapper_session.
 
-        :param data: the full data object the field should be run against
-        :param output: the full object the field should output to, in place
+        :param mapper_session: The Mappers marshaling session this field is being
+            run inside of.
+        :opts: kwargs passed to the marshal pipelines run method.
         :returns: None
+
+        .. seealso::
+            :meth:`kim.mapper.Mapper.serialize`
         """
 
         self.serialize_pipeline(mapper_session, self).run(**opts)
 
 
 class String(Field):
-    """:class:`.String` represents a value that must be valid
+    """:class:`String` represents a value that must be valid
     when passed to str()
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
@@ -299,21 +334,30 @@ class String(Field):
 
 class IntegerFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.Integer`.
+    :class:`Integer`.
 
     """
 
     def __init__(self, **kwargs):
+        """ Construct a new instance of :class:`IntegerFieldOpts`
+        and set config options
+
+        :param max: Specify the maximum permitted value
+        :param min: Specify the minimum permitted value
+
+        :raises: :class:`FieldOptsError`
+        :returns: None
+        """
         self.max = kwargs.pop('max', None)
         self.min = kwargs.pop('min', None)
         super(IntegerFieldOpts, self).__init__(**kwargs)
 
 
 class Integer(Field):
-    """:class:`.Integer` represents a value that must be valid
+    """:class:`Integer` represents a value that must be valid
     when passed to int()
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
@@ -321,7 +365,7 @@ class Integer(Field):
         class UserMapper(Mapper):
             __type__ = User
 
-            id = field.Integer(required=True)
+            id = field.Integer(required=True, min=1, max=10)
 
     """
 
@@ -332,20 +376,28 @@ class Integer(Field):
 
 class DecimalFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.Decimal`.
+    :class:`Decimal`.
 
     """
 
     def __init__(self, **kwargs):
+        """ Construct a new instance of :class:`DecimalFieldOpts`
+        and set config options
+
+        :param precision: Specify the precision of the decimal
+
+        :raises: :class:`FieldOptsError`
+        :returns: None
+        """
         self.precision = kwargs.pop('precision', 5)
         super(DecimalFieldOpts, self).__init__(**kwargs)
 
 
 class Decimal(Field):
-    """:class:`.Decimal` represents a value that must be valid
+    """:class:`Decimal` represents a value that must be valid
     when passed to decimal.Decimal()
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
@@ -364,11 +416,22 @@ class Decimal(Field):
 
 class BooleanFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.Boolean`.
+    :class:`Boolean`.
 
     """
 
     def __init__(self, **kwargs):
+        """ Construct a new instance of :class:`BooleanFieldOpts`
+        and set config options
+
+        :param true_boolean_values: Specify an array of values that will validate as
+            being 'true' when the field is marshaled.
+        :param false_boolean_values: Specify an array of values that will validate as
+            being 'false' when the field is marshaled.
+
+        :raises: :class:`FieldOptsError`
+        :returns: None
+        """
         self.true_boolean_values = \
             kwargs.pop('true_boolean_values',
                        [True, 'true', '1', 1, 'True'])
@@ -382,10 +445,10 @@ class BooleanFieldOpts(FieldOpts):
 
 
 class Boolean(Field):
-    """:class:`.Boolean` represents a value that must be valid
+    """:class:`Boolean` represents a value that must be valid
     boolean type.
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
@@ -393,7 +456,10 @@ class Boolean(Field):
         class UserMapper(Mapper):
             __type__ = User
 
-            active = field.Boolean(required=True)
+            active = field.Boolean(
+                required=True,
+                true_boolean_values=[True, 'true', 1],
+                false_boolean_values=[False, 'false', 0])
 
     """
 
@@ -404,22 +470,31 @@ class Boolean(Field):
 
 class NestedFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.Nested`.
+    :class:`Nested`.
 
     """
 
     def __init__(self, mapper_or_mapper_name, **kwargs):
-        """Construct a new instance of :class:`.NestedFieldOpts`
+        """Construct a new instance of :class:`NestedFieldOpts`
 
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
         :param role: specify the name of a role to use on the Nested mapper
         :param collection_class: provide a custom type to be used when
             mapping many nested objects
-        :param getter: provide a function taking (field, data) which returns
+        :param getter: provide a function taking a pipeline session which returns
             the object to be set on this field, or None if it can't find one.
             This is useful where your API accepts simply `{'id': 2}` but you
             want a full object to be set
+        :param allow_updates:  Allow existing objects returned by the ``getter`` function
+            to be updates.
+        :param allow_updates_in_place: Whereas allow_updates requires the getter to
+            return an existing object which it will then update, allow_updates_in_place
+            will make updates to any object it finds at the specified key.
+        :param allow_create: If the ``getter`` returns None, allow the Nested field to
+            create  new instance.
+        :param allow_partial_updates: Allow existing object to be updated using a subset
+            of the fields defined on the Nested field.
 
         """
         self.mapper = mapper_or_mapper_name
@@ -436,23 +511,32 @@ class NestedFieldOpts(FieldOpts):
 
 
 class Nested(Field):
-    """:class:`.Nested` represents an object that is represented by another
+    """:class:`Nested` represents an object that is represented by another
     mapper.
 
-    .. code-block:: python
+    Useage::
 
         from kim import Mapper
         from kim import field
 
-        class UserMapper(Mapper):
+        class PostMapper(Mapper):
             __type__ = User
 
             id = field.String()
-            user = field.Nested('OtherMapper', required=True)
+            name= field.String()
+            content = field.String()
+            user = field.Nested(
+                'UserMapper',
+                role='public',
+                getter=user_getter,
+                allow_upadtes=False,
+                allow_partial_updates=False,
+                allow_updates_in_place=False,
+                allow_create=False,
+                required=True)
 
     .. seealso::
-
-        :py:class:`.NestedFieldOpts`
+        :class:`NestedFieldOpts`
 
     """
 
@@ -463,13 +547,13 @@ class Nested(Field):
     def get_mapper(self, as_class=False, **mapper_params):
         """Retrieve the specified mapper from the Mapper registry.
 
-        :param mapper_params: A dict of kwarg's to pass to the specified
-            mappers constructor
         :param as_class: Return the Mapper class object without
             calling the constructor.  This is typically used when nested
             is mapping many objects.
+        :param mapper_params: A dict of kwarg's to pass to the specified
+            mappers constructor
 
-        :rtype: :py:class:`.Mapper`
+        :rtype: :class:`Mapper`
         :returns: a new instance of the specified mapper
         """
 
@@ -484,14 +568,17 @@ class Nested(Field):
 
 class CollectionFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`.Collection`.
+    :class:`Collection`.
 
     """
 
     def __init__(self, field, **kwargs):
         """Construct a new instance of :class:`.CollectionFieldOpts`
 
-        :param field: specify the field type mpapped inside of this collection.
+        :param field: Specify the field type mpapped inside of this collection.  This
+            may be any :class:`Field` type.
+        :param unique_on: Specify a key that is used to check the collection
+            for duplicates.
 
         """
         self.field = field
@@ -504,14 +591,12 @@ class CollectionFieldOpts(FieldOpts):
                              'not be passed to a wrapped field.')
 
         self.field.opts._is_wrapped = True
-
         self.unique_on = kwargs.pop('unique_on', None)
-
         super(CollectionFieldOpts, self).__init__(**kwargs)
 
     def set_name(self, *args, **kwargs):
-        """proxy access to the :py:class:`.FieldOpts` defined for
-        this collection field.
+        """proxy access to the :class:`FieldOpts` defined for
+        this collections field.
 
         :returns: None
 
@@ -520,17 +605,21 @@ class CollectionFieldOpts(FieldOpts):
         super(CollectionFieldOpts, self).set_name(*args, **kwargs)
 
     def get_name(self):
-        """proxy access to the :py:class:`.FieldOpts` defined for
-        this collection field.
+        """Proxy access to the :class:`FieldOpts` defined for
+        this collections field.
 
         :rtype: str
-        :returns: The value of get_name from FieldOpts
+        :returns: The value of get_name from the collections Field.
 
         """
 
         return self.field.name
 
     def validate(self):
+        """Exra validation for Collection Field.
+
+        :raises: FieldOptsError
+        """
 
         if not isinstance(self.field, Field):
             raise FieldOptsError('Collection requires a valid Field '
@@ -538,10 +627,10 @@ class CollectionFieldOpts(FieldOpts):
 
 
 class Collection(Field):
-    """:class:`.Collection` represents  collection of other field types,
+    """:class:`Collection` represents collection of other field types,
     typically stored in a list.
 
-    .. code-block:: python
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -550,12 +639,11 @@ class Collection(Field):
             __type__ = User
 
             id = field.String()
-            users = field.Collection(field.Nested('OtherMapper', required=True))
+            friends = field.Collection(field.Nested('UserMapper', required=True))
             user_ids = field.Collection(field.String())
 
     .. seealso::
-
-        :py:class:`.CollectionFieldOpts`
+        :class:`CollectionFieldOpts`
 
     """
 
@@ -565,9 +653,13 @@ class Collection(Field):
 
 
 class StaticFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`Static`.
+
+    """
 
     def __init__(self, value, **kwargs):
-        """Construct a new instance of :class:`.StaticFieldOpts`
+        """Construct a new instance of :class:`StaticFieldOpts`
 
         :param value: specify the static value to return when this field
             is serialized.
@@ -584,7 +676,7 @@ class Static(Field):
     This field is implicitly read_only and therefore is typically only used
     during serialization flows.
 
-    .. code-block:: python
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -600,7 +692,7 @@ class Static(Field):
 
 
 class DateTime(Field):
-    """:class:`.DateTime` represents an iso8601 encoded date time
+    """:class:`DateTime` represents an iso8601 encoded date time
 
     .. code-block:: python
 
@@ -619,7 +711,7 @@ class DateTime(Field):
 
 
 class Date(Field):
-    """:class:`.DateTime` represents an iso8601 encoded date
+    """:class:`Date` represents date object
 
     .. code-block:: python
 

@@ -20,6 +20,7 @@ def marshall_collection(session):
 
     :param session: Kim pipeline session instance
 
+    TODO(mike) this should be called marshal_collection
     """
     wrapped_field = session.field.opts.field
     existing_value = attr_or_key(session.output, session.field.opts.source)
@@ -73,6 +74,12 @@ def serialize_collection(session):
 
 @pipe()
 def check_duplicates(session):
+    """iterate over collection and check for duplicates if th unique_on FieldOpt has been
+    set of this Collection field
+
+    TODO(mike) This should only run if the wrapped field is a nested collection
+
+    """
     data = session.data
     key = session.field.opts.unique_on
     if key:
@@ -84,7 +91,6 @@ def check_duplicates(session):
 
 class CollectionMarshalPipeline(MarshalPipeline):
     input_pipes = MarshalPipeline.input_pipes + [check_duplicates, marshall_collection]
-    # output_pipes =  + MarshalPipeline.output_pipes
 
 
 class CollectionSerializePipeline(SerializePipeline):

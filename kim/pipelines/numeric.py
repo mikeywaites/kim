@@ -73,6 +73,8 @@ def is_valid_decimal(session):
 
 @pipe()
 def coerce_to_decimal(session):
+    """Coerce str representation of a decimal into a valid Decimal object.
+    """
     decimals = session.field.opts.precision
     precision = Decimal('0.' + '0' * (decimals - 1) + '1')
     session.data = Decimal(session.data).quantize(precision)
@@ -87,6 +89,8 @@ class DecimalMarshalPipeline(MarshalPipeline):
 
 @pipe()
 def to_string(session):
+    """coerce decimal value into str so it's valid for json
+    """
     if session.data is not None:
         session.data = str(session.data)
         return session.data
