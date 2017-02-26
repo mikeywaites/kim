@@ -576,7 +576,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return self._remove_none(output)
 
     def get_mapper_session(self, data, output):
-        """Polymorphicopulate and return a new instance of :class:`MapperSession`
+        """Populate and return a new instance of :class:`MapperSession`
 
         :param data: data being Mapped
         :param output: obj mapper is mapping too

@@ -5,7 +5,7 @@ Quickstart
 
 .. module:: kim.mapper
 
-Eager to get going? This page gives an introduction in getting started
+Eager to get going? This page gives an introduction to getting started
 with Kim.
 
 First, make sure that:
@@ -65,7 +65,7 @@ object we simply pass it to our mapper using the ``obj`` kwarg.
 	{'name': 'Bruce Wayne', 'id': 1, 'company': {'name': 'Wayne Enterprises', 'id': 1}}
 
 
-Serializing Many Ibjects
+Serializing Many objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We can also handle serializing lots of objects at once.  Each mapper represents
@@ -260,7 +260,7 @@ marshaling and serialization called `roles`. Roles are defined against a
 or a ``blacklist`` set of private fields. (It's also possible to combine the two
 concepts which is covered in more detail in the advanced section).
 
-To define roles on your mapper user the ``__roles__`` property.
+To define roles on your mapper use the ``__roles__`` property.
 
 .. code-block:: python
 
