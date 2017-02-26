@@ -14,7 +14,7 @@ from .serialization import SerializePipeline
 
 @pipe()
 def is_valid_integer(session):
-    """pipe used to determine if a value can be coerced to an int
+    """Pipe used to determine if a value can be coerced to an int
 
     :param session: Kim pipeline session instance
 
@@ -31,7 +31,8 @@ def is_valid_integer(session):
 
 @pipe()
 def bounds_check(session):
-    """pipe used to determine if a value can be coerced to an int
+    """Pipe used to determine if a value is within the min and max bounds on
+    the field
 
     :param session: Kim pipeline session instance
 
@@ -60,7 +61,7 @@ class IntegerSerializePipeline(SerializePipeline):
 
 @pipe()
 def is_valid_decimal(session):
-    """pipe used to determine if a value can be coerced to a Decimal
+    """Pipe used to determine if a value can be coerced to a Decimal
 
     :param session: Kim pipeline session instance
 

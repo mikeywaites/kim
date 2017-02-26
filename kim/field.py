@@ -66,12 +66,12 @@ class FieldOpts(object):
         :param attribute_name: Specify an alternative attr name for data output
         :param source: Specify the name of the attr to use when accessing data
         :param default: Specify a default value for this field
-        :param allow_none: Speficy if this fields value can be None
-        :param read_only: Speficy if this field should be ignored when marshaling
-        :param error_msgs: a dict of error_type: error messages.
-        :param null_default: specify the default type to return when a field is
+        :param allow_none: Specify if this fields value can be None
+        :param read_only: Specify if this field should be ignored when marshaling
+        :param error_msgs: A dict of error_type: error messages.
+        :param null_default: Specify the default type to return when a field is
             null IE None or {} or ''
-        :param choices: specify an array of valid values
+        :param choices: Specify a list of valid values
 
         :raises: :class:`.FieldOptsError`
         :returns: None
@@ -114,8 +114,10 @@ class FieldOpts(object):
         classes should raise :class:`.FieldError` when invalid configuration
         is encountered.
 
-        A slightly contrived example might be requiring all fields to be
+        A slightly contrived example is requiring all fields to be
         ``read_only=True``
+
+        Usage::
 
             from kim.field import FieldOpts
 
@@ -133,7 +135,7 @@ class FieldOpts(object):
         pass
 
     def set_name(self, name=None, attribute_name=None, source=None):
-        """pragmatically set the name properties for a field.
+        """Programmatically set the name properties for a field.
 
         :param name: value of name property
         :param attribute_name: value of attribute_name property
@@ -146,7 +148,7 @@ class FieldOpts(object):
         self.source = self.source or source or self.name
 
     def get_name(self):
-        """return the name property set by :meth:`set_name`
+        """Return the name property set by :meth:`set_name`
 
         :rtype: str
         :returns: the name of the field to be used in input/output
@@ -169,7 +171,7 @@ class Field(object):
     for more complex cases extending Field to create new field types
     couldn't be easier.
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -316,7 +318,7 @@ class String(Field):
     """:class:`String` represents a value that must be valid
     when passed to str()
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -357,7 +359,7 @@ class Integer(Field):
     """:class:`Integer` represents a value that must be valid
     when passed to int()
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -397,7 +399,7 @@ class Decimal(Field):
     """:class:`Decimal` represents a value that must be valid
     when passed to decimal.Decimal()
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -448,7 +450,7 @@ class Boolean(Field):
     """:class:`Boolean` represents a value that must be valid
     boolean type.
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -487,12 +489,12 @@ class NestedFieldOpts(FieldOpts):
             This is useful where your API accepts simply `{'id': 2}` but you
             want a full object to be set
         :param allow_updates:  Allow existing objects returned by the ``getter`` function
-            to be updates.
+            to be updated.
         :param allow_updates_in_place: Whereas allow_updates requires the getter to
             return an existing object which it will then update, allow_updates_in_place
-            will make updates to any object it finds at the specified key.
+            will make updates to any existing object it finds at the specified key.
         :param allow_create: If the ``getter`` returns None, allow the Nested field to
-            create  new instance.
+            create a new instance.
         :param allow_partial_updates: Allow existing object to be updated using a subset
             of the fields defined on the Nested field.
 
@@ -514,7 +516,7 @@ class Nested(Field):
     """:class:`Nested` represents an object that is represented by another
     mapper.
 
-    Useage::
+    Usage::
 
         from kim import Mapper
         from kim import field
@@ -711,7 +713,7 @@ class DateTime(Field):
 
 
 class Date(Field):
-    """:class:`Date` represents date object
+    """:class:`Date` represents a date object
 
     .. code-block:: python
 

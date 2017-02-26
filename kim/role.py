@@ -9,15 +9,15 @@ from kim.exception import RoleError
 
 
 class Role(set):
-    """Roles are a fundamental feature of Kim.  Its very common to need
+    """Roles are a fundamental feature of Kim.  It's very common to need
     to provide a different view of your data or to only require a selection of
     fields when marshaling data.  ``Roles`` in Kim allow users
-    to shape their data at runtime in a simple yet flexible manor.
+    to shape their data at runtime in a simple yet flexible manner.
 
     ``Roles`` are added to your :py:class:`~.Mapper` declarations
     using the ``__roles__`` attribute.
 
-    Useage::
+    Usage::
 
         from kim import Mapper, whitelist, field
 
@@ -37,7 +37,7 @@ class Role(set):
     def __init__(self, *args, **kwargs):
         """initialise a new :class:`Role`.
 
-        :param whitelist:  pass a boolean indicating wether this
+        :param whitelist:  pass a boolean indicating whether this
             role is a whitelist
 
         """

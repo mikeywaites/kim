@@ -14,7 +14,7 @@ from .serialization import SerializePipeline
 
 @pipe()
 def is_valid_datetime(session):
-    """pipe used to determine if a value can be coerced to a string
+    """Pipe used to determine if a value can be coerced to a datetime
 
     :param session: Kim pipeline session instance
 

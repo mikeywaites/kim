@@ -14,7 +14,7 @@ from .serialization import SerializePipeline
 
 @pipe()
 def is_valid_string(session):
-    """pipe used to determine if a value can be coerced to a string
+    """Pipe used to determine if a value can be coerced to a string
 
     :param session: Kim pipeline session instance
 
