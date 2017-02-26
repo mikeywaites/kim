@@ -336,9 +336,10 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
     Mappers consist of Fields. Fields define the shape and nature of the data
     both when being serialised(output) and marshaled(input).
 
-    Mappers must define a __type__. This is the type that will be
-    instantiated if a new object is marshaled through the mapper. __type__
-    maybe be any object that supports setter and getter functionality.
+    Mappers must define a ``__type__``. This is the type that will be
+    instantiated if a new object is marshaled through the mapper. ``__type__``
+    may be be any object that supports ``getattr`` and ``setattr``, or any dict
+    like object.
 
     Usage::
 
@@ -385,11 +386,11 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param obj: the object to be serialized, or updated by marshaling
         :param data: input data to be used for marshaling
         :param raw: the mapper will instruct fields to populate themselves
-            using __duner__ field names where required.
+            using __dunder__ field names where required.
         :param partial: allow pipelines to pull data from an existing source
             or fall back to standard checks.
-        :param parent: The parent of this Mapper.  Set when a Mapper is being used
-            as a nested field.
+        :param parent: The parent of this Mapper.  Set internally when a Mapper
+            is being used as a nested field.
 
         :raises: :class:`MapperError`
         :returns: None
@@ -575,7 +576,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return self._remove_none(output)
 
     def get_mapper_session(self, data, output):
-        """populate and return a new instance of :class:`MapperSession`
+        """Polymorphicopulate and return a new instance of :class:`MapperSession`
 
         :param data: data being Mapped
         :param output: obj mapper is mapping too
@@ -739,7 +740,7 @@ class PolymorphicMapper(Mapper):
 
 
 class MapperIterator(object):
-    """Provides a symetric interface for Mapping many objects in one batch.
+    """Provides a symmetric interface for Mapping many objects in one batch.
 
     A simple example would be seriaizing a list of User objects from a database
     query or other source.
@@ -770,7 +771,7 @@ class MapperIterator(object):
         self.mapper_params = mapper_params
 
     def get_mapper(self, data=None, obj=None):
-        """return a new instance of the provided mapper.
+        """Return a new instance of the provided mapper.
 
         :param data: provide the new mapper with data when marshaling
         :param obj: provide the new mapper with data when serializing

@@ -25,21 +25,20 @@ def marshal_nested(session):
     There are 6 possible scenarios, depending on the security setters and
     presence of a getter function
 
-    Getter function returns an object and no updates are allowed.
-    Return the object immediately
-    Getter function returns an object and updates are allowed.
-    Call the nested mapper with the object to update it
-    Object already exists, getter function returns None/does not exist and
-    in place updates are allowed.
-    Call the nested mapper with the existing object to update it
-    Getter function returns None/does not exist and creation of new objects
-    is allowed
-    Call the nested mapper to create a new object
-    Getter function returns None/does not exist and creation of new objects
-    is not allowed, nor are in place updates. Raise an exception.
-    Object already exists, getter function returns None/does not exist and
-    partial updates are allowed.
-    Call the nested mapper with the existing object to update it
+    * Getter function returns an object and no updates are allowed - Return the
+      object immediately
+    * Getter function returns an object and updates are allowed - Call the
+      nested mapper with the object to update it
+    * Object already exists, getter function returns None/does not exist and
+      in place updates are allowed - Call the nested mapper with the existing
+      object to update it
+    * Getter function returns None/does not exist and creation of new objects
+      is allowed - Call the nested mapper to create a new object
+    * Getter function returns None/does not exist and creation of new objects
+      is not allowed, nor are in place updates - Raise an exception.
+    * Object already exists, getter function returns None/does not exist and
+      partial updates are allowed - Call the nested mapper with the existing object
+      to update it
 
     :param session: Kim pipeline session instance
     """

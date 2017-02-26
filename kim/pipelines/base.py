@@ -57,7 +57,7 @@ class Session(object):
 
 
 def pipe(**pipe_kwargs):
-    """pipe decorator is provided as a convenience method for creating Pipe
+    """Pipe decorator is provided as a convenience method for creating Pipe
     objects
     """
 
@@ -89,12 +89,12 @@ def _decorate_pipe(fn, fields, pipe_type, pipeline_type, **pipe_opts):
 class Pipeline(object):
     """Pipelines provide a simple, extensible way of processing data.  Each
     pipeline provides 4 input groups, ``input_pipes``, ``validation_pipes``,
-    ``process_pipes`` and ``output_pipes``, each containing `pipe` function
+    ``process_pipes`` and ``output_pipes``, each containing `pipe` functions
     that are called in order passing data from one pipe to another.
 
-    The idea here is to almost act like pipes in unix,
-    where each pipe in the chain has a single role in handling data
-    before passing it on to the next pipe in the chain.
+    Kim pipes are similar to unix pipes, where each pipe in the chain has a
+    single role in handling data before passing it on to the next pipe in the
+    chain.
 
     Pipelines are typically ignorant to whether they
     are marhsaling data or serializing data, they simply take data in one end,
@@ -115,7 +115,7 @@ class Pipeline(object):
         self.mapper_session = mapper_session
 
     def run(self, **opts):
-        """ Iterate over all of the defined 'pipes' for this pipeline.
+        """ Iterate over all of the defined ``pipes`` for this pipeline.
 
         """
         parent = opts.get('parent_session', None)
@@ -139,7 +139,7 @@ class Pipeline(object):
 
 @pipe(run_if_none=True)
 def get_data_from_name(session):
-    """extracts a specific key from data using field.name.  This pipe is
+    """Extracts a specific key from data using ``field.name``.  This pipe is
     typically used as the entry point to a chain of input pipes.
 
     :param session: Kim pipeline session instance
@@ -171,7 +171,7 @@ def get_data_from_name(session):
 
 @pipe()
 def get_data_from_source(session):
-    """extracts a specific key from data using field.source.  This pipe is
+    """Extracts a specific key from data using ``field.source``.  This pipe is
     typically used as the entry point to a chain of output pipes.
 
     :param session: Kim pipeline session instance
@@ -235,7 +235,7 @@ def is_valid_choice(session):
 
 @pipe(run_if_none=True)
 def update_output_to_name(session):
-    """Store ``data`` at field.name for a ``field`` inside
+    """Store ``data`` at ``field.name`` for a ``field`` inside
     of ``output``
 
     :param session: Kim pipeline session instance

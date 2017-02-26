@@ -29,7 +29,7 @@ marshaling and serialization requirements.
 
 - Web framework agnostic - Flask, Django, Framework-XXX supported!
 - Highly customisable field processing system
-- Security focussed
+- Security focused
 - Control included fields with powerful roles system
 - Handle mixed data types with polymorphic mappers
 - Marshal and Serialize nested objects
@@ -41,7 +41,7 @@ The User Guide
 --------------
 
 Learn all of Kim's features with these simple step-by-step instructions or check out the
-quickstart guidde for a rapid overview to get you going.
+quickstart guide for a rapid overview to get going quickly.
 
 .. toctree::
    :maxdepth: 2
@@ -59,7 +59,7 @@ quickstart guidde for a rapid overview to get you going.
 The API Documentation / Guide
 -----------------------------
 
-Detailed class and method documentation!
+Detailed class and method documentation
 
 .. toctree::
    :maxdepth: 3
