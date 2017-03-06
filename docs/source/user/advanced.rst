@@ -13,34 +13,30 @@ or if this is your first time using Kim, please check out the :ref:`quickstart g
 Mappers
 -----------
 
-Mappers are the building blocks of kim - They
-define how JSON output should look and how inpit JSON should be expected to look.
-
-Mappers consist of Fields. Fields define the shape and nature of the data
-both when being serialised(output) and marshaled(input).
-
-
-.. _mappers_advanced_defining:
-
-Defining Mappers
-^^^^^^^^^^^^^^^^^^^
-
-TODO
-
 .. _mappers_advanced_polymorphic:
 
 Polymorphic Mappers
 ^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+TODO (MW)
 
-.. _mappers_advanced_custom:
+.. _mappers_advanced_exceptions:
 
-Custom Mappers
-^^^^^^^^^^^^^^^^
+Exception Handling
+^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+TODO (MW)
 
+.. _roles_advanced:
+
+Roles
+-----------
+
+- combining roles
+- default roles
+- role inheritence
+
+TODO (MW)
 
 .. _fields_advanced:
 
@@ -51,55 +47,39 @@ Fields
 - __self__
 - differnt input/output names
 
-TODO
+TODO (JS)
 
 .. _fields_nested:
 
 Nested
 ^^^^^^^^^^^^^^^^^^
 
-TODO
+TODO (JS)
+
+- allow_updates etc
 
 .. _fields_collection:
 
 Collections
 ^^^^^^^^^^^^^^^^^^
 
-TODO
-
-
-.. _serialization_advanced:
-
-Serialization
------------------
-
-Serialization is the process of outputting data from your Mappers.  It takes things like your database objects and turns them into
-data structures that are suitable for converting to JSON.
-
-
-.. _marshaling_advanced:
-
-Marshaling Advanced
-----------------------
-
-TODO
+TODO (JS)
 
 
 Pipelines
 -----------------------
 
-.. _custom_serialization_pipelines:
+.. _pipelines_extra_marshal_pipes:
 
-Custom Serialization Pipelines
+extra_marshal_pipes
+^^^^^^^^^^^^^^^^^^
+
+TODO (JS)
+
+.. _custom_pipelines:
+
+Custom Pipelines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
-
-
-.. _custom_marshaling_pipelines:
-
-Custom Marshaling Pipelines
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
+TODO (JS)
 
