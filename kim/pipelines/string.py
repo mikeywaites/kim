@@ -17,7 +17,6 @@ def is_valid_string(session):
     """Pipe used to determine if a value can be coerced to a string
 
     :param session: Kim pipeline session instance
-
     """
 
     try:
@@ -28,10 +27,22 @@ def is_valid_string(session):
 
 
 class StringMarshalPipeline(MarshalPipeline):
+    """StringMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.base.is_valid_choice`
+        :func:`kim.pipelines.string.is_valid_string`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = \
         [is_valid_string, is_valid_choice] + MarshalPipeline.validation_pipes
 
 
 class StringSerializePipeline(SerializePipeline):
+    """StringSerializePipeline
+
+    .. seealso::
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
     pass

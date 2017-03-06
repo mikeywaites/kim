@@ -50,12 +50,25 @@ def bounds_check(session):
 
 
 class IntegerMarshalPipeline(MarshalPipeline):
+    """IntegerMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.is_valid_integer`
+        :func:`kim.pipelines.base.is_valid_choice`
+        :func:`kim.pipelines.numeric.bounds_check`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = \
         [is_valid_integer, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
 
 
 class IntegerSerializePipeline(SerializePipeline):
+    """IntegerSerializePipeline
+
+    .. seealso::
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
     pass
 
 
@@ -83,11 +96,19 @@ def coerce_to_decimal(session):
 
 
 class DecimalMarshalPipeline(MarshalPipeline):
+    """DecimalMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.is_valid_decimal`
+        :func:`kim.pipelines.numeric.coerce_to_decimal`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = [is_valid_decimal] + MarshalPipeline.validation_pipes
     process_pipes = [coerce_to_decimal] + MarshalPipeline.process_pipes
 
 
+# TODO(mike) This should probably move to base
 @pipe()
 def to_string(session):
     """coerce decimal value into str so it's valid for json
@@ -98,5 +119,12 @@ def to_string(session):
 
 
 class DecimalSerializePipeline(SerializePipeline):
+    """IntegerSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.coerce_to_decimal`
+        :func:`kim.pipelines.numeric.to_string`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [coerce_to_decimal, to_string] + SerializePipeline.process_pipes

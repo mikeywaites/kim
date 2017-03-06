@@ -38,12 +38,25 @@ def format_datetime(session):
 
 
 class DateTimeMarshalPipeline(MarshalPipeline):
+    """DateTimeMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.datetime.is_valid_datetime`
+        :func:`kim.pipelines.base.is_valid_choice`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = \
         [is_valid_datetime, is_valid_choice] + MarshalPipeline.validation_pipes
 
 
 class DateTimeSerializePipeline(SerializePipeline):
+    """DateTimeSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.datetime.format_datetime`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
     process_pipes = [format_datetime, ] + SerializePipeline.process_pipes
 
 
@@ -57,9 +70,20 @@ def cast_to_date(session):
 
 
 class DateMarshalPipeline(DateTimeMarshalPipeline):
+    """DateMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.datetime.cast_to_date`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     process_pipes = [cast_to_date, ] + MarshalPipeline.process_pipes
 
 
 class DateSerializePipeline(DateTimeSerializePipeline):
+    """DateSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.serialization.SerializePipeline`
+    """
     pass

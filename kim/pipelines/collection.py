@@ -90,9 +90,23 @@ def check_duplicates(session):
 
 
 class CollectionMarshalPipeline(MarshalPipeline):
+    """CollectionMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.collection.check_duplicates`
+        :func:`kim.pipelines.collection.marshal_collection`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
+
     input_pipes = MarshalPipeline.input_pipes + [check_duplicates, marshall_collection]
 
 
 class CollectionSerializePipeline(SerializePipeline):
+    """CollectionSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.collection.serialize_collection`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [serialize_collection, ] + SerializePipeline.process_pipes

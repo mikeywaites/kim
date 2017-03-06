@@ -80,13 +80,13 @@ def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
 
     :param session: Kim pipeline session instance
-
     """
 
     if session.data is None:
         session.data = session.field.opts.null_default
         return session.data
 
+    # Grab the Mapper defined for the nested field and call serialize()
     nested_mapper = session.field.get_mapper(obj=session.data)
     session.data = nested_mapper.serialize(role=session.field.opts.role)
 
@@ -94,10 +94,22 @@ def serialize_nested(session):
 
 
 class NestedMarshalPipeline(MarshalPipeline):
+    """NestedMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.nested.marshal_nested`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     output_pipes = [marshal_nested, ] + MarshalPipeline.output_pipes
 
 
 class NestedSerializePipeline(SerializePipeline):
+    """NestedSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.nested.serialize_nested`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [serialize_nested, ] + SerializePipeline.process_pipes

@@ -47,6 +47,10 @@ TODO
 Fields
 -----------
 
+*source options*
+- __self__
+- differnt input/output names
+
 TODO
 
 .. _fields_nested:

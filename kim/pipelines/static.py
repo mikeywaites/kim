@@ -20,5 +20,11 @@ def get_static_value(session):
 
 
 class StaticSerializePipeline(SerializePipeline):
+    """StaticSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.static.get_static_value`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [get_static_value, ] + SerializePipeline.process_pipes
