@@ -670,21 +670,83 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
 
 class PolymorphicMapper(Mapper):
-    """
+    """PolymorphicMappers build on the normal Mapper system to provide functionality for
+    serializing and marshaling collections of different objects with different data
+    structures.
+
+    Usage::
+
+        from kim import Mapper, field
+
+        class ActivityMapper(PolymorphicMapper):
+
+            __type__ = Activity
+
+            id = field.String()
+            name = field.String()
+            object_type = field.String(choices=['event', 'task'])
+            created_at = field.DateTime(read_only=True)
+
+            __mapper_args__ = {
+                'polymorphic_on': object_type,
+            }
+
+
+        class TaskMapper(ActivityMapper):
+
+            __type__ = Task
+
+            status = field.String(read_only=True)
+            is_complete = field.Boolean()
+
+            __mapper_args__ = {
+                'polymorphic_name': 'task'
+            }
+
+
+        class EventMapper(ActivityMapper):
+
+            __type__ = Event
+
+            location = field.String(read_only=True)
+
+            __mapper_args__ = {
+                'polymorphic_name': 'event'
+            }
     """
 
     @classmethod
     def is_polymorphic_base(cls):
+        """Return a boolean indicating if this cls is the base type in the class hierarchy
+
+        :returns: True if the class is the base type, otherwise False
+        :rtype: boolean
+        """
 
         return getattr(cls, '_polymorphic_base', False)
 
     @classmethod
     def _get_polymorphic_on(cls):
+        """Return the :class:`kim.field.Field` defined in
+        ``__mapper__args`` used for evaluating the type of the object.
+
+        :returns: A field used to decide an object's type.
+        :rtype: :class:`kim.field.Field``
+        """
 
         return cls._polymorphic_opts['polymorphic_on']
 
     def __new__(cls, data=None, obj=None, *args, **kwargs):
-        """
+        """Create an new instance of a Mapper using the polymorphic_on key defined in
+        __mapper__opts__.
+
+        :param data: datum being marshaled by the Mapper
+        :param obj: obj being serialized by the Mapper
+        :param args: Args passed to newly created Mapper
+        :param kwargs: Kwargs passed to newly created Mapper
+        :raises: :class:`kim.exception.FieldInvalid`
+        :returns: :class:`kim.mapper.Mapper` indentified by polymorphic_indentity
+        :rtype: :class:`kim.mapper.Mapper`
         """
 
         if (cls.is_polymorphic_base()
@@ -707,7 +769,14 @@ class PolymorphicMapper(Mapper):
 
     @classmethod
     def get_polymorphic_key(cls, obj=None, data=None):
-        """
+        """Return the value from obj when serializing or from data when marshaling
+        for the polymorphic_on key.
+
+        :param data: datum being marshaled by the Mapper
+        :param obj: obj being serialized by the Mapper
+        :returns: the polymorphic type name
+        :rtype: str
+        :raises: :class:`kim.exception.FieldInvalid` :class:`kim.exception.MappingInvalid`
         """
 
         field = cls._get_polymorphic_on()
@@ -729,7 +798,12 @@ class PolymorphicMapper(Mapper):
 
     @classmethod
     def get_polymorphic_identity(cls, key):
-        """
+        """Return the polymorphic mapper stored at ``key``.
+
+        :param key: The name of a polymoprhic indentity
+        :raises: :class:`kim.exception.MapperError`
+        :rtype: :class:`kim.mapper.Mapper`
+        :returns: the Mapper stored against key
         """
 
         try:
