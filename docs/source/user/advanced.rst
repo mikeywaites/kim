@@ -18,7 +18,7 @@ Mappers
 Polymorphic Mappers
 ^^^^^^^^^^^^^^^^^^^^^
 
-It's not uncommon to have collections of objects that are not all the same.  Perhaps you have a ``User`` and an ``AnonymousUser``.  Their serialization
+It's not uncommon to have collections of objects that are not all the same.  Perhaps you have an ``Activity`` type that has two sub types ``Task`` and ``Event``.  Their serialization
 requirements differ slightly meaning you'd typically serialize two lists and manually munge them together.
 
 Kim provides support for Polymorphic Mapper to solve this problem.
@@ -225,7 +225,7 @@ MapperA.  Equally, MapperB can define the role ``ab`` to override the fields ava
 Combining Roles
 ^^^^^^^^^^^^^^^^^^^^
 
-Under the hood :class:`kim.role.Role` is a set object.  This allows us to cobine roles in the ways that sets can be combined.
+Under the hood :class:`kim.role.Role` is a set object.  This allows us to combine roles in the ways that sets can be combined.
 This is useful when you have a role defined on a base type that you need to extend.
 
 When combining whitelist and blacklist roles the order is not important.  The blacklist always takes priority.  The following examples are equal.
