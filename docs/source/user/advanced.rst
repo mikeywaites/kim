@@ -138,13 +138,20 @@ fields are all sourced from company.
 .. note:: ``__self__`` can also be used to marshal nested objects into flat structures
 
 Marshaling Nested Fields
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Nested fields can be marshaled in a similar manner to serialising, but there are several security concerns you should take into account when using them. For security reasons, Kim's settings default to the most secure and must be overridden to use the full functionality.
+Nested fields can be marshaled in a similar manner to serializing, but there
+are several security concerns you should take into account when using them.
+Kim's settings default to the most secure and must be overridden to use the full
+functionality.
 
-.. note:: This section, and Kim's defaults, assume you are using nested fields to refer to foreign keys (or similar NoSQL relationships) on ORM objects. If you are not using Kim with an ORM, you probably want to enable the `allow_create` and `allow_updates_in_place` options for seamless operation.
+.. note:: This section, and Kim's defaults, assume you are using nested fields
+    to refer to foreign keys (or similar NoSQL relationships) on ORM objects. If you
+    are not using Kim with an ORM, you probably want to enable the ``allow_create``
+    and ``allow_updates_in_place`` options for seamless operation.
 
-In general, there are four things you may want to happen when marshaling a nested field. The following sections describe them, and the input data they expect.
+In general, there are four things you may want to happen when marshaling a nested
+field. The following sections describe them, and the input data they expect.
 
 For all examples, assume the Mapper looks like this:
 
@@ -161,7 +168,7 @@ For all examples, assume the Mapper looks like this:
 
 
 1. Retrieve by ID only (default)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++++++++
 
 .. code-block:: python
 
@@ -172,10 +179,15 @@ For all examples, assume the Mapper looks like this:
         # Any other data here will be ignored
      }}
 
-This is the most secure option and the most common thing you will want to do. This means that only the ID of the target object will be used, a ``getter`` function which you define will be used to retrieve the object with this ID from your database (taking into account security such as ensuring the user has access to the object), and the object returned from the ``getter`` function will be set on the target attribute.
+This is the most secure option and the most common thing you will want to do.
+This means that only the ID of the target object will be used, a ``getter``
+function which you define will be used to retrieve the object with this ID from
+your database (taking into account security such as ensuring the user has access
+to the object), and the object returned from the ``getter`` function will be set
+on the target attribute.
 
 2. ``allow_updates`` - Retrieve by ID, allowing updates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code-block:: python
 
@@ -186,7 +198,13 @@ This is the most secure option and the most common thing you will want to do. Th
         'name': 'New name',  # Will be set on the Company
      }}
 
-This option retrieves the related object via it's ID using a ``getter`` function as in scenario 1. However, any other fields passed along with the ID will be updated on the related object, according to the role passed. You are strongly encouraged to only use this option with a restrictive role, in order to avoid introducing security holes where users can change fields on objects they should not be able to do, (for example, change the ``user`` field on an object to change it's ownership).
+This option retrieves the related object via it's ID using a ``getter`` function
+as in scenario 1. However, any other fields passed along with the ID will be
+updated on the related object, according to the role passed. You are strongly
+encouraged to only use this option with a restrictive role, in order to avoid
+introducing security holes where users can change fields on objects they should
+not be able to do, (for example, change the ``user`` field on an object to
+change it's ownership).
 
 Use this option like this (``role`` is not required):
 
@@ -194,7 +212,7 @@ Use this option like this (``role`` is not required):
     company = field.Nested('CompanyMapper', allow_updates=True, role='restrictive_role')
 
 3. ``allow_create`` - Retrieve by ID, or create object if no ID passed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code-block:: python
 
@@ -213,11 +231,17 @@ Use this option like this (``role`` is not required):
       }}
 
 
-This option uses your ``getter`` function to look up the related object by ID, but if it is not found (ie. your getter function returns ``None``) then a new instance of the object will be created, using the fields passed according to the role.
+This option uses your ``getter`` function to look up the related object by ID,
+but if it is not found (ie. your getter function returns ``None``) then a new
+instance of the object will be created, using the fields passed according to the role.
 
-This option may be combined with ``allow_updates`` in order to provide an field which will accept an existing object, allow it to be updated and allow a new one to be created.
+This option may be combined with ``allow_updates`` in order to provide an field
+which will accept an existing object, allow it to be updated and allow a new one
+to be created.
 
-Once again, you should consider carefully the role you use with this option to avoid unexpected consequences (for example, it being possible to set the ``user`` field on an object to someone other than the logged-in user.)
+Once again, you should consider carefully the role you use with this option to
+avoid unexpected consequences (for example, it being possible to set the ``user``
+field on an object to someone other than the logged-in user.)
 
 Use this option like this (``role`` is not required):
 
@@ -225,7 +249,7 @@ Use this option like this (``role`` is not required):
     company = field.Nested('CompanyMapper', allow_create=True, role='restrictive_role')
 
 4. ``allow_updates_in_place`` - Do not use ID, update existing related object
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code-block:: python
 
@@ -237,7 +261,9 @@ Use this option like this (``role`` is not required):
         'name': 'New name',  # Will be updated on existing company
      }}
 
-In this scenario, no ID field is required and no ``getter`` function is used. Instead, the fields are simply updated on the existing value of ``user.company``, if it exists.
+In this scenario, no ID field is required and no ``getter`` function is used.
+Instead, the fields are simply updated on the existing value of ``user.company``,
+if it exists.
 
 
 .. _fields_collection:
@@ -323,7 +349,7 @@ When marshaling, Nested fields can be forced to be unique on a key to avoid dupl
     >>> mapper.marshal()
     MappingInvalid
 
-
+.. _pipelines:
 
 Pipelines
 -----------------------
@@ -362,11 +388,11 @@ grouped into four stages - input, validation, process and output.
 Custom Fields and Pipelines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To define a custom field, you need to create the Field class and it's corresponding
+To define a custom field, you need to create the Field class and its corresponding
 Pipline. It's usually easiest to inherit from an existing Field/Pipeline, rather
 than defining an entirely new one.
 
-This example defines a new field with a custom pipeline to convert it's output
+This example defines a new field with a custom pipeline to convert its output
 to uppercase:
 
 .. code-block:: python

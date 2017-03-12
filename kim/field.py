@@ -63,8 +63,11 @@ class FieldOpts(object):
 
         :param name: Specify the name of the field for data output
         :param required: This field must be present when marshaling
-        :param attribute_name: Specify an alternative attr name for data output
-        :param source: Specify the name of the attr to use when accessing data
+        :param attribute_name: Specify internal name for this field, set on
+            mapper.fields dict
+        :param source: Specify the name of the attribute on the object to use
+            when getting/setting data. May be ``__self__`` to use entire mapper
+            object as data
         :param default: Specify a default value for this field
         :param allow_none: Specify if this fields value can be None
         :param read_only: Specify if this field should be ignored when marshaling
@@ -72,6 +75,12 @@ class FieldOpts(object):
         :param null_default: Specify the default type to return when a field is
             null IE None or {} or ''
         :param choices: Specify a list of valid values
+        :param extra_serialize_pipes: dict of lists containing extra Pipe functions
+            to be run at the end of each stage when serializing.
+            eg ``{'output': [my_pipe, my_other_pipe]}```
+        :param extra_marshal_pipes: dict of lists containing extra Pipe functions
+            to be run at the end of each stage when marshaling.
+            eg ``{'validate': [my_pipe, my_other_pipe]}```
 
         :raises: :class:`.FieldOptsError`
         :returns: None
@@ -497,7 +506,6 @@ class NestedFieldOpts(FieldOpts):
             create a new instance.
         :param allow_partial_updates: Allow existing object to be updated using a subset
             of the fields defined on the Nested field.
-
         """
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
