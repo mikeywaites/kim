@@ -235,7 +235,7 @@ This option uses your ``getter`` function to look up the related object by ID,
 but if it is not found (ie. your getter function returns ``None``) then a new
 instance of the object will be created, using the fields passed according to the role.
 
-This option may be combined with ``allow_updates`` in order to provide an field
+This option may be combined with ``allow_updates`` in order to provide a field
 which will accept an existing object, allow it to be updated and allow a new one
 to be created.
 
@@ -432,7 +432,7 @@ also provides access to the field, the current output object, the parent field
 .. _pipelines_extra_marshal_pipes:
 
 Custom Validation - extra_marshal_pipes
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you just want to change the pipeline used by a particular instance of a Field
 on a Mapper, for example to add custom validation logic, you don't need to
