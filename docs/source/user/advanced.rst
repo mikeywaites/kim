@@ -419,6 +419,8 @@ to uppercase:
 
         name = UpperCaseString()
 
+.. note:: This is a contrived example, for simple transforms like this see ``extra_marshal_pipelines`` below
+
 Note that we have only overridden the ``process_pipes`` stage of StringSerializePipeline.
 Everything else remains the same. We have extended the ``process_pipes`` list
 from the parent object in order to retain it's functionality, and just added
