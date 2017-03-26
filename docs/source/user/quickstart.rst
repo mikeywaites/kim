@@ -29,8 +29,7 @@ like object.
 
 .. code-block:: python
 
-	from kim import Mapper
-	from kim import field
+	from kim import Mapper, field
 
 	class CompanyMapper(Mapper):
 		__type__ = Company
@@ -123,7 +122,7 @@ raised when marshaling.
 
 .. code-block:: python
 
-	from kim.exception import MappingInvalid
+	from kim import MappingInvalid
 
 	data = {'name': 'Tony Stark'}
 	mapper = UserMapper(data=data)
@@ -264,8 +263,7 @@ To define roles on your mapper use the ``__roles__`` property.
 
 .. code-block:: python
 
-	from kim import Mapper
-	from kim import field, role
+	from kim import Mapper, field, whitelist, blacklist
 
 	class CompanyMapper(Mapper):
 		__type__ = Company
@@ -279,8 +277,8 @@ To define roles on your mapper use the ``__roles__`` property.
 		company = field.Nested(CompanyMapper, read_only=True)
 
         __roles__ = {
-            'id_only': role.whitelist('id'),
-            'public': role.blackist('id')
+            'id_only': whitelist('id'),
+            'public': blackist('id')
         }
 
 We've defined two roles on our UserMapper.  These roles can now be used when

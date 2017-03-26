@@ -28,8 +28,7 @@ all of our Polymorphic types extend from.  Our base type should inherit from :cl
 
 .. code-block:: python
 
-    from kim.mapper import PolymorphicMapper
-    from kim import field
+    from kim import PolymorphicMapper, field
 
     class ActivityMapper(PolymorphicMapper):
 
@@ -170,7 +169,7 @@ You should typically only worry about handling the :class:`kim.exception.Mapping
 
 .. code-block:: python
 
-    from kim.exception import MappingInvalid
+    from kim import MappingInvalid
 
     try:
         data = mapper.marshal()
