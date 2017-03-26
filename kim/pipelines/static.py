@@ -11,6 +11,8 @@ from .serialization import SerializePipeline
 
 @pipe(run_if_none=True)
 def get_static_value(session):
+    """return the static value specified in FieldOpts
+    """
 
     session.data = session.field.opts.value
 
@@ -18,5 +20,11 @@ def get_static_value(session):
 
 
 class StaticSerializePipeline(SerializePipeline):
+    """StaticSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.static.get_static_value`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [get_static_value, ] + SerializePipeline.process_pipes

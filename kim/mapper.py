@@ -28,8 +28,14 @@ def get_mapper_from_registry(mapper_or_name):
     """Serarch for a defined mapper by name inside of the mapper registry.
 
     User may pass either a mapper class object or the name of a defined mapper
-    as a str:
+    as a str
 
+    :param mapper_or_name: a mapper class or name of a mapper
+    :raises: :class:`MapperError`
+    :return: :class:`Mapper <Mapper>` class
+    :rtype: :class:`Mapper`
+
+    Usage::
         >>>mapper = get_mapper_from_registry('UserMapper')
         >>>mapper
         UserMapper
@@ -37,12 +43,6 @@ def get_mapper_from_registry(mapper_or_name):
         mapper = get_mapper_from_registry(UserMapper)
         >>>mapper
         UserMapper
-
-    :param mapper_or_name: a mapper class or name of a mapper
-
-    :raises: MapperError
-    :rtype: :py:class:`.Mapper`
-    :returns: A Mapper class
     """
 
     from .mapper import Mapper, mapper_is_defined, _MapperConfig
@@ -67,9 +67,9 @@ def add_class_to_registry(classname, cls):
 
     :param classname: the name of the class used as the key inside the registry
     :param cls: the class being stored
-
-    :raises :class:`kim.exception.MapperError`
-    :returns: None
+    :raises :class:`MapperError`
+    :return: None
+    :rtype: None
     """
 
     if classname in _MapperConfig.MAPPER_REGISTRY:
@@ -79,6 +79,7 @@ def add_class_to_registry(classname, cls):
         _MapperConfig.MAPPER_REGISTRY[classname] = cls
 
 
+# TODO(mike) __docs__
 class _MapperConfig(object):
 
     MAPPER_REGISTRY = weakref.WeakValueDictionary()
@@ -296,6 +297,7 @@ class _MapperConfig(object):
         cls.roles = _roles
 
 
+# TODO(mike) __docs__
 class MapperMeta(type):
 
     def __init__(cls, classname, bases, dict_):
@@ -304,8 +306,23 @@ class MapperMeta(type):
 
 
 class MapperSession(object):
+    """Object that represents the state of a :class:`Mapper` during the execution of
+    marshaling and serialization :class:`Pipeline`.
+    """
 
     def __init__(self, mapper, data, output, partial=None):
+        """Instantiate a new instance of :class:`MapperSession`
+
+        :param mapper: :class:`Mapper <Mapper>` instance.
+        :param data: The data marshaled by the :class:`Mapper`
+        :param output: The object the :class:`Mapper` is outputting  to.
+        :return: None
+        :rtype: None
+
+        .. seealso::
+            get_mapper_session method :func:`~Mapper.get_mapper_session`
+
+        """
 
         self.mapper = mapper
         self.data = data
@@ -320,11 +337,13 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
     Mappers consist of Fields. Fields define the shape and nature of the data
     both when being serialised(output) and marshaled(input).
 
-    Mappers must define a __type__. This is the type that will be
-    instantiated if a new object is marshaled through the mapper. __type__
-    maybe be any object that supports setter and getter functionality.
+    Mappers must define a ``__type__``. This is the type that will be
+    instantiated if a new object is marshaled through the mapper. ``__type__``
+    may be be any object that supports ``getattr`` and ``setattr``, or any dict
+    like object.
 
-    .. code-block:: python
+    Usage::
+
         from kim import Mapper, field
 
         class UserMapper(Mapper):
@@ -336,15 +355,25 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
     """
 
+    #: The python type this Mapper will marshal to.
     __type__ = None
+    "The python type this Mapper will marshal to."
+
+    #: dictionary containing the role definitions for this mapper.
     __roles__ = {}
 
     @classmethod
     def many(cls, **mapper_params):
-        """Provide access to a :class:`.MapperIterator` to allow multiple
+        """Provide access to a :class:`MapperIterator` to allow multiple
         items to be mapped by a mapper.
 
-        :returns: an instance of :class`.MapperIterator`
+        :param mapper_params: dict of params passed to each new instance of the mapper.
+        :return: :class:`MapperIterator <MapperIterator>` object
+        :rtype: :class:`MapperIterator`
+
+        Usage::
+
+            >>> mapper = Mapper.many(data=data).marshal()
         """
 
         return MapperIterator(cls, **mapper_params)
@@ -358,13 +387,15 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param obj: the object to be serialized, or updated by marshaling
         :param data: input data to be used for marshaling
         :param raw: the mapper will instruct fields to populate themselves
-            using __duner__ field names where required.
+            using __dunder__ field names where required.
         :param partial: allow pipelines to pull data from an existing source
             or fall back to standard checks.
+        :param parent: The parent of this Mapper.  Set internally when a Mapper
+            is being used as a nested field.
 
-
-        :raises: :class:`.MapperError`
+        :raises: :class:`MapperError`
         :returns: None
+        :rtype: None
         """
 
         if obj is None and data is None:
@@ -385,10 +416,10 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return getattr(self, '_initial_errors', None)
 
     def _get_mapper_type(self):
-        """Return the spefified type for this Mapper.  If no ``__type__`` is
-        defined a :class:`.MapperError` is raised
+        """Return the specified type for this Mapper.  If no ``__type__`` is
+        defined a :class:`MapperError` is raised
 
-        :raises: :class:`.MapperError`
+        :raises: :class:`MapperError`
         :returns: The specified ``__type__`` for the mapper.
         """
 
@@ -435,9 +466,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param deferred_role: provide a role containing fields to dynamically change the
             permitted fields for the role specified in ``name_or_role``
         :param name_or_role: role name as a string or a Role instance
-
-        :raises: :class:`.MapperError`
+        :raises: :class:`MapperError`
         :returns: Role instance
+        :rtype: :class:`Role <Role>`
         """
         if isinstance(name_or_role, six.string_types):
             try:
@@ -462,20 +493,30 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             return role
 
     def _field_in_data(self, field):
+        """Validate if a field.name appears in the provided data
+
+        :param field: :class:`Field` instance
+        :returns: Boolean
+        :rtype: boolean
+        """
         for key in self.data.keys():
             if key == field.name:
                 return True
         return False
 
     def _get_fields(self, name_or_role, deferred_role=None, for_marshal=False):
-        """Returns a list of :class:`.Field` instances providing they are
+        """Returns a list of :class:`Field` instances providing they are
         registered in the specified :class:`Role`.
 
-        If the provided role_name is not found in the Mappers role list an
+        If the provided name_or_role is not found in the Mappers role list an
         error will be raised.
 
-        :raises: MapperError
-        :returns: list of :class:`.Field`
+        :param deferred_role: an instance of role used to dynamically a new role.
+        :param name_or_role: the name of a role as a string or a :class:`Role` instance.
+        :param for_marshal: Indicate that the mapper is marshaling data.
+        :raises: :class:`MapperError`
+        :returns: list of :class:`Field <Field>` instances
+        :rtype: list
         """
 
         role = self._get_role(name_or_role, deferred_role=deferred_role)
@@ -495,7 +536,8 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         based iteration
 
         :param data: the data object being used for iteration
-
+        :returns: Boolean
+        :rtype: boolean
         """
 
         return getattr(data, 'keys', False) is not False
@@ -508,7 +550,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         the `raw=True` option is used.
 
         :param output: the data being evaulated
-
+        :returns: If all values are none, None will be returned.  Otherwise ``output``
+            will be returned with the ``None`` values removed.
+        :rtype: mixed
         """
         all_none = True
         for k, v in six.iteritems(output):
@@ -523,29 +567,28 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             return output
 
     def transform_data(self, data):
-        """ Transform flat data from a KeyedTuple with keys in the form:
-                [
-                 'id',
-                    'name',
-                    'contact_details__phone',
-                    'contact_details__address__postcode'
-                    ]
-                    Into:
-                    {
-                        'id': x,
-                        'name': x,
-                        'contact_details': {
-                            'phone': x,
-                            'address': {
-                                'postcode': x
-                            }
-                        }
+        """Transform a flat list of key names into a nested data structure by inflating
+        dunder_score key name into objects.
+
+        :param data: The object or data being transformed
+        :returns: transformed data
+        :rtype: dict
+
+        Usage::
+
+            >>> data = ['id', 'name', 'contact_details__phone',
+                        'contact_details__address__postcode']
+            >>> mapper.transform_data(data)
+            {
+                'id': x,
+                'name': x,
+                'contact_details': {
+                    'phone': x,
+                    'address': {
+                        'postcode': x
                     }
-                ]
-
-            :param data: The object or data being transformed
-
-            :returns: transformed data
+                }
+            }
 
         """
         if not self._data_supports_transform(data):
@@ -567,10 +610,12 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         return self._remove_none(output)
 
     def get_mapper_session(self, data, output):
-        """populate and return a new instance of :class:``MapperSession``
+        """Populate and return a new instance of :class:`MapperSession`
 
         :param data: data being Mapped
         :param output: obj mapper is mapping too
+        :return: :class:`MapperSession <MapperSession>` object
+        :rtype: :class:`MapperSession` object
         """
 
         return MapperSession(self, data, output, partial=self.partial)
@@ -582,9 +627,16 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :param role: specify the role to use when serializing this mapper
         :param raw: instruct the mapper to transform the data before serializing.
             This option overrides the Mapper.raw setting.
-
-        :raises: FieldInalid, MapperError
+        :raises: :class:`FieldInvalid` :class:`MapperError`
         :returns: dict containing serialized object
+        :rtype: mixed
+
+        Usage::
+            >>> mapper = UserMapper(obj=user)
+            >>> mapper.serialize(role='public')
+
+        .. seealso::
+            :func:`~Mapper.transform_data`
         """
 
         output = {}  # Should this be user definable?
@@ -652,21 +704,83 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
 
 class PolymorphicMapper(Mapper):
-    """
+    """PolymorphicMappers build on the normal Mapper system to provide functionality for
+    serializing and marshaling collections of different objects with different data
+    structures.
+
+    Usage::
+
+        from kim import Mapper, field
+
+        class ActivityMapper(PolymorphicMapper):
+
+            __type__ = Activity
+
+            id = field.String()
+            name = field.String()
+            object_type = field.String(choices=['event', 'task'])
+            created_at = field.DateTime(read_only=True)
+
+            __mapper_args__ = {
+                'polymorphic_on': object_type,
+            }
+
+
+        class TaskMapper(ActivityMapper):
+
+            __type__ = Task
+
+            status = field.String(read_only=True)
+            is_complete = field.Boolean()
+
+            __mapper_args__ = {
+                'polymorphic_name': 'task'
+            }
+
+
+        class EventMapper(ActivityMapper):
+
+            __type__ = Event
+
+            location = field.String(read_only=True)
+
+            __mapper_args__ = {
+                'polymorphic_name': 'event'
+            }
     """
 
     @classmethod
     def is_polymorphic_base(cls):
+        """Return a boolean indicating if this cls is the base type in the class hierarchy
+
+        :returns: True if the class is the base type, otherwise False
+        :rtype: boolean
+        """
 
         return getattr(cls, '_polymorphic_base', False)
 
     @classmethod
     def _get_polymorphic_on(cls):
+        """Return the :class:`kim.field.Field` defined in
+        ``__mapper__args`` used for evaluating the type of the object.
+
+        :returns: A field used to decide an object's type.
+        :rtype: :class:`kim.field.Field``
+        """
 
         return cls._polymorphic_opts['polymorphic_on']
 
     def __new__(cls, data=None, obj=None, *args, **kwargs):
-        """
+        """Create an new instance of a Mapper using the polymorphic_on key defined in
+        __mapper__opts__.
+
+        :param data: datum being marshaled by the Mapper
+        :param obj: obj being serialized by the Mapper
+        :param args: Args passed to newly created Mapper
+        :param kwargs: Kwargs passed to newly created Mapper
+        :raises: :class:`kim.exception.FieldInvalid`
+        :returns: :class:`kim.mapper.Mapper` indentified by polymorphic_indentity
+        :rtype: :class:`kim.mapper.Mapper`
         """
 
         if (cls.is_polymorphic_base()
@@ -689,7 +803,14 @@ class PolymorphicMapper(Mapper):
 
     @classmethod
     def get_polymorphic_key(cls, obj=None, data=None):
-        """
+        """Return the value from obj when serializing or from data when marshaling
+        for the polymorphic_on key.
+
+        :param data: datum being marshaled by the Mapper
+        :param obj: obj being serialized by the Mapper
+        :returns: the polymorphic type name
+        :rtype: str
+        :raises: :class:`kim.exception.FieldInvalid` :class:`kim.exception.MappingInvalid`
         """
 
         field = cls._get_polymorphic_on()
@@ -711,7 +832,12 @@ class PolymorphicMapper(Mapper):
 
     @classmethod
     def get_polymorphic_identity(cls, key):
-        """
+        """Return the polymorphic mapper stored at ``key``.
+
+        :param key: The name of a polymoprhic indentity
+        :raises: :class:`kim.exception.MapperError`
+        :rtype: :class:`kim.mapper.Mapper`
+        :returns: the Mapper stored against key
         """
 
         try:
@@ -722,12 +848,13 @@ class PolymorphicMapper(Mapper):
 
 
 class MapperIterator(object):
-    """Provides a symetric interface for Mapping many objects in one batch.
+    """Provides a symmetric interface for Mapping many objects in one batch.
 
     A simple example would be seriaizing a list of User objects from a database
     query or other source.
 
-    .. code-block:: python
+    Usage::
+
         from kim import Mapper, field
 
         class UserMapper(Mapper):
@@ -752,7 +879,7 @@ class MapperIterator(object):
         self.mapper_params = mapper_params
 
     def get_mapper(self, data=None, obj=None):
-        """return a new instance of the provided mapper.
+        """Return a new instance of the provided mapper.
 
         :param data: provide the new mapper with data when marshaling
         :param obj: provide the new mapper with data when serializing

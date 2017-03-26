@@ -40,11 +40,49 @@ class Session(object):
     """Pipeline session objects acts as store for the state passed between
     one pipe method to another.
 
+    Everytime a :class:`kim.field.Field` is marshaled or serialized a session object
+    is created for each field that persists across every pipe inside of the fields
+    MarsahlingPipeline or SerializationPipeline.
+
+    Each pipe in a pipeline is able to work with the data set by the previous pipe using
+    the session object.
+
+    Example::
+
+        from kim.pipelines.base import pipe
+
+        @pipe()
+        def odds_evens(session):
+
+            if session.data is not None:
+                if session.data % 2:
+                    session.data = 'evens'
+                else:
+                    session.data = 'odds'
+
+    In the example above our pipe changes the data of our pipeline based on the current
+    value of session.data.
+
+    As well as providing the interface to the data in a fields pipeline, the Session
+    object also provides pipes with access to the overal state of that marshaling or
+    serialization pipeline.
     """
 
     def __init__(self, field=None, data=None, output=None,
                  parent=None, mapper_session=None):
+        """Construct a new session.
 
+        :param field: an instance of :class:`kim.field.Field` the scope of this session
+            is bound too.
+        :param data: data that has been passed along the pipeline field marshaling or
+            serialization session.
+        :param output: An object that contains the output of this fields marshaling
+            or serialization session.
+        :param parent:  If this is a wrapped field, then the parent kwarg will be a
+            referrence to the instance of the field wrapping field.
+        :param mapper_session: The overal mapper marshaling or serialization session
+            this field session belongs to.
+        """
         self.field = field
         self.data = data
         self.output = output
@@ -53,12 +91,32 @@ class Session(object):
 
     @property
     def mapper(self):
+        """Return the :class:`kim.mapper.Mapper` bound to the scope of this Session.
+
+        :returns: The :class:`kim.mapper.Mapper` bound to this Session.
+        :rtype: :class:`kim.mapper.Mapper`
+        """
         return self.mapper_session.mapper
 
 
 def pipe(**pipe_kwargs):
-    """pipe decorator is provided as a convenience method for creating Pipe
-    objects
+    """Pipe decorator is provided as a convenience method for creating Pipe
+    objects.
+
+    :param run_if_none: Specify wether the pipe function should be called if session.data
+        is None.
+
+    Usage::
+
+        from kim.pipelines.base import pipe
+
+        @pipe(run_if_none=True)
+        def my_pipe(session):
+
+            do_stuff(session)
+
+    .. seealso::
+        :class:`kim.pipelines.base.Pipe`
     """
 
     def pipe_decorator(pipe_func):
@@ -73,6 +131,8 @@ def pipe(**pipe_kwargs):
     return pipe_decorator
 
 
+#TODO(mike) Let's remove this functionality.  The decoarted @validates() methods
+# Didn't work as well as planned.
 def _decorate_pipe(fn, fields, pipe_type, pipeline_type, **pipe_opts):
 
     fn.__mapper_field_hook = pipe_type
@@ -87,14 +147,15 @@ def _decorate_pipe(fn, fields, pipe_type, pipeline_type, **pipe_opts):
 
 
 class Pipeline(object):
-    """Pipelines provide a simple, extensible way of processing data.  Each
-    pipeline provides 4 input groups, ``input_pipes``, ``validation_pipes``,
-    ``process_pipes`` and ``output_pipes``, each containing `pipe` function
-    that are called in order passing data from one pipe to another.
+    """Pipelines provide a simple, extensible way of processing data for
+    a :class:`kim.field.Field`.  Each pipeline provides 4 input groups,
+    ``input_pipes``, ``validation_pipes``, ``process_pipes`` and ``output_pipes``.
+    Each containing `pipe` functions that are called in order
+    passing data from one pipe to another.
 
-    The idea here is to almost act like pipes in unix,
-    where each pipe in the chain has a single role in handling data
-    before passing it on to the next pipe in the chain.
+    Kim pipes are similar to unix pipes, where each pipe in the chain has a
+    single role in handling data before passing it on to the next pipe in the
+    chain.
 
     Pipelines are typically ignorant to whether they
     are marhsaling data or serializing data, they simply take data in one end,
@@ -102,6 +163,16 @@ class Pipeline(object):
     that's been populated from the database, and produce an output
     at the other.
 
+    Usage::
+
+        from kim.pipelines.base import Pipeline
+
+        class StringIntPipeline(Pipeline):
+
+            input_pipes = [get_data_from_json]
+            validation_pipes = [is_numeric_string]
+            process_pipes [cast_to_int]
+            output_pipes = [update_output]
     """
 
     input_pipes = []
@@ -110,13 +181,22 @@ class Pipeline(object):
     output_pipes = []
 
     def __init__(self, mapper_session, field):
+        """Construct a new Pipeline for a :class:`kim.field.Field`.
+
+        :param field: An instance of :class:`kim.field.Field` being processed.
+        :param mapper_session: The mapper_session scope this field is being processed in.
+        """
 
         self.field = field
         self.mapper_session = mapper_session
 
     def run(self, **opts):
-        """ Iterate over all of the defined 'pipes' for this pipeline.
+        """ Iterate over all of the defined ``pipes`` for this pipeline.
 
+        :param parent_session: The field being processed by this Pipeline is wrapped,
+            parent_session will be passed and set on the fields session.
+        :returns: Returns the output of the pipelines session.
+        :rtype: mixed
         """
         parent = opts.get('parent_session', None)
 
@@ -125,10 +205,13 @@ class Pipeline(object):
             mapper_session=self.mapper_session,
             parent=parent)
 
+        # chain all the pipelines pipes together and process them until the all the
+        # pipe groups have been exhausted or until
+        # :class:`kim.exception.StopPipelineExecution` is raised.
         try:
-
             for pipe in chain(self.input_pipes, self.validation_pipes,
                               self.process_pipes, self.output_pipes):
+                # TODO(mike)don't call each item pipe in this loop, it's confusing.
                 pipe(session)
 
             return session.output
@@ -139,7 +222,7 @@ class Pipeline(object):
 
 @pipe(run_if_none=True)
 def get_data_from_name(session):
-    """extracts a specific key from data using field.name.  This pipe is
+    """Extracts a specific key from data using ``field.name``.  This pipe is
     typically used as the entry point to a chain of input pipes.
 
     :param session: Kim pipeline session instance
@@ -171,7 +254,7 @@ def get_data_from_name(session):
 
 @pipe()
 def get_data_from_source(session):
-    """extracts a specific key from data using field.source.  This pipe is
+    """Extracts a specific key from data using ``field.source``.  This pipe is
     typically used as the entry point to a chain of output pipes.
 
     :param session: Kim pipeline session instance
@@ -235,7 +318,7 @@ def is_valid_choice(session):
 
 @pipe(run_if_none=True)
 def update_output_to_name(session):
-    """Store ``data`` at field.name for a ``field`` inside
+    """Store ``data`` at ``field.name`` for a ``field`` inside
     of ``output``
 
     :param session: Kim pipeline session instance

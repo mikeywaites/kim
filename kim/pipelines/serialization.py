@@ -48,6 +48,15 @@ def serialize_extra_outputs(session):
 
 
 class SerializePipeline(Pipeline):
+    """SerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.base.get_data_from_name`
+        :func:`kim.pipelines.serialization.serialize_extra_inputs`
+        :func:`kim.pipelines.serialization.serialize_extra_processors`
+        :func:`kim.pipelines.base.update_output_to_name`
+        :func:`kim.pipelines.serialization.serialize_extra_outputs`
+    """
 
     input_pipes = [get_data_from_source, serialize_extra_inputs]
     validation_pipes = []

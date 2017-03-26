@@ -7,6 +7,7 @@
 
 
 class KimException(Exception):
+    """Base Exception for all Kim exception types."""
 
     def __init__(self, message, *args, **kwargs):
 
@@ -15,6 +16,7 @@ class KimException(Exception):
 
 
 class MapperError(KimException):
+    """MapperError is raised from a mapper that was unable to instantiate correctly."""
     pass
 
 

@@ -14,7 +14,7 @@ from .serialization import SerializePipeline
 
 @pipe()
 def is_valid_integer(session):
-    """pipe used to determine if a value can be coerced to an int
+    """Pipe used to determine if a value can be coerced to an int
 
     :param session: Kim pipeline session instance
 
@@ -31,7 +31,8 @@ def is_valid_integer(session):
 
 @pipe()
 def bounds_check(session):
-    """pipe used to determine if a value can be coerced to an int
+    """Pipe used to determine if a value is within the min and max bounds on
+    the field
 
     :param session: Kim pipeline session instance
 
@@ -49,18 +50,31 @@ def bounds_check(session):
 
 
 class IntegerMarshalPipeline(MarshalPipeline):
+    """IntegerMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.is_valid_integer`
+        :func:`kim.pipelines.base.is_valid_choice`
+        :func:`kim.pipelines.numeric.bounds_check`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = \
         [is_valid_integer, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
 
 
 class IntegerSerializePipeline(SerializePipeline):
+    """IntegerSerializePipeline
+
+    .. seealso::
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
     pass
 
 
 @pipe()
 def is_valid_decimal(session):
-    """pipe used to determine if a value can be coerced to a Decimal
+    """Pipe used to determine if a value can be coerced to a Decimal
 
     :param session: Kim pipeline session instance
 
@@ -73,6 +87,8 @@ def is_valid_decimal(session):
 
 @pipe()
 def coerce_to_decimal(session):
+    """Coerce str representation of a decimal into a valid Decimal object.
+    """
     decimals = session.field.opts.precision
     precision = Decimal('0.' + '0' * (decimals - 1) + '1')
     session.data = Decimal(session.data).quantize(precision)
@@ -80,18 +96,35 @@ def coerce_to_decimal(session):
 
 
 class DecimalMarshalPipeline(MarshalPipeline):
+    """DecimalMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.is_valid_decimal`
+        :func:`kim.pipelines.numeric.coerce_to_decimal`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = [is_valid_decimal] + MarshalPipeline.validation_pipes
     process_pipes = [coerce_to_decimal] + MarshalPipeline.process_pipes
 
 
+# TODO(mike) This should probably move to base
 @pipe()
 def to_string(session):
+    """coerce decimal value into str so it's valid for json
+    """
     if session.data is not None:
         session.data = str(session.data)
         return session.data
 
 
 class DecimalSerializePipeline(SerializePipeline):
+    """IntegerSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.numeric.coerce_to_decimal`
+        :func:`kim.pipelines.numeric.to_string`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [coerce_to_decimal, to_string] + SerializePipeline.process_pipes

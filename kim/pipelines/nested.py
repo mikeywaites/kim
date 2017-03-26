@@ -23,25 +23,24 @@ def marshal_nested(session):
     """Marshal data using the nested mapper defined on this field.
 
     There are 6 possible scenarios, depending on the security setters and
-    presence of a getter function:
-    1. Getter function returns an object and no updates are allowed.
-       Return the object immediately
-    2. Getter function returns an object and updates are allowed.
-       Call the nested mapper with the object to update it
-    3. Object already exists, getter function returns None/does not exist and
-       in place updates are allowed.
-       Call the nested mapper with the existing object to update it
-    4. Getter function returns None/does not exist and creation of new objects
-       is allowed
-       Call the nested mapper to create a new object
-    5. Getter function returns None/does not exist and creation of new objects
-       is not allowed, nor are in place updates. Raise an exception.
-    6. Object already exists, getter function returns None/does not exist and
-       partial updates are allowed.
-       Call the nested mapper with the existing object to update it
+    presence of a getter function
+
+    * Getter function returns an object and no updates are allowed - Return the
+      object immediately
+    * Getter function returns an object and updates are allowed - Call the
+      nested mapper with the object to update it
+    * Object already exists, getter function returns None/does not exist and
+      in place updates are allowed - Call the nested mapper with the existing
+      object to update it
+    * Getter function returns None/does not exist and creation of new objects
+      is allowed - Call the nested mapper to create a new object
+    * Getter function returns None/does not exist and creation of new objects
+      is not allowed, nor are in place updates - Raise an exception.
+    * Object already exists, getter function returns None/does not exist and
+      partial updates are allowed - Call the nested mapper with the existing object
+      to update it
 
     :param session: Kim pipeline session instance
-
     """
 
     resolved = _call_getter(session)
@@ -81,13 +80,13 @@ def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
 
     :param session: Kim pipeline session instance
-
     """
 
     if session.data is None:
         session.data = session.field.opts.null_default
         return session.data
 
+    # Grab the Mapper defined for the nested field and call serialize()
     nested_mapper = session.field.get_mapper(obj=session.data)
     session.data = nested_mapper.serialize(role=session.field.opts.role)
 
@@ -95,10 +94,22 @@ def serialize_nested(session):
 
 
 class NestedMarshalPipeline(MarshalPipeline):
+    """NestedMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.nested.marshal_nested`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     output_pipes = [marshal_nested, ] + MarshalPipeline.output_pipes
 
 
 class NestedSerializePipeline(SerializePipeline):
+    """NestedSerializePipeline
+
+    .. seealso::
+        :func:`kim.pipelines.nested.serialize_nested`
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
 
     process_pipes = [serialize_nested, ] + SerializePipeline.process_pipes

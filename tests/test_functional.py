@@ -1,10 +1,9 @@
 import pytest
 import mock
 
-from kim.exception import MappingInvalid, MapperError
-from kim.mapper import Mapper, PolymorphicMapper
-from kim.role import whitelist, blacklist
-from kim.field import Integer, Collection, String
+from kim import (
+    MappingInvalid, MapperError, Mapper, PolymorphicMapper, blacklist, Integer,
+    Collection, String, whitelist)
 from kim.pipelines import marshaling
 from kim.pipelines import serialization
 

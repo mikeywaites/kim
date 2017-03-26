@@ -16,7 +16,6 @@ def coerce_to_boolean(session):
     set the data to the python boolean type True or False
 
     :param session: Kim pipeline session instance
-
     """
     if session.data in session.field.opts.true_boolean_values:
         session.data = True
@@ -27,10 +26,22 @@ def coerce_to_boolean(session):
 
 
 class BooleanMarshalPipeline(MarshalPipeline):
+    """BooleanMarshalPipeline
+
+    .. seealso::
+        :func:`kim.pipelines.base.is_valid_choice`
+        :func:`kim.pipelines.boolean.coerce_to_boolean`
+        :class:`kim.pipelines.marshaling.MarshalPipeline`
+    """
 
     validation_pipes = [is_valid_choice, ] + MarshalPipeline.validation_pipes
     process_pipes = [coerce_to_boolean, ] + MarshalPipeline.process_pipes
 
 
 class BooleanSerializePipeline(SerializePipeline):
+    """BooleanSerializePipeline
+
+    .. seealso::
+        :class:`kim.pipelines.serialization.SerializePipeline`
+    """
     pass
