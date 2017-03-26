@@ -51,8 +51,7 @@ on the object, pass the ``source`` attribute to ``Field``.
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field
+    from kim import Mapper, field
 
     class CompanyMapper(Mapper):
         __type__ = Company
@@ -72,8 +71,7 @@ same field.
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field, role
+    from kim import Mapper, field, role
 
     class CompanyMapper(Mapper):
         __type__ = Company
@@ -105,8 +103,7 @@ to be nested. You can do this by setting ``source='__self__'`` on a Nested field
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field, role
+    from kim import Mapper, field, role
 
     class AddressMapper(Mapper):
         __type__ = dict
@@ -278,8 +275,7 @@ To create a collection, wrap any field in ``Collection``:
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field, role
+    from kim import Mapper, field, role
 
 
     class CompanyMapper(Mapper):
@@ -298,8 +294,7 @@ You can also wrap nested fields:
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field, role
+    from kim import Mapper, field, role
 
     class EmployeeMapper(Mapper):
         __type__ = Employee
@@ -327,8 +322,7 @@ When marshaling, Nested fields can be forced to be unique on a key to avoid dupl
 
 .. code-block:: python
 
-    from kim import Mapper
-    from kim import field, role
+    from kim import Mapper, field, role
 
     class EmployeeMapper(Mapper):
         __type__ = Employee
@@ -396,10 +390,8 @@ This example defines a new field with a custom pipeline to convert its output
 to uppercase:
 
 .. code-block:: python
-    from kim.pipelines.base import pipe
+    from kim import pipe, String, Mapper
     from kim.pipelines.string import StringSerializePipeline
-    from kim.field import String
-    from kim import Mapper
 
 
     @pipe()
@@ -442,9 +434,7 @@ define an entirely new field. Instead you can pass ``extra_marshal_pipes``:
 
 
 .. code-block:: python
-    from kim.pipelines.base import pipe
-    from kim.field import String, Integer
-    from kim import Mapper
+    from kim import Mapper, String, Integer, pipe
 
 
     @pipe()
