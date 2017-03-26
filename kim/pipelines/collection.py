@@ -13,7 +13,7 @@ from .marshaling import MarshalPipeline
 from .serialization import SerializePipeline
 
 
-@pipe()
+@pipe(run_if_none=True)
 def marshall_collection(session):
     """iterate over each item in ``data`` and marshal the item through the
     wrapped field defined for this collection
@@ -27,24 +27,25 @@ def marshall_collection(session):
 
     output = []
 
-    if not hasattr(session.data, '__iter__'):
-        raise session.field.invalid('type_error')
+    if session.data is not None:
+        if not hasattr(session.data, '__iter__'):
+            raise session.field.invalid('type_error')
 
-    for i, datum in enumerate(session.data):
-        _output = {}
-        # If the object already exists, try to match up the existing elements
-        # with those in the input json
-        if existing_value is not None:
-            try:
-                _output[wrapped_field.opts.source] = existing_value[i]
-            except IndexError:
-                pass
+        for i, datum in enumerate(session.data):
+            _output = {}
+            # If the object already exists, try to match up the existing elements
+            # with those in the input json
+            if existing_value is not None:
+                try:
+                    _output[wrapped_field.opts.source] = existing_value[i]
+                except IndexError:
+                    pass
 
-        mapper_session = session.mapper.get_mapper_session(datum, _output)
-        wrapped_field.marshal(mapper_session, parent_session=session)
+            mapper_session = session.mapper.get_mapper_session(datum, _output)
+            wrapped_field.marshal(mapper_session, parent_session=session)
 
-        result = _output[wrapped_field.opts.source]
-        output.append(result)
+            result = _output[wrapped_field.opts.source]
+            output.append(result)
 
     session.data = output
     return session.data

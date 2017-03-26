@@ -1,6 +1,6 @@
 from kim import field
 from kim.mapper import PolymorphicMapper
-from kim.role import whitelist
+from kim.role import whitelist, blacklist
 
 
 class TestType(object):
@@ -56,7 +56,9 @@ class EventMapper(SchedulableMapper):
 
     __roles__ = {
         'public': SchedulableMapper.__roles__['public']
-        | whitelist('location')
+        | whitelist('location'),
+        'event_only_role': whitelist('id', 'location'),
+        'event_blacklist': blacklist('location')
     }
 
 
@@ -71,5 +73,7 @@ class TaskMapper(SchedulableMapper):
 
     __roles__ = {
         'public': SchedulableMapper.__roles__['public']
-        | whitelist('status')
+        | whitelist('status'),
+        'task_only_role': whitelist('id', 'status'),
+        'task_blacklist': blacklist('status')
     }
