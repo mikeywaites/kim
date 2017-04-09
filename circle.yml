@@ -2,19 +2,14 @@ machine:
   services:
     - docker
 
-general:
-  branches:
-    only:
-      - master # list of branches to build
-
 dependencies:
   override:
-    - docker info
-    - docker build -t kim .
+    - docker-compose build
 
 test:
   override:
-    - docker run -it -v $(pwd):/opt/kim kim python setup.py test
+    - docker-compose run py3
+    - docker-compose run py2
 
 deployment:
   pypi:
