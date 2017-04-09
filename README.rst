@@ -58,4 +58,4 @@ Documentation
 Learn all of Kim's features with these simple step-by-step instructions or check out the
 quickstart guide for a rapid overview to get going quickly.
 
-.. _Kim User Guide: http://kim.readthedocs.org/latest
+Kim Documentaton: `Kim Documentation <http://kim.readthedocs.org/latest/>`_.
