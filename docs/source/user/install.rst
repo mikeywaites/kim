@@ -11,4 +11,4 @@ Installation via Pip
 
 To install Kim, simply run this command in your terminal of choice::
 
-    $ pip install kim
+    $ pip install py-kim
