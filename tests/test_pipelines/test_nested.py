@@ -415,41 +415,6 @@ def test_marshal_nested_partial():
     assert obj['user']['name'] == 'new user name'
 
 
-def test_marshal_nested_sets_mapper_parent():
-
-    data = {'id': '1', 'user': {'id': '1', 'name': 'mike'}}
-
-    called = {'called': False}
-
-    class UserMapper(Mapper):
-
-        __type__ = TestType
-
-        id = field.String(required=True, read_only=True)
-        name = field.String()
-
-        @marshaling.validates('name')
-        def assert_parent(session):
-            called['called'] = True
-            assert session.mapper.parent is not None
-            assert isinstance(session.mapper.parent, PostMapper)
-            assert session.mapper.parent.data == data
-
-    def user_getter(session):
-
-        return TestType(id=session.data['id'], name='foo')
-
-    class PostMapper(Mapper):
-
-        __type__ = TestType
-
-        user = field.Nested(UserMapper, getter=user_getter, allow_updates=True)
-
-    mapper = PostMapper(data=data)
-    mapper.marshal()
-    assert called['called']
-
-
 def test_self_nesting_marshal():
     class Inner(Mapper):
         __type__ = dict
