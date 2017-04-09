@@ -17,5 +17,8 @@ deployment:
     commands:
       - sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - sed "s/PYPI_USERNAME/$PYPI_USERNAME/;s/PYPI_PASSWORD/$PYPI_PASSWORD/" < pypirc.template > ~/.pypirc
+      - python setup.py register -r pypitest
+      - python setup.py sdist upload -r pypitest
+      - python setup.py register -r pypi
       - python setup.py sdist upload -r pypi
       - curl -X POST http://readthedocs.org/build/kim
