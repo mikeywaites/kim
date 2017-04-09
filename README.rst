@@ -6,10 +6,10 @@
 Kim: A JSON Serialization and Marshaling framework
 =================================================
 
-.. image:: https://img.shields.io/pypi/v/requests.svg
+.. image:: https://img.shields.io/pypi/v/py-kim.svg
     :target: https://pypi.python.org/pypi/py-kim
 
-.. image:: https://img.shields.io/pypi/l/requests.svg
+.. image:: https://img.shields.io/pypi/l/py-kim.svg
     :target: https://pypi.python.org/pypi/py-kim
 
 .. image:: https://circleci.com/gh/mikeywaites/kim.svg?style=shield&circle-token=d46954b5e66c2cc885f35c745baaea9a70e961af
