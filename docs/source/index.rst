@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Kim: A JSON Serialization and Marshaling framework
-=================================================
+===================================================
 
 Release v\ |version|. (:ref:`Installation <install>`)
 

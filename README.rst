@@ -1,10 +1,5 @@
-.. Kim documentation master file, created by
-   sphinx-quickstart on Fri May 15 15:12:15 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Kim: A JSON Serialization and Marshaling framework
-=================================================
+===================================================
 
 .. image:: https://img.shields.io/pypi/v/py-kim.svg
     :target: https://pypi.python.org/pypi/py-kim
@@ -14,9 +9,6 @@ Kim: A JSON Serialization and Marshaling framework
 
 .. image:: https://circleci.com/gh/mikeywaites/kim.svg?style=shield&circle-token=d46954b5e66c2cc885f35c745baaea9a70e961af
     :target: https://pypi.python.org/pypi/py-kim
-
-
--------------------
 
 **Introducing Kim**::
 
@@ -31,7 +23,7 @@ Kim: A JSON Serialization and Marshaling framework
     {u'id': 'two', u'name': 'Martha Wayne', 'title': 'Mother of Batman'}
 
 Kim Features
-----------------
+------------
 
 Kim is a feature packed framework for handling even the most complex
 marshaling and serialization requirements.
@@ -47,15 +39,17 @@ Kim officially supports Python 2.7 & 3.3–3.5
 
 
 Installation
---------------
+------------
 
 Install Kim using pip::
+
+.. code-block:: bash
 
     $ pip install py-kim
 
 
 Documentation
---------------
+-------------
 
 Learn all of Kim's features with these simple step-by-step instructions or check out the
 quickstart guide for a rapid overview to get going quickly.
