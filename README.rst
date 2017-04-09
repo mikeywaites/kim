@@ -1,56 +1,61 @@
-``Kim``
-=============
+.. Kim documentation master file, created by
+   sphinx-quickstart on Fri May 15 15:12:15 2015.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-Kim is a serialization and marshaling framework for orchestrating the structure and flow of JSON data into and out of your REST API.
+Kim: A JSON Serialization and Marshaling framework
+=================================================
 
+.. image:: https://img.shields.io/pypi/v/py-kim.svg
+    :target: https://pypi.python.org/pypi/py-kim
 
-Example
--------
-.. code-block:: python
+.. image:: https://img.shields.io/pypi/l/py-kim.svg
+    :target: https://pypi.python.org/pypi/py-kim
 
-    class UserMapper(Mapper):
-        __type__ = User
-
-        id = field.String(read_only=True)
-        name = field.String()
-        age = field.Integer(min=18)
-        is_admin = field.Boolean(required=False, default=False)
-        company = field.Nested(CompanyMapper)
-
-        __roles__ = {
-            'overview': whitelist('id', 'name', 'is_admin')
-        }
+.. image:: https://circleci.com/gh/mikeywaites/kim.svg?style=shield&circle-token=d46954b5e66c2cc885f35c745baaea9a70e961af
+    :target: https://pypi.python.org/pypi/py-kim
 
 
-Contributing
--------------
-Kim comes bundled with two Dockerfiles for py2 and py3.  Running the test suite is expalined briefly below.
+-------------------
+
+**Introducing Kim**::
+
+    >>> mapper = UserMapper(data=response.json())
+    >>> mapper.marshal()
+    User(id='one', name='Bruce Wayne', 'title'='CEO/Super Hero')
+    >>> user_two = User.query.get('two')
+    >>> mapper = UserMapper(obj=user_two)
+    >>> mapper.serialize()
+    {u'id': 'two', u'name': 'Martha Wayne', 'title': 'Mother of Batman'}
+
+Kim Features
+----------------
+
+Kim is a feature packed framework for handling even the most complex
+marshaling and serialization requirements.
+
+- Web framework agnostic - Flask, Django, Framework-XXX supported!
+- Highly customisable field processing system
+- Security focused
+- Control included fields with powerful roles system
+- Handle mixed data types with polymorphic mappers
+- Marshal and Serialize nested objects
+
+Kim officially supports Python 2.7 & 3.3–3.5
 
 
-Mac OSX
--------
+Installation
+--------------
 
-Firstly install docker-toolbox available [here](https://www.docker.com/products/docker-toolbox). Once toolbox is installed we need to create a machine using `docker-machine`.
+Install Kim using pip::
 
-`$ docker-machine create --driver virtualbox kim2`
-
-Run the following command to make sure the new machine is available and ready for use.
-
-`$ docker-machine ls`
-
-```
-docker-machine ls
-NAME   ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER    ERRORS
-kim2   -        virtualbox   Running   tcp://192.168.99.100:2376           v1.10.1
-```
-
-Now we need to connect our shell to the new machine.  We need to run the following command every time we start a enw shell or restart the docker machine.
-
-`$ eval "$(docker-machine env kim2)"`
+    $ pip install py-kim
 
 
-Now we can run commands against our docker machine.
+Documentation
+--------------
 
-`docker-compose run py2`
+Learn all of Kim's features with these simple step-by-step instructions or check out the
+quickstart guide for a rapid overview to get going quickly.
 
-`docker-compose run py3`
+`Kim Documentation <http://kim.readthedocs.io/en/latest/>`_.
