@@ -90,26 +90,6 @@ def test_get_data_from_source_pipe_self():
     assert get_data_from_source(session) is data
 
 
-def test_update_output_to_name_with_object():
-
-    data = {
-        'name': 'mike',
-        'test': 'true',
-        'nested': {'foo': 'bar'}
-    }
-
-    class MyObject(object):
-        pass
-
-    output = MyObject()
-    field = Field(name='name', required=True)
-    session = Session(field, data, output)
-    session.data = data['name']
-
-    update_output_to_name(session)
-    assert output.name == 'mike'
-
-
 def test_update_output_to_name_with_dict():
 
     data = {
@@ -125,20 +105,6 @@ def test_update_output_to_name_with_dict():
     session.data = data['name']
     update_output_to_name(session)
     assert output == {'name': 'mike'}
-
-
-def test_update_output_to_name_invalid_output_type():
-
-    data = {
-        'name': 'mike',
-        'test': 'true',
-        'nested': {'foo': 'bar'}
-    }
-
-    field = Field(name='name', required=True)
-    session = Session(field, data, 1)
-    with pytest.raises(FieldError):
-        update_output_to_name(session)
 
 
 def test_update_output_to_source_with_object():

@@ -318,22 +318,14 @@ def is_valid_choice(session):
 
 @pipe(run_if_none=True)
 def update_output_to_name(session):
-    """Store ``data`` at ``field.name`` for a ``field`` inside
+    """Store ``data`` at ``field[name]`` for a ``field`` inside
     of ``output``
 
     :param session: Kim pipeline session instance
 
-    :raises: FieldError
     :returns: None
     """
-    try:
-        setattr(session.output, session.field.name, session.data)
-    except AttributeError:
-        try:
-            session.output[session.field.name] = session.data
-        except TypeError:
-            raise FieldError('output does not support attribute or '
-                             'key based set operations')
+    session.output[session.field.name] = session.data
 
 
 @pipe(run_if_none=True)
