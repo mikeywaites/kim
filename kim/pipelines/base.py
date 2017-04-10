@@ -326,14 +326,14 @@ def update_output_to_name(session):
     :raises: FieldError
     :returns: None
     """
+    # try:
+    #     setattr(session.output, session.field.name, session.data)
+    # except AttributeError:
     try:
-        setattr(session.output, session.field.name, session.data)
-    except AttributeError:
-        try:
-            session.output[session.field.name] = session.data
-        except TypeError:
-            raise FieldError('output does not support attribute or '
-                             'key based set operations')
+        session.output[session.field.name] = session.data
+    except TypeError:
+        raise FieldError('output does not support attribute or '
+                         'key based set operations')
 
 
 @pipe(run_if_none=True)
