@@ -3,7 +3,6 @@ from .base import (
 
 
 def _run_extra_outputs(session, pipe_type):
-    return
     for pipe in session.field.opts.extra_serialize_pipes.get(pipe_type, []):
         pipe(session)
 
