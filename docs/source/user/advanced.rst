@@ -442,6 +442,7 @@ change it's ownership).
 Use this option like this (``role`` is not required):
 
 .. code-block:: python
+
     company = field.Nested('CompanyMapper', allow_updates=True, role='restrictive_role')
 
 3. ``allow_create`` - Retrieve by ID, or create object if no ID passed
@@ -479,6 +480,7 @@ field on an object to someone other than the logged-in user.)
 Use this option like this (``role`` is not required):
 
 .. code-block:: python
+
     company = field.Nested('CompanyMapper', allow_create=True, role='restrictive_role')
 
 4. ``allow_updates_in_place`` - Do not use ID, update existing related object
@@ -626,6 +628,7 @@ This example defines a new field with a custom pipeline to convert its output
 to uppercase:
 
 .. code-block:: python
+
     from kim import pipe, String, Mapper
     from kim.pipelines.string import StringSerializePipeline
 
@@ -646,6 +649,7 @@ to uppercase:
         __type__ = dict
 
         name = UpperCaseString()
+
 
 .. note:: This is a contrived example, for simple transforms like this see ``extra_marshal_pipelines`` below
 
@@ -670,6 +674,7 @@ define an entirely new field. Instead you can pass ``extra_marshal_pipes``:
 
 
 .. code-block:: python
+
     from kim import Mapper, String, Integer, pipe
 
 
