@@ -68,6 +68,8 @@ class Session(object):
     serialization pipeline.
     """
 
+    __slots__ = ('field', 'data', 'output', 'parent', 'mapper_session')
+
     def __init__(self, field=None, data=None, output=None,
                  parent=None, mapper_session=None):
         """Construct a new session.
@@ -124,7 +126,12 @@ def pipe(**pipe_kwargs):
         @wraps(pipe_func)
         def inner(session, *args, **kwargs):
 
-            return Pipe(pipe_func, **pipe_kwargs)(session)
+            if session.data is not None:
+                return pipe_func(session)
+            elif session.data is None and pipe_kwargs.get('run_if_none'):
+                return pipe_func(session)
+            else:
+                return session.data
 
         return inner
 
@@ -180,44 +187,37 @@ class Pipeline(object):
     process_pipes = []
     output_pipes = []
 
-    def __init__(self, mapper_session, field):
-        """Construct a new Pipeline for a :class:`kim.field.Field`.
+    __slots__ = ()
 
-        :param field: An instance of :class:`kim.field.Field` being processed.
-        :param mapper_session: The mapper_session scope this field is being processed in.
-        """
 
-        self.field = field
-        self.mapper_session = mapper_session
 
-    def run(self, **opts):
-        """ Iterate over all of the defined ``pipes`` for this pipeline.
+def run_pipeline(pipeline, mapper_session, field, **opts):
+    """ Iterate over all of the defined ``pipes`` for this pipeline.
 
-        :param parent_session: The field being processed by this Pipeline is wrapped,
-            parent_session will be passed and set on the fields session.
-        :returns: Returns the output of the pipelines session.
-        :rtype: mixed
-        """
-        parent = opts.get('parent_session', None)
+    :param parent_session: The field being processed by this Pipeline is wrapped,
+        parent_session will be passed and set on the fields session.
+    :returns: Returns the output of the pipelines session.
+    :rtype: mixed
+    """
+    parent = opts.get('parent_session', None)
 
-        session = Session(
-            self.field, self.mapper_session.data, self.mapper_session.output,
-            mapper_session=self.mapper_session,
-            parent=parent)
+    session = Session(
+        field, mapper_session.data, mapper_session.output,
+        mapper_session=mapper_session,
+        parent=parent)
 
-        # chain all the pipelines pipes together and process them until the all the
-        # pipe groups have been exhausted or until
-        # :class:`kim.exception.StopPipelineExecution` is raised.
-        try:
-            for pipe in chain(self.input_pipes, self.validation_pipes,
-                              self.process_pipes, self.output_pipes):
-                # TODO(mike)don't call each item pipe in this loop, it's confusing.
-                pipe(session)
+    # chain all the pipelines pipes together and process them until the all the
+    # pipe groups have been exhausted or until
+    # :class:`kim.exception.StopPipelineExecution` is raised.
+    try:
+        for pipe_func in chain(pipeline.input_pipes, pipeline.validation_pipes,
+                               pipeline.process_pipes, pipeline.output_pipes):
+            pipe_func(session)
 
-            return session.output
+        return session.output
 
-        except StopPipelineExecution:
-            return session.output
+    except StopPipelineExecution:
+        return session.output
 
 
 @pipe(run_if_none=True)

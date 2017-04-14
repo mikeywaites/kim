@@ -20,6 +20,7 @@ from .pipelines import (
     DateMarshalPipeline, DateSerializePipeline,
     DecimalSerializePipeline, DecimalMarshalPipeline,
 )
+from .pipelines.base import run_pipeline
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
 
@@ -305,7 +306,7 @@ class Field(object):
             :meth:`kim.mapper.Mapper.marshal`
         """
 
-        self.marshal_pipeline(mapper_session, self).run(**opts)
+        run_pipeline(self.marshal_pipeline, mapper_session, self, **opts)
 
     def serialize(self, mapper_session, **opts):
         """Run the serialize :class:`Pipeline` for this field for the given `data` and
@@ -320,7 +321,7 @@ class Field(object):
             :meth:`kim.mapper.Mapper.serialize`
         """
 
-        self.serialize_pipeline(mapper_session, self).run(**opts)
+        run_pipeline(self.serialize_pipeline, mapper_session, self, **opts)
 
 
 class String(Field):
