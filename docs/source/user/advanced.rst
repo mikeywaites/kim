@@ -598,21 +598,17 @@ grouped into four stages - input, validation, process and output.
 
 .. code-block:: python
 
-    input_pipes = [read_only, get_data_from_name, marshal_extra_inputs]
-    validation_pipes = [is_valid_string, is_valid_choice, marshal_extra_validators, ]
-    process_pipes = [marshal_extra_processors, ]
-    output_pipes = [update_output_to_source, marshal_extra_outputs]
+    input_pipes = [read_only, get_data_from_name]
+    validation_pipes = [is_valid_string, is_valid_choice, ]
+    process_pipes = []
+    output_pipes = [update_output_to_source]
 
     # Order of execution is:
     read_only ->                 # Stop execution if field is ready only
     get_data_from_name ->        # Get the data for this field from the JSON
-    marshal_extra_inputs ->      # Hook for extra pipes
     is_valid_string ->           # Raise exception if data is not a string
     is_valid_choice ->           # If choices=[] set on field, raise exception if not valid choice
-    marshal_extra_validators ->  # Hook for extra pipes
-    marshal_extra_processors ->  # Hook for extra pipes
     update_output_to_source ->   # Update the object with this data
-    marshal_extra_outputs        # Hook for extra pipes
 
 
 .. _custom_pipelines:
@@ -671,6 +667,9 @@ Custom Validation - extra_marshal_pipes
 If you just want to change the pipeline used by a particular instance of a Field
 on a Mapper, for example to add custom validation logic, you don't need to
 define an entirely new field. Instead you can pass ``extra_marshal_pipes``:
+
+``extra_marshal_pipes`` are pushed onto the existing list of pipes defined on the
+field at compile time once each time a Field is instantiated.
 
 
 .. code-block:: python
