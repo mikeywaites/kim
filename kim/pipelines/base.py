@@ -189,6 +189,14 @@ class Pipeline(object):
 
     __slots__ = ()
 
+    def get_pipeline(self, **extra_pipes):
+        chain = []
+        chain.extend(self.input_pipes + extra_pipes.get('input', []))
+        chain.extend(self.validation_pipes + extra_pipes.get('validation', []))
+        chain.extend(self.process_pipes + extra_pipes.get('process', []))
+        chain.extend(self.output_pipes + extra_pipes.get('output', []))
+
+        return chain
 
 
 def run_pipeline(pipeline, mapper_session, field, **opts):
@@ -210,8 +218,7 @@ def run_pipeline(pipeline, mapper_session, field, **opts):
     # pipe groups have been exhausted or until
     # :class:`kim.exception.StopPipelineExecution` is raised.
     try:
-        for pipe_func in chain(pipeline.input_pipes, pipeline.validation_pipes,
-                               pipeline.process_pipes, pipeline.output_pipes):
+        for pipe_func in pipeline:
             pipe_func(session)
 
         return session.output

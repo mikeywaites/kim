@@ -225,6 +225,13 @@ class Field(object):
 
         set_creation_order(self)
 
+        self.marshal_pipes = self.marshal_pipeline().get_pipeline(
+            **self.opts.extra_marshal_pipes
+        )
+        self.serialize_pipes = self.serialize_pipeline().get_pipeline(
+            **self.opts.extra_serialize_pipes
+        )
+
     def get_error(self, error_type):
         """Return the error message for ``error_type`` from the error messages defined on
         the fields opts class.
@@ -306,7 +313,7 @@ class Field(object):
             :meth:`kim.mapper.Mapper.marshal`
         """
 
-        run_pipeline(self.marshal_pipeline, mapper_session, self, **opts)
+        run_pipeline(self.marshal_pipes, mapper_session, self, **opts)
 
     def serialize(self, mapper_session, **opts):
         """Run the serialize :class:`Pipeline` for this field for the given `data` and
@@ -321,7 +328,7 @@ class Field(object):
             :meth:`kim.mapper.Mapper.serialize`
         """
 
-        run_pipeline(self.serialize_pipeline, mapper_session, self, **opts)
+        run_pipeline(self.serialize_pipes, mapper_session, self, **opts)
 
 
 class String(Field):
