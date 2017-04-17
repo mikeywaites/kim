@@ -1,5 +1,4 @@
-from .base import (
-    Pipeline, read_only, get_data_from_name, update_output_to_source)
+from .base import Pipeline, read_only, get_data_from_name, update_output_to_source
 
 
 class MarshalPipeline(Pipeline):

@@ -12,32 +12,8 @@ from kim.exception import StopPipelineExecution, FieldError
 from kim.utils import attr_or_key, set_attr_or_key, attr_or_key_update
 
 
-class Pipe(object):
-    """Base pipe class wrapping a pipe func allowing users to provide
-    custom base pipe objects.
-
-    """
-
-    def __init__(self, func=None, run_if_none=False, *args, **kwargs):
-        self.func = func
-        self.run_if_none = run_if_none
-
-    def __call__(self, session, *args, **kwargs):
-
-        return self.run(session, **kwargs)
-
-    def run(self, session, **kwargs):
-
-        if session.data is not None:
-            return self.func(session, **kwargs)
-        elif session.data is None and self.run_if_none:
-            return self.func(session, **kwargs)
-        else:
-            return session.data
-
-
 class Session(object):
-    """Pipeline session objects acts as store for the state passed between
+    """Session objects acts as store for the state passed between
     one pipe method to another.
 
     Everytime a :class:`kim.field.Field` is marshaled or serialized a session object
@@ -103,8 +79,8 @@ class Session(object):
 
 
 def pipe(**pipe_kwargs):
-    """Pipe decorator is provided as a convenience method for creating Pipe
-    objects.
+    """Pipe decorator is provided as a convenience to avoid duplicating logic like
+    not running pipes when session.data is null.
 
     :param run_if_none: Specify wether the pipe function should be called if session.data
         is None.
@@ -117,9 +93,6 @@ def pipe(**pipe_kwargs):
         def my_pipe(session):
 
             do_stuff(session)
-
-    .. seealso::
-        :class:`kim.pipelines.base.Pipe`
     """
 
     def pipe_decorator(pipe_func):
@@ -137,21 +110,6 @@ def pipe(**pipe_kwargs):
         return inner
 
     return pipe_decorator
-
-
-#TODO(mike) Let's remove this functionality.  The decoarted @validates() methods
-# Didn't work as well as planned.
-def _decorate_pipe(fn, fields, pipe_type, pipeline_type, **pipe_opts):
-
-    fn.__mapper_field_hook = pipe_type
-    fn.__mapper_field_hook_opts = {
-        'serialize': pipeline_type == 'serialize',
-        'marshal': pipeline_type == 'marshal',
-        'pipe_opts': pipe_opts
-    }
-    fn._field_names = fields
-
-    return fn
 
 
 class Pipeline(object):

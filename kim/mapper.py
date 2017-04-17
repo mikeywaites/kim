@@ -225,10 +225,10 @@ class _MapperConfig(object):
                 opts = getattr(p, '__mapper_field_hook_opts', {})
                 if opts['marshal']:
                     field.opts.extra_marshal_pipes[pipe_type] \
-                        .append(Pipe(p, **opts['pipe_opts']))
+                        .append(pipe(p, **opts['pipe_opts']))
                 if opts['serialize']:
                     field.opts.extra_serialize_pipes[pipe_type] \
-                        .append(Pipe(p, **opts['pipe_opts']))
+                        .append(pipe(p, **opts['pipe_opts']))
 
             return field
 

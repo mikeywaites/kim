@@ -1,13 +1,10 @@
 import pytest
 
-from six import get_unbound_function
-
 from kim.exception import MapperError, MappingInvalid
 from kim.mapper import (
     Mapper, _MapperConfig, get_mapper_from_registry, PolymorphicMapper)
 from kim.field import Field, String, Integer, Nested, Collection
 from kim.role import whitelist, blacklist
-from kim.pipelines import marshaling, serialization, Pipe
 
 from .fixtures import SchedulableMapper, EventMapper, TaskMapper
 
