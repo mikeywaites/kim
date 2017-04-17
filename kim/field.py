@@ -300,14 +300,6 @@ class Field(object):
         """
         self.opts.set_name(name)
 
-    def get_session(self, data, output, mapper_session=None, **opts):
-        parent = opts.get('parent_session', None)
-
-        return Session(
-            self, mapper_session.data, mapper_session.output,
-            mapper_session=mapper_session,
-            parent=parent)
-
     def marshal(self, mapper_session, **opts):
         """Run the marshal :class:`Pipeline` for this field for the given ``data`` and
         update the output for this field inside of the mapper_session.
@@ -321,12 +313,11 @@ class Field(object):
             :meth:`kim.mapper.Mapper.marshal`
         """
 
-        session = self.get_session(
-            mapper_session.data,
-            mapper_session.output,
+        parent = opts.get('parent_session', None)
+        session = Session(
+            self, mapper_session.data, mapper_session.output,
             mapper_session=mapper_session,
-            **opts
-        )
+            parent=parent)
         run_pipeline(self.marshal_pipes, session, self, **opts)
 
     def serialize(self, mapper_session, **opts):
@@ -341,12 +332,11 @@ class Field(object):
         .. seealso::
             :meth:`kim.mapper.Mapper.serialize`
         """
-        session = self.get_session(
-            mapper_session.data,
-            mapper_session.output,
+        parent = opts.get('parent_session', None)
+        session = Session(
+            self, mapper_session.data, mapper_session.output,
             mapper_session=mapper_session,
-            **opts
-        )
+            parent=parent)
 
         run_pipeline(self.serialize_pipes, session, self, **opts)
 
