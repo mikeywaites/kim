@@ -10,6 +10,9 @@ test:
   override:
     - docker-compose run py3
     - docker-compose run py2
+  post:
+    - docker-compose run py3 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py3_perf.txt
+    - docker-compose run py2 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py2_perf.txt
 
 deployment:
   pypi:
