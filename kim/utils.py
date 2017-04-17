@@ -22,18 +22,18 @@ def set_creation_order(instance):
     _creation_order += 1
 
 
-def _attr_or_key(obj, name):
-    if isinstance(obj, dict):
+def _attr_or_key(obj, name, _isinstance=isinstance, _dict=dict, getter=getattr):
+    if _isinstance(obj, _dict):
         return obj.get(name)
     else:
-        return getattr(obj, name, None)
+        return getter(obj, name, None)
 
 
-def _set_attr_or_key(obj, name, value):
-    if isinstance(obj, dict):
+def _set_attr_or_key(obj, name, value, _isinstance=isinstance, _dict=dict, setter=setattr):
+    if _isinstance(obj, _dict):
         obj[name] = value
     else:
-        setattr(obj, name, value)
+        setter(obj, name, value)
 
 
 def attr_or_key(obj, name):
