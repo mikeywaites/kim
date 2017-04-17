@@ -310,6 +310,8 @@ class MapperSession(object):
     marshaling and serialization :class:`Pipeline`.
     """
 
+    __slots__ = ('mapper', 'data', 'output', 'partial')
+
     def __init__(self, mapper, data, output, partial=None):
         """Instantiate a new instance of :class:`MapperSession`
 
