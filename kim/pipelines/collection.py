@@ -60,14 +60,23 @@ def serialize_collection(session):
 
     """
     wrapped_field = session.field.opts.field
+    field_name = wrapped_field.name
     output = []
 
+    mapper_session = session.mapper.get_mapper_session(None, {})
+
+    # If the wrapped field uses a mapper, fetch it once to avoid looking up the mapper
+    # from the registry for each item in the collection.
+    session.nested_mapper = getattr(
+        wrapped_field,
+        'get_mapper',
+        lambda **kwargs: None)(as_class=True)
+
     for datum in session.data:
-        _output = {}
-        mapper_session = session.mapper.get_mapper_session(datum, _output)
+        mapper_session.data = datum
+        mapper_session.output = {}
         wrapped_field.serialize(mapper_session, parent_session=session)
-        result = _output[wrapped_field.name]
-        output.append(result)
+        output.append(mapper_session.output[field_name])
 
     session.data = output
     return session.data

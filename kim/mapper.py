@@ -16,7 +16,7 @@ from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, blacklist, Role
 from .utils import recursive_defaultdict, attr_or_key
-from .pipelines.base import Pipe
+from .pipelines.base import pipe
 
 
 def mapper_is_defined(mapper_name):
@@ -647,8 +647,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         else:
             data = self._get_obj()
 
+        mapper_session = self.get_mapper_session(data, output)
         for field in self._get_fields(role, deferred_role=deferred_role):
-            field.serialize(self.get_mapper_session(data, output))
+            field.serialize(mapper_session)
 
         return output
 

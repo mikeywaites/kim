@@ -46,13 +46,18 @@ def marshal_nested(session):
     resolved = _call_getter(session)
 
     partial = session.mapper_session.partial
-    parent = session.mapper
+    parent_mapper = session.mapper
+
+    if session.parent and session.parent.nested_mapper:
+        nested_mapper_class = session.parent.nested_mapper
+    else:
+        nested_mapper_class = session.field.get_mapper(as_class=True)
 
     if resolved is not None:
         if session.field.opts.allow_updates:
-            nested_mapper = session.field.get_mapper(
+            nested_mapper = nested_mapper_class(
                 data=session.data, obj=resolved, partial=partial,
-                parent=parent)
+                parent=parent_mapper)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             session.data = resolved
@@ -61,13 +66,13 @@ def marshal_nested(session):
         if (session.field.opts.allow_updates_in_place or
                 session.field.opts.allow_partial_updates) and \
                 existing_value is not None:
-            nested_mapper = session.field.get_mapper(
+            nested_mapper = nested_mapper_class(
                 data=session.data, obj=existing_value, partial=partial,
-                parent=parent)
+                parent=parent_mapper)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         elif session.field.opts.allow_create:
-            nested_mapper = session.field.get_mapper(
-                data=session.data, partial=partial, parent=parent)
+            nested_mapper = nested_mapper_class(
+                data=session.data, partial=partial, parent=parent_mapper)
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             raise session.field.invalid(error_type='not_found')
@@ -87,7 +92,11 @@ def serialize_nested(session):
         return session.data
 
     # Grab the Mapper defined for the nested field and call serialize()
-    nested_mapper = session.field.get_mapper(obj=session.data)
+    if session.parent and session.parent.nested_mapper:
+        nested_mapper = session.parent.nested_mapper(obj=session.data)
+    else:
+        nested_mapper = session.field.get_mapper(obj=session.data)
+
     session.data = nested_mapper.serialize(role=session.field.opts.role)
 
     return session.data

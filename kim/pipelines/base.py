@@ -68,10 +68,10 @@ class Session(object):
     serialization pipeline.
     """
 
-    __slots__ = ('field', 'data', 'output', 'parent', 'mapper_session')
+    __slots__ = ('field', 'data', 'output', 'parent', 'mapper_session', 'nested_mapper')
 
     def __init__(self, field=None, data=None, output=None,
-                 parent=None, mapper_session=None):
+                 parent=None, mapper_session=None, nested_mapper=None):
         """Construct a new session.
 
         :param field: an instance of :class:`kim.field.Field` the scope of this session
@@ -90,6 +90,7 @@ class Session(object):
         self.output = output
         self.parent = parent
         self.mapper_session = mapper_session
+        self.nested_mapper = nested_mapper
 
     @property
     def mapper(self):
@@ -200,7 +201,7 @@ class Pipeline(object):
         return chain
 
 
-def run_pipeline(pipeline, mapper_session, field, **opts):
+def run_pipeline(pipeline, session, field, **opts):
     """ Iterate over all of the defined ``pipes`` for this pipeline.
 
     :param parent_session: The field being processed by this Pipeline is wrapped,
@@ -208,12 +209,6 @@ def run_pipeline(pipeline, mapper_session, field, **opts):
     :returns: Returns the output of the pipelines session.
     :rtype: mixed
     """
-    parent = opts.get('parent_session', None)
-
-    session = Session(
-        field, mapper_session.data, mapper_session.output,
-        mapper_session=mapper_session,
-        parent=parent)
 
     # chain all the pipelines pipes together and process them until the all the
     # pipe groups have been exhausted or until

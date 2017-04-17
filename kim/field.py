@@ -20,7 +20,7 @@ from .pipelines import (
     DateMarshalPipeline, DateSerializePipeline,
     DecimalSerializePipeline, DecimalMarshalPipeline,
 )
-from .pipelines.base import run_pipeline
+from .pipelines.base import run_pipeline, Session
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
 
@@ -300,6 +300,14 @@ class Field(object):
         """
         self.opts.set_name(name)
 
+    def get_session(self, data, output, mapper_session=None, **opts):
+        parent = opts.get('parent_session', None)
+
+        return Session(
+            self, mapper_session.data, mapper_session.output,
+            mapper_session=mapper_session,
+            parent=parent)
+
     def marshal(self, mapper_session, **opts):
         """Run the marshal :class:`Pipeline` for this field for the given ``data`` and
         update the output for this field inside of the mapper_session.
@@ -313,7 +321,13 @@ class Field(object):
             :meth:`kim.mapper.Mapper.marshal`
         """
 
-        run_pipeline(self.marshal_pipes, mapper_session, self, **opts)
+        session = self.get_session(
+            mapper_session.data,
+            mapper_session.output,
+            mapper_session=mapper_session,
+            **opts
+        )
+        run_pipeline(self.marshal_pipes, session, self, **opts)
 
     def serialize(self, mapper_session, **opts):
         """Run the serialize :class:`Pipeline` for this field for the given `data` and
@@ -327,8 +341,14 @@ class Field(object):
         .. seealso::
             :meth:`kim.mapper.Mapper.serialize`
         """
+        session = self.get_session(
+            mapper_session.data,
+            mapper_session.output,
+            mapper_session=mapper_session,
+            **opts
+        )
 
-        run_pipeline(self.serialize_pipes, mapper_session, self, **opts)
+        run_pipeline(self.serialize_pipes, session, self, **opts)
 
 
 class String(Field):
@@ -562,6 +582,11 @@ class Nested(Field):
     marshal_pipeline = NestedMarshalPipeline
     serialize_pipeline = NestedSerializePipeline
 
+    def __init__(self, *args, **kwargs):
+
+        super(Nested, self).__init__(*args, **kwargs)
+        self._mapper_class = None
+
     def get_mapper(self, as_class=False, **mapper_params):
         """Retrieve the specified mapper from the Mapper registry.
 
@@ -577,11 +602,14 @@ class Nested(Field):
 
         from .mapper import get_mapper_from_registry
 
-        mapper = get_mapper_from_registry(self.opts.mapper)
-        if as_class:
-            return mapper
+        if self._mapper_class is None:
+            mapper = get_mapper_from_registry(self.opts.mapper)
+            self._mapper_class = mapper
 
-        return mapper(**mapper_params)
+        if as_class:
+            return self._mapper_class
+        else:
+            return self._mapper_class(**mapper_params)
 
 
 class CollectionFieldOpts(FieldOpts):
