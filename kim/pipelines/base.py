@@ -189,12 +189,13 @@ class Pipeline(object):
 
     __slots__ = ()
 
-    def get_pipeline(self, **extra_pipes):
+    @classmethod
+    def get_pipeline(cls, **extra_pipes):
         chain = []
-        chain.extend(self.input_pipes + extra_pipes.get('input', []))
-        chain.extend(self.validation_pipes + extra_pipes.get('validation', []))
-        chain.extend(self.process_pipes + extra_pipes.get('process', []))
-        chain.extend(self.output_pipes + extra_pipes.get('output', []))
+        chain.extend(cls.input_pipes + extra_pipes.get('input', []))
+        chain.extend(cls.validation_pipes + extra_pipes.get('validation', []))
+        chain.extend(cls.process_pipes + extra_pipes.get('process', []))
+        chain.extend(cls.output_pipes + extra_pipes.get('output', []))
 
         return chain
 

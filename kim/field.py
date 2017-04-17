@@ -225,10 +225,10 @@ class Field(object):
 
         set_creation_order(self)
 
-        self.marshal_pipes = self.marshal_pipeline().get_pipeline(
+        self.marshal_pipes = self.marshal_pipeline.get_pipeline(
             **self.opts.extra_marshal_pipes
         )
-        self.serialize_pipes = self.serialize_pipeline().get_pipeline(
+        self.serialize_pipes = self.serialize_pipeline.get_pipeline(
             **self.opts.extra_serialize_pipes
         )
 
