@@ -449,6 +449,8 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         using ``deferred_role``.  deferred_role is used to provide the intersection
         between the role specified at ``name_or_role`` and the ``deferred_role``.
 
+        Usage::
+
             class FooMapper(Mapper):
                 __type__ = dict
                 name = field.String()
