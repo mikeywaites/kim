@@ -65,3 +65,12 @@ Detailed class and method documentation
    :maxdepth: 3
 
    api
+
+
+About Kim
+--------------
+
+.. toctree::
+   :maxdepth: 2
+
+   benchmarks

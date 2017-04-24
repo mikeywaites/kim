@@ -114,9 +114,6 @@ Roles
 Pipelines
 ------------------
 
-.. autoclass:: kim.pipelines.base.Pipe
-   :members:
-
 .. autofunction:: kim.pipelines.base.pipe
 
 .. autoclass:: kim.pipelines.base.Pipeline
