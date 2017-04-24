@@ -6,6 +6,9 @@ Benchmarks
 Below is the output of a benchmark written and maintained by @voidfiles.  You can find the results
 here https://voidfiles.github.io/python-serialization-benchmark/
 
+Here's the output from the test suite using a Python 3 Docker container
+on a 2015 Mac Book pro with 8gb of ram.
+
 =====================  ========================  ======================  ==========
 Library                  Many Objects (seconds)    One Object (seconds)    Relative
 =====================  ========================  ======================  ==========
