@@ -1,6 +1,22 @@
 Changelog
 ========================
 
+v1.2.0
+-----------------------
+
+This release contains a number of improvements and changes to existing field options as
+well as some new Field types
+
+https://github.com/mikeywaites/kim/milestone/4?closed=1
+
+* New Float field (Margaferrez)
+* Min/Max options for Decimal field (Margaferrez)
+* String Min/Max validation options (Margaferrez)
+* Add blank option to String to disallow empty string
+* make field default apply when serializing and marshaling
+* Error now raise when trying to serialize None
+* Default String field to unicode type
+
 v1.1.1
 -----------------------
 Fix version of iso8601 dependency which was broken by the latest release of that project
