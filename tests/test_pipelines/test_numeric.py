@@ -111,7 +111,7 @@ def test_is_valid_choice():
     assert output == {'type': 1}
 
 
-def test_min_max():
+def test_min_max_integer():
 
     field = Integer(name='age', min=20, max=35)
     output = {}
@@ -131,6 +131,31 @@ def test_min_max():
     mapper_session = get_mapper_session(data={'age': '25'}, output=output)
     field.marshal(mapper_session)
     assert output == {'age': 25}
+
+    mapper_session = get_mapper_session(data={'age': 35}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': 35}
+
+
+def test_min_max_decimal():
+    field = Decimal(name='age', min=0, max=1.5)
+    output = {}
+
+    mapper_session = get_mapper_session(data={'age': -1}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 4}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 0.7}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': decimal.Decimal('0.7')}
+
+    mapper_session = get_mapper_session(data={'age': 1.5}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': decimal.Decimal('1.5')}
 
 
 def test_is_valid_decimal_pipe():

@@ -104,7 +104,7 @@ class DecimalMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = [is_valid_decimal] + MarshalPipeline.validation_pipes
+    validation_pipes = [is_valid_decimal, bounds_check] + MarshalPipeline.validation_pipes
     process_pipes = [coerce_to_decimal] + MarshalPipeline.process_pipes
 
 
