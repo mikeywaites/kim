@@ -11,6 +11,24 @@ from .base import pipe, is_valid_choice
 from .marshaling import MarshalPipeline
 from .serialization import SerializePipeline
 
+@pipe()
+def bounds_check(session):
+    """Pipe used to determine if a value is within the min and max bounds on
+    the field
+
+    :param session: Kim pipeline session instance
+
+    """
+
+    max_ = session.field.opts.max
+    min_ = session.field.opts.min
+
+    if max_ is not None and len(session.data) > max_:
+        raise session.field.invalid(error_type='out_of_bounds')
+    if min_ is not None and len(session.data) < min_:
+        raise session.field.invalid(error_type='out_of_bounds')
+
+    return session.data
 
 @pipe()
 def is_valid_string(session):
@@ -36,7 +54,7 @@ class StringMarshalPipeline(MarshalPipeline):
     """
 
     validation_pipes = \
-        [is_valid_string, is_valid_choice] + MarshalPipeline.validation_pipes
+        [is_valid_string, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
 
 
 class StringSerializePipeline(SerializePipeline):

@@ -341,6 +341,27 @@ class Field(object):
         run_pipeline(self.serialize_pipes, session, self, **opts)
 
 
+class StringFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`String`.
+
+    """
+
+    def __init__(self, **kwargs):
+        """ Construct a new instance of :class:`StringFieldOpts`
+        and set config options
+
+        :param max: Specify the maximum permitted length
+        :param min: Specify the minimum permitted length
+
+        :raises: :class:`FieldOptsError`
+        :returns: None
+        """
+        self.max = kwargs.pop('max', None)
+        self.min = kwargs.pop('min', None)
+        super(StringFieldOpts, self).__init__(**kwargs)
+
+
 class String(Field):
     """:class:`String` represents a value that must be valid
     when passed to str()
@@ -356,7 +377,7 @@ class String(Field):
             name = field.String(required=True)
 
     """
-
+    opts_class = StringFieldOpts
     marshal_pipeline = StringMarshalPipeline
     serialize_pipeline = StringSerializePipeline
 

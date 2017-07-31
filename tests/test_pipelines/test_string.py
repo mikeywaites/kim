@@ -98,3 +98,45 @@ def test_string_input_cast():
     mapper_session = get_mapper_session(data={'name': 123}, output=output)
     field.marshal(mapper_session)
     assert output == {'name': '123'}
+
+def test_min_length_input():
+    field = String(name='length', min=3)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'length': 'o'}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'length': 'four'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'length': 'four'}
+
+
+def test_max_length_input():
+    field = String(name='length', max=3)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'length': 'seven'}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'length': 'one'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'length': 'one'}
+
+
+def test_min_max_length_input():
+    field = String(name='length', min=3, max=5)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'length': 'o'}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'length': 'onemore'}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'length': 'four'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'length': 'four'}
