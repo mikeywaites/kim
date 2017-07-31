@@ -25,7 +25,7 @@ def mapper_is_defined(mapper_name):
 
 
 def get_mapper_from_registry(mapper_or_name):
-    """Serarch for a defined mapper by name inside of the mapper registry.
+    """Search for a defined mapper by name inside of the mapper registry.
 
     User may pass either a mapper class object or the name of a defined mapper
     as a str
