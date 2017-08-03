@@ -19,7 +19,7 @@ from .pipelines import (
     DateTimeSerializePipeline, DateTimeMarshalPipeline,
     DateMarshalPipeline, DateSerializePipeline,
     DecimalSerializePipeline, DecimalMarshalPipeline,
-)
+    FloatSerializePipeline, FloatMarshalPipeline)
 from .pipelines.base import run_pipeline, Session
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
@@ -424,17 +424,18 @@ class Integer(Field):
     serialize_pipeline = IntegerSerializePipeline
 
 
-class DecimalFieldOpts(FieldOpts):
+class FloatFieldOpts(FieldOpts):
     """Custom FieldOpts class that provides additional config options for
-    :class:`Decimal`.
+    :class:`Float`.
 
     """
 
     def __init__(self, **kwargs):
-        """ Construct a new instance of :class:`DecimalFieldOpts`
+        """ Construct a new instance of :class:`FloatFieldOpts`
         and set config options
 
-        :param precision: Specify the precision of the decimal
+
+        :param precision: Specify the precision of the float
         :param max: Specify the maximum permitted value
         :param min: Specify the minimum permitted value
 
@@ -444,10 +445,31 @@ class DecimalFieldOpts(FieldOpts):
         self.precision = kwargs.pop('precision', 5)
         self.max = kwargs.pop('max', None)
         self.min = kwargs.pop('min', None)
-        super(DecimalFieldOpts, self).__init__(**kwargs)
+        super(FloatFieldOpts, self).__init__(**kwargs)
 
 
-class Decimal(Field):
+class Float(Field):
+    """:class:`Float` represents a value that must be valid
+    Float type.
+
+    Usage::
+
+        from kim import Mapper
+        from kim import field
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            score = field.Float(precision=4)
+
+    """
+
+    opts_class = FloatFieldOpts
+    marshal_pipeline = FloatMarshalPipeline
+    serialize_pipeline = FloatSerializePipeline
+
+
+class Decimal(Float):
     """:class:`Decimal` represents a value that must be valid
     when passed to decimal.Decimal()
 
@@ -463,7 +485,7 @@ class Decimal(Field):
 
     """
 
-    opts_class = DecimalFieldOpts
+    opts_class = FloatFieldOpts
     marshal_pipeline = DecimalMarshalPipeline
     serialize_pipeline = DecimalSerializePipeline
 

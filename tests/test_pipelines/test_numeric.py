@@ -1,7 +1,7 @@
 import pytest
 import decimal
 
-from kim.field import FieldInvalid, Integer, Decimal
+from kim.field import FieldInvalid, Integer, Decimal, Float
 from kim.pipelines.base import Session
 from kim.pipelines.numeric import is_valid_integer, is_valid_decimal
 
@@ -228,3 +228,81 @@ def test_decimal_output():
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
     assert output == {'name': '2.52000'}
+
+
+def test_float_input():
+
+    field = Float(name='name', required=True)
+
+    mapper_session = get_mapper_session(
+        data={'email': 'mike@mike.com'}, output={})
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(
+        data={'name': 'foo', 'email': 'mike@mike.com'}, output={})
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': 2, 'email': 'mike@mike.com'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'name': 2.0}
+
+
+def test_min_max_float():
+
+    field = Float(name='age', min=0, max=1.5)
+    output = {}
+
+    mapper_session = get_mapper_session(data={'age': -1}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 4}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'age': 0.7}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': 0.7}
+
+    mapper_session = get_mapper_session(data={'age': 1.5}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'age': 1.5}
+
+
+def test_float_input_precision():
+
+    field = Float(name='name', required=True, precision=4)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': '3.147261', 'email': 'mike@mike.com'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'name': 3.1473}
+
+
+def test_float_field_invalid_type():
+
+    field = Decimal(name='name')
+
+    mapper_session = get_mapper_session(
+        data={'name': None, 'email': 'mike@mike.com'}, output={})
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+
+def test_float_output():
+
+    class Foo(object):
+        name = 2.52056
+
+    field = Float(name='name', required=True, precision=2)
+
+    output = {}
+    mapper_session = get_mapper_session(obj=Foo(), output=output)
+    field.serialize(mapper_session)
+    assert output == {'name': '2.52'}
+
