@@ -1,6 +1,10 @@
 Changelog
 ========================
 
+v1.1.1
+-----------------------
+Fix version of iso8601 dependency which was broken by the latest release of that project
+
 v1.1.0
 -----------------------
 
