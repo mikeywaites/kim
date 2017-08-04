@@ -1,14 +1,7 @@
 [distutils]
 index-servers =
     pypi
-    pypitest
 
 [pypi]
-repository: https://pypi.python.org/pypi
-username: PYPI_USERNAME
-password: PYPI_PASSWORD
-
-[pypitest]
-repository: https://testpypi.python.org/pypi
 username: PYPI_USERNAME
 password: PYPI_PASSWORD
