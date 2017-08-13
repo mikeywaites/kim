@@ -7,9 +7,32 @@
 
 import iso8601
 
+from kim.utils import datetime as dt
+
+
 from .base import pipe, is_valid_choice
 from .marshaling import MarshalPipeline
 from .serialization import SerializePipeline
+
+
+def parse_iso8601(session):
+    try:
+        session.data = iso8601.parse_date(session.data)
+    except iso8601.ParseError:
+        raise session.field.invalid(error_type='invalid')
+
+    return session.data
+
+
+def parse_date_str(session):
+    date_format = session.field.opts.date_format
+
+    try:
+        session.data = dt.strptime(session.data, date_format)
+    except ValueError:
+        raise session.field.invalid(error_type='invalid')
+
+    return session.data
 
 
 @pipe()
@@ -21,19 +44,23 @@ def is_valid_datetime(session):
     """
 
     if session.data is not None:
-        try:
-            session.data = iso8601.parse_date(session.data)
-        except iso8601.ParseError:
-            raise session.field.invalid(error_type='type_error')
-    return session.data
+        date_format = session.field.opts.date_format
+        if date_format == 'iso8601':
+            return parse_iso8601(session)
+        else:
+            return parse_date_str(session)
 
 
 @pipe()
 def format_datetime(session):
-    """convert datetime object to isoformat() datetime str
+    """Convert date or datetime object into formatted string representation.
     """
     if session.data is not None:
-        session.data = session.data.isoformat()
+        date_format = session.field.opts.date_format
+        if date_format == 'iso8601':
+            session.data = session.data.isoformat()
+        else:
+            session.data = session.data.strftime(date_format)
     return session.data
 
 
@@ -77,7 +104,7 @@ class DateMarshalPipeline(DateTimeMarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    process_pipes = [cast_to_date, ] + MarshalPipeline.process_pipes
+    process_pipes = DateTimeMarshalPipeline.process_pipes + [cast_to_date]
 
 
 class DateSerializePipeline(DateTimeSerializePipeline):

@@ -28,27 +28,39 @@ def test_is_valid_datetime_pipe():
         datetime(2015, 6, 29, 8, 0, 12, tzinfo=Utc())
 
 
-def test_datetime_input():
+def test_datetime_input_default_format():
 
-    field = DateTime(name='date', required=True)
+    field = DateTime(name='datetime', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'datetime': '2015-06-29T08:00:12Z', 'email': 'mike@mike.com'},
+        output=output)
+    field.marshal(mapper_session)
+    assert output == {'datetime': datetime(2015, 6, 29, 8, 0, 12, tzinfo=Utc())}
+
+
+def test_datetome_input_custom_format_invalid_value():
+
+    field = DateTime(name='datetime', format_str='%Y-%m-%d %H:%M:%S', required=True)
 
     mapper_session = get_mapper_session(
-        data={'email': 'mike@mike.com'}, output={})
-    with pytest.raises(FieldInvalid):
-        field.marshal(mapper_session)
-
-    mapper_session = get_mapper_session(
-        data={'date': 'bla', 'email': 'mike@mike.com'},
+        data={'datetime': 'bla', 'email': 'mike@mike.com'},
         output={})
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    output = {}
+
+def test_datetome_input_default_format_invalid_value():
+
+    field = DateTime(name='datetime', required=True)
+
     mapper_session = get_mapper_session(
-        data={'date': '2015-06-29T08:00:12Z', 'email': 'mike@mike.com'},
-        output=output)
-    field.marshal(mapper_session)
-    assert output == {'date': datetime(2015, 6, 29, 8, 0, 12, tzinfo=Utc())}
+        data={'datetime': 'bla', 'email': 'mike@mike.com'},
+        output={})
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
 
 
 def test_datetime_field_invalid_type():
@@ -86,20 +98,9 @@ def test_marshal_read_only_datetime():
     assert output == {}
 
 
-def test_date_input():
+def test_date_input_default_format():
 
     field = Date(name='date', required=True)
-
-    mapper_session = get_mapper_session(
-        data={'email': 'mike@mike.com'}, output={})
-    with pytest.raises(FieldInvalid):
-        field.marshal(mapper_session)
-
-    mapper_session = get_mapper_session(
-        data={'date': 'bla', 'email': 'mike@mike.com'},
-        output={})
-    with pytest.raises(FieldInvalid):
-        field.marshal(mapper_session)
 
     output = {}
     mapper_session = get_mapper_session(
@@ -109,7 +110,31 @@ def test_date_input():
     assert output == {'date': date(2015, 6, 29)}
 
 
-def test_date_output():
+def test_date_input_custom_format():
+
+    field = Date(name='date', format_str='%Y', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'date': '2015', 'email': 'mike@mike.com'},
+        output=output)
+    field.marshal(mapper_session)
+    assert output == {'date': date(2015, 1, 1)}
+
+
+def test_date_input_custom_format_invalid_format():
+
+    field = Date(name='date', format_str='%Y', required=True)
+
+    output = {}
+    with pytest.raises(FieldInvalid):
+        mapper_session = get_mapper_session(
+            data={'date': 'bla', 'email': 'mike@mike.com'},
+            output=output)
+        field.marshal(mapper_session)
+
+
+def test_date_output_default_format():
 
     class Foo(object):
         date = date(2015, 6, 29)
@@ -120,3 +145,16 @@ def test_date_output():
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
     assert output == {'date': '2015-06-29'}
+
+
+def test_date_output_custom_format():
+
+    class Foo(object):
+        date = date(2015, 6, 29)
+
+    field = Date(name='date', format_str='%Y', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(obj=Foo(), output=output)
+    field.serialize(mapper_session)
+    assert output == {'date': '2015'}

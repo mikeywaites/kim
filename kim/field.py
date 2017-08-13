@@ -781,6 +781,44 @@ class Static(Field):
     serialize_pipeline = StaticSerializePipeline
 
 
+class DateTimeFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`DateTime`.
+
+    """
+
+    def __init__(self, **kwargs):
+        """Construct a new instance of :class:`DateTimeFieldOpts`
+
+        :param format_str: Specify a format string used to validate an
+            incoming date string.  If not value is passed then the format defaults to
+            iso8601.
+
+        """
+        self.date_format = kwargs.pop('format_str', 'iso8601')
+        super(DateTimeFieldOpts, self).__init__(**kwargs)
+        self.error_msgs['invalid'] = 'Not a valid datetime.'
+
+
+class DateFieldOpts(FieldOpts):
+    """Custom FieldOpts class that provides additional config options for
+    :class:`Date`.
+
+    """
+
+    def __init__(self, **kwargs):
+        """Construct a new instance of :class:`Date`
+
+        :param format_str: Specify a format string used to validate an
+            incoming date string.  If not value is passed then the format defaults to
+            iso8601.
+
+        """
+        self.date_format = kwargs.pop('format_str', '%Y-%m-%d')
+        super(DateFieldOpts, self).__init__(**kwargs)
+        self.error_msgs['invalid'] = 'Not a valid date.'
+
+
 class DateTime(Field):
     """:class:`DateTime` represents an iso8601 encoded date time
 
@@ -796,11 +834,12 @@ class DateTime(Field):
 
     """
 
+    opts_class = DateTimeFieldOpts
     marshal_pipeline = DateTimeMarshalPipeline
     serialize_pipeline = DateTimeSerializePipeline
 
 
-class Date(Field):
+class Date(DateTime):
     """:class:`Date` represents a date object
 
     .. code-block:: python
@@ -815,5 +854,5 @@ class Date(Field):
 
     """
 
+    opts_class = DateFieldOpts
     marshal_pipeline = DateMarshalPipeline
-    serialize_pipeline = DateSerializePipeline

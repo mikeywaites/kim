@@ -5,10 +5,12 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-
-_creation_order = 1
+from datetime import datetime  # NOQA
 
 from collections import defaultdict
+
+
+_creation_order = 1
 
 
 def set_creation_order(instance):
