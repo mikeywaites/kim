@@ -62,7 +62,10 @@ def blank_check(session):
 
 @pipe(run_if_none=False)
 def to_unicode(session):
+    """Convert incoming value to unicode string
 
+    :param session: Kim pipeline session instance
+    """
     return six.text_type(session.data)
 
 

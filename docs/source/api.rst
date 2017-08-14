@@ -62,9 +62,6 @@ Fields
 .. autoclass:: kim.field.Decimal
    :members:
 
-.. autoclass:: kim.field.DecimalFieldOpts
-   :members:
-
 .. autoclass:: kim.field.Boolean
    :members:
 
@@ -193,13 +190,16 @@ Base
 String
 ''''''''''''''
 .. autofunction:: kim.pipelines.string.is_valid_string
+.. autofunction:: kim.pipelines.string.to_unicode
+.. autofunction:: kim.pipelines.string.bounds_check
 
 Integer
 ''''''''''''''
 .. autofunction:: kim.pipelines.numeric.is_valid_integer
 .. autofunction:: kim.pipelines.numeric.bounds_check
 
-Decimal
+
+String
 ''''''''''''''
 .. autofunction:: kim.pipelines.numeric.is_valid_decimal
 .. autofunction:: kim.pipelines.numeric.coerce_to_decimal

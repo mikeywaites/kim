@@ -45,9 +45,8 @@ like object.
 
 **Further Reading**:
 
-    * :ref:`Defining Mappers - Advanced <mappers_advanced_defining>`
+    * :ref:`Defining Mappers - Advanced <mappers_advanced>`
     * :ref:`Polymorphic Mappers <mappers_advanced_polymorphic>`
-    * :ref:`Custom Mapper Classes <mappers_advanced_custom>`
 
 
 Serializing Data
@@ -80,8 +79,7 @@ from the mapper.
 
 **Further Reading**:
 
-    * :ref:`Advanced serialization Usage <serialization_advanced>`
-    * :ref:`Custom serialization Pipelines <custom_serialization_pipelines>`
+    * :ref:`Custom serialization Pipelines <custom_pipelines>`
 
 
 Marshaling Data
@@ -168,8 +166,7 @@ to indicate this is a partial update.
 
 **Further Reading**:
 
-    * :ref:`Advanced Marshaling Usage <marshaling_advanced>`
-    * :ref:`Custom marshaling Pipelines <custom_marshaling_pipelines>`
+    * :ref:`Custom marshaling Pipelines <custom_pipelines>`
 
 
 Nesting Objects

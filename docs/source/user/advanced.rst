@@ -331,7 +331,7 @@ same field.
 .. _fields_nested:
 
 Nested ``__self__``
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 Sometimes your object model may contain flat data but you'd like the JSON output
 to be nested. You can do this by setting ``source='__self__'`` on a Nested field.
