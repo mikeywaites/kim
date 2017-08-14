@@ -1,4 +1,6 @@
 # encoding: utf-8
+
+import json
 import pytest
 
 from ..conftest import get_mapper_session
@@ -176,3 +178,23 @@ def test_string_input_cast_object():
 
     field.marshal(mapper_session)
     assert output == {'name': "{'nested': 'stuff'}"}
+
+
+def test_supports_unicode():
+
+    field = String(name='unicode')
+    output = {}
+    data = {'unicode': u"foo \u2192"}
+    mapper_session = get_mapper_session(data=data, output=output)
+    field.marshal(mapper_session)
+    assert output == {'unicode': u'foo →'}
+
+
+def test_supports_unicode_from_json():
+
+    field = String(name='unicode')
+    output = {}
+    data = '{"unicode": "foo \u2192"}'
+    mapper_session = get_mapper_session(data=json.loads(data), output=output)
+    field.marshal(mapper_session)
+    assert output == {'unicode': u'foo →'}

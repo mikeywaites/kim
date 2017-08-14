@@ -11,6 +11,7 @@ from .base import pipe, is_valid_choice
 from .marshaling import MarshalPipeline
 from .serialization import SerializePipeline
 
+
 @pipe()
 def bounds_check(session):
     """Pipe used to determine if a value is within the min and max bounds on
@@ -29,6 +30,7 @@ def bounds_check(session):
         raise session.field.invalid(error_type='out_of_bounds')
 
     return session.data
+
 
 @pipe()
 def is_valid_string(session):
@@ -58,6 +60,12 @@ def blank_check(session):
     return session.data
 
 
+@pipe(run_if_none=False)
+def to_unicode(session):
+
+    return six.text_type(session.data)
+
+
 class StringMarshalPipeline(MarshalPipeline):
     """StringMarshalPipeline
 
@@ -68,7 +76,10 @@ class StringMarshalPipeline(MarshalPipeline):
     """
 
     validation_pipes = \
-        [is_valid_string, blank_check, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
+        [is_valid_string, is_valid_choice, bounds_check] \
+        + MarshalPipeline.validation_pipes
+
+    output_pipes = [to_unicode] + MarshalPipeline.output_pipes
 
 
 class StringSerializePipeline(SerializePipeline):
