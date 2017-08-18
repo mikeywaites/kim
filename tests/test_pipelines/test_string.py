@@ -162,3 +162,17 @@ def test_blank_false():
     mapper_session = get_mapper_session(data={'blank': 'bla'}, output=output)
     field.marshal(mapper_session)
     assert output == {'blank': 'bla'}
+
+
+def test_string_input_cast_object():
+    """If I pass a nested object instead of a string, it should be cast to a
+    string"""
+
+    field = String(name='name', required=True)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': {'nested': 'stuff'}}, output=output)
+
+    field.marshal(mapper_session)
+    assert output == {'name': "{'nested': 'stuff'}"}
