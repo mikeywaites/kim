@@ -592,3 +592,19 @@ def test_mapper_serialize_with_default():
     result = mapper.serialize()
 
     assert result == {'name': 'my default'}
+
+
+def test_field_serialize_None():
+    """If you attempt to serialize None (because you passed data instead of obj)
+    an error should be raised"""
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        score = Integer()
+
+    mapper = MapperBase(data={})
+
+    with pytest.raises(MapperError):
+        mapper.serialize()

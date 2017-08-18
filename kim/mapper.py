@@ -645,11 +645,15 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         output = {}  # Should this be user definable?
 
+        if self.obj is None:
+            raise MapperError(
+                'Attmpted to serialize None, have you passed a valid obj param to %s()?'
+                % self.__class__.__name__)
+
+        data = self.obj
         transform_data = raw or self.raw
         if transform_data:
-            data = self.transform_data(self._get_obj())
-        else:
-            data = self._get_obj()
+            data = self.transform_data(data)
 
         mapper_session = self.get_mapper_session(data, output)
         for field in self._get_fields(role, deferred_role=deferred_role):
