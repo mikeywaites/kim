@@ -353,12 +353,14 @@ class StringFieldOpts(FieldOpts):
 
         :param max: Specify the maximum permitted length
         :param min: Specify the minimum permitted length
+        :param blank: If False, raise error if empty string passed. Default True
 
         :raises: :class:`FieldOptsError`
         :returns: None
         """
         self.max = kwargs.pop('max', None)
         self.min = kwargs.pop('min', None)
+        self.blank = kwargs.pop('blank', True)
         super(StringFieldOpts, self).__init__(**kwargs)
 
 

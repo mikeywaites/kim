@@ -140,3 +140,25 @@ def test_min_max_length_input():
     mapper_session = get_mapper_session(data={'length': 'four'}, output=output)
     field.marshal(mapper_session)
     assert output == {'length': 'four'}
+
+
+def test_blank_true():
+    field = String(name='blank', blank=True)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'blank': ''}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'blank': ''}
+
+
+def test_blank_false():
+    field = String(name='blank', blank=False)
+
+    output = {}
+    mapper_session = get_mapper_session(data={'blank': ''}, output=output)
+    with pytest.raises(FieldInvalid):
+        field.marshal(mapper_session)
+
+    mapper_session = get_mapper_session(data={'blank': 'bla'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'blank': 'bla'}

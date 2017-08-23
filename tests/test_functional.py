@@ -115,6 +115,22 @@ def test_field_marshal_to_name():
     assert result.score == 5
 
 
+def test_field_marshal_required():
+    """A required field is not present, so an error should be raied"""
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String()  # required=True is default
+
+    data = {}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+
 def test_mapper_top_level_validate_with_fieldinvalid():
 
     class MapperBase(Mapper):
