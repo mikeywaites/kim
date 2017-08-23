@@ -131,6 +131,56 @@ def test_field_marshal_required():
         mapper.marshal()
 
 
+def test_field_marshal_required_none():
+    """A required field is None, so an error should be raied"""
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String()  # required=True is default
+
+    data = {'name': None}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+
+def test_field_marshal_none_allow_none():
+    """A non required field is None, but allow_none is True,
+    so an error should not be raised"""
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String(required=False)  # allow_none=True is the default
+
+    data = {'name': None}
+
+    mapper = MapperBase(data=data)
+    result = mapper.marshal()
+    assert result.name is None
+
+
+def test_field_marshal_none_allow_none_false():
+    """A non required field is None, allow_none is False,
+    so an error should be raised"""
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String(required=False, allow_none=False)
+
+    data = {'name': None}
+
+    mapper = MapperBase(data=data)
+    with pytest.raises(MappingInvalid):
+        mapper.marshal()
+
+
 def test_mapper_top_level_validate_with_fieldinvalid():
 
     class MapperBase(Mapper):

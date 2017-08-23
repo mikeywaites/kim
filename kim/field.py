@@ -70,7 +70,11 @@ class FieldOpts(object):
             when getting/setting data. May be ``__self__`` to use entire mapper
             object as data
         :param default: Specify a default value for this field
-        :param allow_none: Specify if this fields value can be None
+        :param allow_none: This option only takes affect if required=False. If
+            allow_none=False and required=False, then Kim will accept either
+            the field being missing completely from the data, or the field
+            being passed with a non-None value. That is, either ``{}`` or
+            ``{'field': 'value'}`` but never ``{'field': None}``. Default True.
         :param read_only: Specify if this field should be ignored when marshaling
         :param error_msgs: A dict of error_type: error messages.
         :param null_default: Specify the default type to return when a field is
