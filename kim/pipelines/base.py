@@ -309,3 +309,17 @@ def update_output_to_source(session):
     except (TypeError, AttributeError):
         raise FieldError('output does not support attribute or '
                          'key based set operations')
+
+
+@pipe(run_if_none=True)
+def set_default(session):
+    """If ``data`` is None, set default if it is set.
+
+    :param session: Kim pipeline session instance
+
+    :returns: None
+    """
+    if session.data is None:
+        session.data = session.field.opts.default
+
+    return session.data

@@ -4,7 +4,7 @@ from kim.field import Field, FieldInvalid, FieldError
 from kim.pipelines.base import (
     Session,
     get_data_from_source, get_data_from_name, update_output_to_name,
-    update_output_to_source)
+    update_output_to_source, set_default)
 
 
 def test_get_data_from_name_pipe():
@@ -173,3 +173,38 @@ def test_update_output_to_source_invalid_output_type():
     session = Session(field, data, output)
     with pytest.raises(FieldError):
         update_output_to_source(session)
+
+
+def test_set_default():
+
+    data = {
+        'name': None,
+        'test': 'true',
+        'nested': {'foo': 'bar'}
+    }
+
+    output = {}
+
+    field = Field(name='name', required=True, default='default')
+    session = Session(field, data, output)
+    session.data = data['name']
+    set_default(session)
+    assert session.data == 'default'
+
+
+def test_set_default_falsy():
+    # Default should not apply if value is falsy
+
+    data = {
+        'name': '',
+        'test': 'true',
+        'nested': {'foo': 'bar'}
+    }
+
+    output = {}
+
+    field = Field(name='name', required=True, default='default')
+    session = Session(field, data, output)
+    session.data = data['name']
+    set_default(session)
+    assert session.data == ''

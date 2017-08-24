@@ -576,3 +576,19 @@ def test_serialize_polymorphic_mapper_many_with_deferred_role():
             'id': 3,
         }
     ]
+
+
+def test_mapper_serialize_with_default():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        name = String(default='my default')
+
+    obj = TestType()
+
+    mapper = MapperBase(obj=obj)
+    result = mapper.serialize()
+
+    assert result == {'name': 'my default'}

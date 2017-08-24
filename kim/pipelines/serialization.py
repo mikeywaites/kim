@@ -1,4 +1,5 @@
-from .base import Pipeline, get_data_from_source, update_output_to_name
+from .base import (
+    Pipeline, get_data_from_source, update_output_to_name, set_default)
 
 
 class SerializePipeline(Pipeline):
@@ -11,5 +12,5 @@ class SerializePipeline(Pipeline):
 
     input_pipes = [get_data_from_source]
     validation_pipes = []
-    process_pipes = []
+    process_pipes = [set_default]
     output_pipes = [update_output_to_name]

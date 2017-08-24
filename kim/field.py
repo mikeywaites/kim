@@ -69,7 +69,8 @@ class FieldOpts(object):
         :param source: Specify the name of the attribute on the object to use
             when getting/setting data. May be ``__self__`` to use entire mapper
             object as data
-        :param default: Specify a default value for this field
+        :param default: Specify a default value for this field to apply when
+            serializing or marshaling
         :param allow_none: This option only takes affect if required=False. If
             allow_none=False and required=False, then Kim will accept either
             the field being missing completely from the data, or the field
