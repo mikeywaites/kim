@@ -79,7 +79,7 @@ class StringMarshalPipeline(MarshalPipeline):
     """
 
     validation_pipes = \
-        [is_valid_string, is_valid_choice, bounds_check] \
+        [is_valid_string, blank_check, is_valid_choice, bounds_check] \
         + MarshalPipeline.validation_pipes
 
     output_pipes = [to_unicode] + MarshalPipeline.output_pipes
