@@ -226,3 +226,104 @@ class blacklist(Role):
     def __init__(self, *args, **kwargs):
         kwargs['whitelist'] = False
         super(blacklist, self).__init__(*args, **kwargs)
+
+
+class nested_role(whitelist):
+    """Nested roles allow you to specify the role of a :class:.`kim.field.Nested` field
+    on a mapper to be used when serializing or marshaling a Mapper
+    conataining a Nested field.
+
+    Example::
+
+        class UserMapper(Mapper):
+            __type__ = User
+
+            id = field.Integer()
+            name = field.String()
+            email = field.Email()
+
+            __roles__ = {
+                'public': whitelist('id', 'name')
+            }
+
+
+        class Post(Mapper):
+            __type__ = Post
+
+            id = field.Integer()
+            created_by = field.Nested('UserMapper')
+            text = field.String()
+            likes = field.Collection(field.Nested('UserMapper'))
+
+            __roles__ = {
+                'list': whitelist('id', 'name', nested_role('created_by', role='public'))
+            }
+
+
+        mapper = PostMapper(obj=posts)
+        mapper.serialize(role='list')
+
+
+    When the PostMapper is serialized using the list role, the Nested role will instruct
+    Kim that when it processes the Nested created_by field, it should use the public Role.
+
+    the nested role also support membership tests on the main Role object.
+
+    .. code-block::
+
+        role = whitelist('id', 'name', nested_role('user', role='public'))
+        assert 'user' in role
+
+    .. versionadded:: 1.3.0
+    """
+
+    def __init__(
+            self, name,
+            role='__default__',
+            serialize_role=None,
+            marshal_role=None,
+            *args, **kwargs):
+        """Construct a new nested_role instance.  The nested_role implicitly acts
+        as a :class:`kim.role.whitelist`.
+
+        :param name: The name of the nested field this nested_role is referring to.
+        :param role: The name of the role to use for both Marshaling and Serializing the
+            nested field.
+        :param serialize: The name of a role to use when serializing the nested field.
+        :param marshal: The name of a role to use when marshaling the nested field
+        """
+
+        self.name = name
+        self.role = role
+        self.serialize_role = serialize_role
+        self.marshal_role = marshal_role
+
+        super(nested_role, self).__init__(*args, **kwargs)
+
+    def __eq__(self, field_name):
+        """Overload the __eq__ method so that when a Mapper asserts if a field is found
+        within a role, nested_role will act as though it's name were added normally using
+        the string name of the field.
+
+        :param field_name: The name of the field the role is searching for.
+
+        .. code-block::
+
+            role = whitelist('id', 'name', nested_role('user', role='public'))
+            assert 'user' in role
+
+        """
+
+        return self.name == field_name
+
+    def __hash__(self):
+        """Has the nested role using the provided field name.  This means nested roles
+        still pass membership tests on the main role object when only the nested field
+        name is provided.
+
+        .. code-block::
+
+            role = whitelist('id', 'name', nested('user', role='public'))
+            assert 'user' in role
+        """
+        return hash(self.name)
