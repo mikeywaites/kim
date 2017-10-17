@@ -4,7 +4,7 @@ from kim.exception import MapperError, MappingInvalid
 from kim.mapper import (
     Mapper, _MapperConfig, get_mapper_from_registry, PolymorphicMapper)
 from kim.field import Field, String, Integer, Nested, Collection
-from kim.role import whitelist, blacklist
+from kim.role import whitelist, blacklist, nested_role
 
 from .fixtures import SchedulableMapper, EventMapper, TaskMapper
 
@@ -231,6 +231,78 @@ def test_new_mapper_sets_roles():
         '__default__': whitelist('id', 'name', 'email'),
         'overview': whitelist('email'),
         'private': whitelist('id', )
+    }
+
+
+def test_new_mapper_sets_nested_roles():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = String()
+        name = String()
+
+        __roles__ = {
+            'public': whitelist('id', 'name')
+        }
+
+    class MyMapper(Mapper):
+
+        __type__ = TestType
+
+        email = TestField()
+        user = Nested('UserMapper')
+
+        __roles__ = {
+            'public_role': whitelist('email', nested_role('user'))
+        }
+
+    mapper = MyMapper(data={})
+    assert mapper.nested_roles == {
+        'public_role': {'user': nested_role('user')}
+    }
+
+
+def test_new_mapper_sets_nested_roles_from_parent_mapper():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = String()
+        name = String()
+        email = String()
+
+        __roles__ = {
+            'public': whitelist('id', 'name'),
+            'private': whitelist('id', 'name', 'email')
+        }
+
+    class BaseMapper(Mapper):
+        __type__ = TestType
+
+        id = String()
+
+        __roles__ = {
+            'public_role': whitelist('email', nested_role('user', role='public'))
+        }
+
+    class MyMapper(BaseMapper):
+
+        __type__ = TestType
+
+        email = TestField()
+        user = Nested('UserMapper')
+
+        __roles__ = {
+            'private_role': whitelist('email', nested_role('user', role='private'))
+        }
+
+    mapper = MyMapper(data={})
+    assert mapper.nested_roles == {
+        'public_role': {'user': nested_role('user', role='public')},
+        'private_role': {'user': nested_role('user', role='private')},
     }
 
 

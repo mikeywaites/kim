@@ -5,7 +5,6 @@
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
-import warnings
 import weakref
 import six
 import inspect
@@ -14,7 +13,7 @@ from collections import OrderedDict, defaultdict
 
 from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
-from .role import whitelist, blacklist, Role
+from .role import whitelist, Role, nested_role
 from .utils import recursive_defaultdict, attr_or_key
 from .pipelines.base import pipe
 
@@ -282,19 +281,29 @@ class _MapperConfig(object):
         _roles = {}
         _roles.update(getattr(cls, 'roles', None) or {})
         _roles.update(getattr(base, '__roles__', None) or {})
+        _nested_roles = {}
 
         # Roles may be passed as list, convert to whitelist
         # objects in this case
-        for name, role in six.iteritems(_roles):
+        for role_name, role in six.iteritems(_roles):
             if isinstance(role, list):
-                _roles[name] = whitelist(*role)
+                _roles[role_name] = whitelist(*role)
             elif not isinstance(role, Role):
                 msg = "role %s on %s must be list or Role " \
-                      "instance, got %s" % (name, self.__class__.__name__,
+                      "instance, got %s" % (role_name, self.__class__.__name__,
                                             type(role))
                 raise MapperError(msg)
 
+            #: Iterate all the items defined within the Role.  Find any instances
+            #: of nested_role and store these on the Mapper in the Mapper.nested_roles
+            #: ..versionadded: 1.3.0
+            for field_or_role in role:
+                if isinstance(field_or_role, nested_role):
+                    _nested_roles.setdefault(role_name, {})
+                    _nested_roles[role_name][field_or_role.name] = field_or_role
+
         cls.roles = _roles
+        cls.nested_roles = _nested_roles
 
 
 # TODO(mike) __docs__
