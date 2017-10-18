@@ -319,14 +319,15 @@ class MapperSession(object):
     marshaling and serialization :class:`Pipeline`.
     """
 
-    __slots__ = ('mapper', 'data', 'output', 'partial')
+    __slots__ = ('mapper', 'data', 'output', 'role', 'partial')
 
-    def __init__(self, mapper, data, output, partial=None):
+    def __init__(self, mapper, data, output, role='__default__', partial=None):
         """Instantiate a new instance of :class:`MapperSession`
 
         :param mapper: :class:`Mapper <Mapper>` instance.
         :param data: The data marshaled by the :class:`Mapper`
         :param output: The object the :class:`Mapper` is outputting  to.
+        :param role: The name of a sesion being with this mapper session
         :return: None
         :rtype: None
 
@@ -339,6 +340,7 @@ class MapperSession(object):
         self.data = data
         self.output = output
         self.partial = partial
+        self.role = role
 
 
 class Mapper(six.with_metaclass(MapperMeta, object)):
@@ -622,16 +624,18 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return self._remove_none(output)
 
-    def get_mapper_session(self, data, output):
+    def get_mapper_session(self, data, output, role='__default__'):
         """Populate and return a new instance of :class:`MapperSession`
 
         :param data: data being Mapped
         :param output: obj mapper is mapping too
+        :param role: The role specified for serializing or marshaling the mapper.
+
         :return: :class:`MapperSession <MapperSession>` object
         :rtype: :class:`MapperSession` object
         """
 
-        return MapperSession(self, data, output, partial=self.partial)
+        return MapperSession(self, data, output, role=role, partial=self.partial)
 
     def serialize(self, role='__default__', raw=False, deferred_role=None):
         """Serialize ``self.obj`` into a dict according to the fields
@@ -664,7 +668,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         if transform_data:
             data = self.transform_data(data)
 
-        mapper_session = self.get_mapper_session(data, output)
+        mapper_session = self.get_mapper_session(data, output, role=role)
         for field in self._get_fields(role, deferred_role=deferred_role):
             field.serialize(mapper_session)
 
@@ -689,7 +693,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         for field in fields:
             try:
-                field.marshal(self.get_mapper_session(data, output))
+                field.marshal(self.get_mapper_session(data, output, role=role))
             except FieldInvalid as e:
                 self.errors[field.name] = e.message
             except MappingInvalid as e:
