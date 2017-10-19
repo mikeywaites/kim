@@ -327,3 +327,6 @@ class nested_role(whitelist):
             assert 'user' in role
         """
         return hash(self.name)
+
+    def __bool__(self):
+        return True
