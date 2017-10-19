@@ -80,26 +80,49 @@ def marshal_nested(session):
     return session.data
 
 
+def get_nested_role_for_serialize(mapper_session, nested_field):
+    """Retrieves a role either from a Nested fields parent mapper extracted nested_roles
+    or for the nested_fields standard field opts.
+    """
+
+    # Do we have any nested roles defined with the parent session's role?
+    nested_roles = mapper_session.mapper.nested_roles.get(mapper_session.role, {})
+    role_for_nested = nested_roles.get(nested_field.name, None)
+
+    if role_for_nested:
+        return role_for_nested.serialize_role or role_for_nested.role
+    else:
+        return nested_field.opts.serialize_role or nested_field.opts.role
+
+
 @pipe(run_if_none=True)
 def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
 
     :param session: Kim pipeline session instance
     """
-
     if session.data is None:
         session.data = session.field.opts.null_default
         return session.data
-
-    # Grab the Mapper defined for the nested field and call serialize()
-    if session.parent and session.parent.nested_mapper:
-        nested_mapper = session.parent.nested_mapper(obj=session.data)
     else:
-        nested_mapper = session.field.get_mapper(obj=session.data)
+        # If the Nested field Session object has a parent set it means that the Nested
+        # field is being processed by another field rather than it being attached to
+        # a Mapper directly IE by a field.Collection.  This means the
+        # session.mapper_session will be in the scope of the collection field rather than
+        # the outer mapper.  Proxy to the outer mapper's session by using the parent
+        # session instead and fetch the nested_mapper.
+        # Mapper.mapper_session.fields[collection].mapper_session.nested_mapper
+        if session.parent:
+            parent_session = session.parent.mapper_session
+            nested_mapper = session.parent.nested_mapper(obj=session.data)
+        else:
+            parent_session = session.mapper_session
+            nested_mapper = session.field.get_mapper(obj=session.data)
 
-    session.data = nested_mapper.serialize(role=session.field.opts.role)
+        role = get_nested_role_for_serialize(parent_session, session.field)
 
-    return session.data
+        session.data = nested_mapper.serialize(role=role)
+        return session.data
 
 
 class NestedMarshalPipeline(MarshalPipeline):

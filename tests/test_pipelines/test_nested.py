@@ -3,10 +3,9 @@ import pytest
 from kim.mapper import Mapper, MapperError
 from kim.field import FieldInvalid
 from kim import field
-from kim.pipelines import marshaling
+from kim.role import whitelist, nested_role, blacklist
 
 from ..conftest import get_mapper_session
-from ..helpers import TestType
 
 
 def test_nested_defers_mapper_checks():
@@ -432,3 +431,234 @@ def test_self_nesting_marshal():
     result = Outer(data=data).marshal()
 
     assert result == {'user_name': 'jack', 'status': 200}
+
+
+def test_serlialize_with_nested_role_obj_role_param():
+    """test serializing using a nested_role using the role param passed to
+    the nested_role instance.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'public': whitelist('name')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user')
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist('id', 'name', nested_role('user', role='public')),
+        }
+
+    obj = {'id': 2, 'name': 'bob', 'user': {'id': 1, 'name': 'a new name'}}
+
+    result = DocumentMapper(obj=obj).serialize(role='full')
+
+    assert result == {'id': 2, 'name': 'bob', 'user': {'name': 'a new name'}}
+
+
+def test_serlialize_with_nested_role_obj_with_serialize_param():
+    """Ensure that the serialize_role param takes precedence over the role param
+    when pasted to a nested_role.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user')
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id', 'name',
+                nested_role('user', role='public', serialize_role='email_only')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(obj=obj).serialize(role='full')
+
+    assert result == {'id': 2, 'name': 'bob', 'user': {'email': 'mike@mike.com'}}
+
+
+def test_serlialize_with_nested_role_obj_with_blacklist_nested_role():
+    """Ensure that the Nested field is processed correctly when a blacklist role is
+    specified as a nested_role for a Nested Field.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user')
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id', 'name',
+                nested_role('user', role='public')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(obj=obj).serialize(role='full')
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com', 'name': 'a new name'}
+    }
+
+
+def test_serlialize_nested_with_field_level_serialize_role_opt():
+    """Test that a specific serialize role can be specified as a FieldOpt to a Nested
+    field directly.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', serialize_role='public')
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist('id', 'name', 'user'),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(obj=obj).serialize(role='full')
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com', 'name': 'a new name'}
+    }
+
+
+def test_serlialize_with_nested_role_obj_nested_collection():
+    """Test that a specific serialize role can be specified as a FieldOpt to a Nested
+    field directly.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', serialize_role='public')
+        seen_by = field.Collection(field.Nested('UserMapper'))
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id', 'name',
+                'user', nested_role('seen_by', role='email_only')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        },
+        'seen_by': [
+            {'id': 1, 'name': 'mike', 'email': 'mike@mike.com'},
+            {'id': 2, 'name': 'bob', 'email': 'bob@mike.com'},
+            {'id': 3, 'name': 'jack', 'email': 'jack@mike.com'},
+        ]
+    }
+
+    result = DocumentMapper(obj=obj).serialize(role='full')
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com', 'name': 'a new name'},
+        'seen_by': [
+            {'email': 'mike@mike.com'},
+            {'email': 'bob@mike.com'},
+            {'email': 'jack@mike.com'},
+        ]
+    }

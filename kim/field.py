@@ -563,6 +563,10 @@ class NestedFieldOpts(FieldOpts):
         :param mapper_or_mapper_name: a required instance of a :class:`Mapper`
             or a valid mapper name
         :param role: specify the name of a role to use on the Nested mapper
+        :param serialize_role: specify the name of a role to use on the Nested mapper
+            when serializing.  The option takes precedence over the role opt.
+        :param marshal_role: specify the name of a role to use on the Nested mapper
+            when marshaling.  The option takes precedence over the role opt.
         :param collection_class: provide a custom type to be used when
             mapping many nested objects
         :param getter: provide a function taking a pipeline session which returns
@@ -581,6 +585,8 @@ class NestedFieldOpts(FieldOpts):
         """
         self.mapper = mapper_or_mapper_name
         self.role = kwargs.pop('role', '__default__')
+        self.serialize_role = kwargs.pop('serialize_role', None)
+        self.marshal_role = kwargs.pop('marshal_role', None)
         self.collection_class = kwargs.pop('collection_class', list)
         self.getter = kwargs.pop('getter', None)
         self.allow_updates = kwargs.pop('allow_updates', False)
