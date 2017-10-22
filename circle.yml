@@ -21,3 +21,7 @@ deployment:
       - sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - docker-compose run -e PYPI_PASSWORD=$PYPI_PASSWORD -e PYPI_USERNAME=$PYPI_USERNAME py2 bash -c 'printf "[distutils]\nindex-servers = pypi \n[pypi]\nusername:$PYPI_USERNAME\npassword:$PYPI_PASSWORD" > ~/.pypirc && python setup.py sdist upload'
       - curl -X POST http://readthedocs.org/build/kim
+
+notify:
+  webhooks:
+    - url: https://webhooks.gitter.im/e/ac301857d011bf714822
