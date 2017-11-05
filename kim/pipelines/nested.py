@@ -18,6 +18,27 @@ def _call_getter(session):
         return result
 
 
+def get_nested_role_for(op_name, mapper_session, nested_field):
+    """Retrieves a role either from a Nested fields parent mapper extracted nested_roles
+    or for the nested_fields standard field opts.
+
+    :param mapper_session: :class:`kim.mapper.Session`
+    :param nested_field: :class:`kim.field.Nested` instance
+    :param op_name: the operation being processed. either ``serialize`` or ``marshal``
+    """
+
+    # Do we have any nested roles defined with the parent session's role?
+    nested_roles = mapper_session.mapper.nested_roles.get(mapper_session.role, {})
+    role_for_nested = nested_roles.get(nested_field.name, None)
+
+    role_name = '{op_name}_role'.format(op_name=op_name)
+
+    if role_for_nested:
+        return getattr(role_for_nested, role_name) or role_for_nested.role
+    else:
+        return getattr(nested_field.opts, role_name) or nested_field.opts.role
+
+
 @pipe()
 def marshal_nested(session):
     """Marshal data using the nested mapper defined on this field.
@@ -80,21 +101,6 @@ def marshal_nested(session):
     return session.data
 
 
-def get_nested_role_for_serialize(mapper_session, nested_field):
-    """Retrieves a role either from a Nested fields parent mapper extracted nested_roles
-    or for the nested_fields standard field opts.
-    """
-
-    # Do we have any nested roles defined with the parent session's role?
-    nested_roles = mapper_session.mapper.nested_roles.get(mapper_session.role, {})
-    role_for_nested = nested_roles.get(nested_field.name, None)
-
-    if role_for_nested:
-        return role_for_nested.serialize_role or role_for_nested.role
-    else:
-        return nested_field.opts.serialize_role or nested_field.opts.role
-
-
 @pipe(run_if_none=True)
 def serialize_nested(session):
     """Serialize data using the nested mapper defined on this field.
@@ -119,7 +125,7 @@ def serialize_nested(session):
             parent_session = session.mapper_session
             nested_mapper = session.field.get_mapper(obj=session.data)
 
-        role = get_nested_role_for_serialize(parent_session, session.field)
+        role = get_nested_role_for('serialize', parent_session, session.field)
 
         session.data = nested_mapper.serialize(role=role)
         return session.data
