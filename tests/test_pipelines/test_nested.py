@@ -471,7 +471,7 @@ def test_serlialize_with_nested_role_obj_role_param():
 
 def test_serlialize_with_nested_role_obj_with_serialize_param():
     """Ensure that the serialize_role param takes precedence over the role param
-    when pasted to a nested_role.
+    when passed to a nested_role.
     """
 
     class UserMapper(Mapper):
@@ -607,8 +607,8 @@ def test_serlialize_nested_with_field_level_serialize_role_opt():
 
 
 def test_serlialize_with_nested_role_obj_nested_collection():
-    """Test that a specific serialize role can be specified as a FieldOpt to a Nested
-    field directly.
+    """Test that nested_role are correctly used when serializing a collection of nested
+    fields.
     """
 
     class UserMapper(Mapper):
@@ -766,3 +766,345 @@ def test_get_role_for_nested_serialize_normal_serialize_nested_role():
 
     result = get_nested_role_for('serialize', mapper_session, test_field)
     assert result == 'name'
+
+
+## MARSHAL
+
+
+def test_marshal_with_nested_role_obj_role_param():
+    """test marshaling using a nested_role using the role param passed to
+    the nested_role instance.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'public': whitelist('name')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', allow_create=True)
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist('id', 'name', nested_role('user', role='public')),
+        }
+
+    obj = {'id': '2', 'name': 'bob', 'user': {'id': '1', 'name': 'a new name'}}
+
+    result = DocumentMapper(data=obj).marshal(role='full')
+
+    assert result == {'id': '2', 'name': 'bob', 'user': {'name': 'a new name'}}
+
+
+def test_marshal_with_nested_role_obj_with_marshal_param():
+    """Ensure that the marshal_role param takes precedence over the role param
+    when passed to a nested_role.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', allow_create=True)
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id', 'name',
+                nested_role('user', role='public', marshal_role='email_only')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(data=obj).marshal(role='full')
+
+    assert result == {'id': 2, 'name': 'bob', 'user': {'email': 'mike@mike.com'}}
+
+
+def test_marshal_with_nested_role_obj_with_blacklist_nested_role():
+    """Ensure that the Nested field is processed correctly when a blacklist role is
+    specified as a nested_role for a Nested Field.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        user = field.Nested('UserMapper', name='user', allow_create=True)
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id', 'name',
+                nested_role('user', role='public')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(data=obj).marshal(role='full')
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com', 'name': 'a new name'}
+    }
+
+
+def test_marshal_nested_with_field_level_marshal_role_opt():
+    """Test that a specific marshal role can be specified as a FieldOpt to a Nested
+    field directly.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        user = field.Nested(
+            'UserMapper', name='user', marshal_role='email_only', allow_create=True)
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist('id', 'name', 'user'),
+        }
+
+    obj = {
+        'id': 2,
+        'name': 'bob',
+        'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        }
+    }
+
+    result = DocumentMapper(data=obj).marshal(role='full')
+
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com'}
+    }
+
+
+def test_marshal_with_nested_role_obj_nested_collection():
+    """test that nested roles are correctly used when marshaling a collection with a
+    nested field.
+    """
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        email = field.String()
+
+        __roles__ = {
+            'public': blacklist('id'),
+            'email_only': whitelist('email')
+        }
+
+    class DocumentMapper(Mapper):
+        __type__ = dict
+
+        id = field.Integer(required=True)
+        name = field.String()
+        user = field.Nested(
+            'UserMapper', name='user', role='public', allow_create=True)
+        seen_by = field.Collection(field.Nested('UserMapper', allow_create=True))
+
+        __roles__ = {
+            'overview': blacklist('user'),
+            'full': whitelist(
+                'id',
+                'name',
+                'user',
+                nested_role('seen_by', role='email_only')
+            ),
+        }
+
+    obj = {
+        'id': 2, 'name': 'bob', 'user': {
+            'id': 1, 'name': 'a new name', 'email': 'mike@mike.com'
+        },
+        'seen_by': [
+            {'id': 1, 'name': 'mike', 'email': 'mike@mike.com'},
+            {'id': 2, 'name': 'bob', 'email': 'bob@mike.com'},
+            {'id': 3, 'name': 'jack', 'email': 'jack@mike.com'},
+        ]
+    }
+
+    result = DocumentMapper(data=obj).marshal(role='full')
+    assert result == {
+        'id': 2,
+        'name': 'bob',
+        'user': {'email': 'mike@mike.com', 'name': 'a new name'},
+        'seen_by': [
+            {'email': 'mike@mike.com'},
+            {'email': 'bob@mike.com'},
+            {'email': 'jack@mike.com'},
+        ]
+    }
+
+
+#def test_get_role_for_nested_serialize_normal_role():
+#    """Ensure we get the right role back when using the normal role kwarg passed to nested.
+#    """
+#
+#    test_field = field.Nested('UserMapper', allow_create=True, role='name')
+#
+#    class UserMapper(Mapper):
+#
+#        __type__ = dict
+#
+#        id = field.String(required=True)
+#        name = field.String()
+#
+#        __roles__ = {
+#            'name': whitelist('name')
+#        }
+#
+#    class PostMapper(Mapper):
+#
+#        id = field.String(required=True)
+#        title = field.String()
+#        user = test_field
+#
+#    output = {}
+#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+#
+#    mapper = PostMapper(obj=obj)
+#    mapper_session = mapper.get_mapper_session(obj, output)
+#
+#    result = get_nested_role_for('serialize', mapper_session, test_field)
+#    assert result == 'name'
+#
+#
+#def test_get_role_for_nested_serialize_normal_serialize_field_level_role():
+#
+#    test_field = field.Nested(
+#        'UserMapper', allow_create=True, role='name', serialize_role='id')
+#
+#    class UserMapper(Mapper):
+#
+#        __type__ = dict
+#
+#        id = field.String(required=True)
+#        name = field.String()
+#
+#        __roles__ = {
+#            'id': whitelist('id'),
+#            'name': whitelist('name')
+#        }
+#
+#    class PostMapper(Mapper):
+#
+#        id = field.String(required=True)
+#        title = field.String()
+#        user = test_field
+#
+#    output = {}
+#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+#
+#    mapper = PostMapper(obj=obj)
+#    mapper_session = mapper.get_mapper_session(obj, output)
+#
+#    result = get_nested_role_for('serialize', mapper_session, test_field)
+#    assert result == 'id'
+#
+#
+#def test_get_role_for_nested_serialize_normal_serialize_nested_role():
+#
+#    test_field = field.Nested(
+#        'UserMapper', allow_create=True, role='id', serialize_role='id')
+#
+#    class UserMapper(Mapper):
+#
+#        __type__ = dict
+#
+#        id = field.String(required=True)
+#        name = field.String()
+#
+#        __roles__ = {
+#            'id': whitelist('id'),
+#            'name': whitelist('name')
+#        }
+#
+#    class PostMapper(Mapper):
+#
+#        id = field.String(required=True)
+#        title = field.String()
+#        user = test_field
+#
+#        __roles__ = {
+#            'full': whitelist('id', 'title', nested_role('user', serialize_role='name')),
+#        }
+#
+#    output = {}
+#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+#
+#    mapper = PostMapper(obj=obj)
+#    mapper_session = mapper.get_mapper_session(obj, output, role='full')
+#
+#    result = get_nested_role_for('serialize', mapper_session, test_field)
+#    assert result == 'name'

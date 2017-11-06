@@ -70,16 +70,20 @@ def marshal_nested(session):
     parent_mapper = session.mapper
 
     if session.parent and session.parent.nested_mapper:
+        parent_session = session.parent.mapper_session
         nested_mapper_class = session.parent.nested_mapper
     else:
+        parent_session = session.mapper_session
         nested_mapper_class = session.field.get_mapper(as_class=True)
+
+    role = get_nested_role_for('marshal', parent_session, session.field)
 
     if resolved is not None:
         if session.field.opts.allow_updates:
             nested_mapper = nested_mapper_class(
                 data=session.data, obj=resolved, partial=partial,
                 parent=parent_mapper)
-            session.data = nested_mapper.marshal(role=session.field.opts.role)
+            session.data = nested_mapper.marshal(role=role)
         else:
             session.data = resolved
     else:
@@ -90,11 +94,11 @@ def marshal_nested(session):
             nested_mapper = nested_mapper_class(
                 data=session.data, obj=existing_value, partial=partial,
                 parent=parent_mapper)
-            session.data = nested_mapper.marshal(role=session.field.opts.role)
+            session.data = nested_mapper.marshal(role=role)
         elif session.field.opts.allow_create:
             nested_mapper = nested_mapper_class(
                 data=session.data, partial=partial, parent=parent_mapper)
-            session.data = nested_mapper.marshal(role=session.field.opts.role)
+            session.data = nested_mapper.marshal(role=role)
         else:
             raise session.field.invalid(error_type='not_found')
 

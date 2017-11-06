@@ -41,7 +41,11 @@ def marshall_collection(session):
                 except IndexError:
                     pass
 
-            mapper_session = session.mapper.get_mapper_session(datum, _output)
+            mapper_session = session.mapper.get_mapper_session(
+                datum,
+                _output,
+                role=session.mapper_session.role
+            )
             wrapped_field.marshal(mapper_session, parent_session=session)
 
             result = _output[wrapped_field.opts.source]
