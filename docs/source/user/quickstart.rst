@@ -273,10 +273,10 @@ To define roles on your mapper use the ``__roles__`` property.
 		name = field.String()
 		company = field.Nested(CompanyMapper, read_only=True)
 
-        __roles__ = {
-            'id_only': whitelist('id'),
-            'public': blacklist('id')
-        }
+                __roles__ = {
+                    'id_only': whitelist('id'),
+                    'public': blacklist('id')
+                }
 
 We've defined two roles on our UserMapper.  These roles can now be used when
 marshaling and serializing by passing the ``role`` kwargs to the methods
