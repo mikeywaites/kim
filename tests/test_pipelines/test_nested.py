@@ -1007,104 +1007,104 @@ def test_marshal_with_nested_role_obj_nested_collection():
     }
 
 
-#def test_get_role_for_nested_serialize_normal_role():
-#    """Ensure we get the right role back when using the normal role kwarg passed to nested.
-#    """
-#
-#    test_field = field.Nested('UserMapper', allow_create=True, role='name')
-#
-#    class UserMapper(Mapper):
-#
-#        __type__ = dict
-#
-#        id = field.String(required=True)
-#        name = field.String()
-#
-#        __roles__ = {
-#            'name': whitelist('name')
-#        }
-#
-#    class PostMapper(Mapper):
-#
-#        id = field.String(required=True)
-#        title = field.String()
-#        user = test_field
-#
-#    output = {}
-#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-#
-#    mapper = PostMapper(obj=obj)
-#    mapper_session = mapper.get_mapper_session(obj, output)
-#
-#    result = get_nested_role_for('serialize', mapper_session, test_field)
-#    assert result == 'name'
-#
-#
-#def test_get_role_for_nested_serialize_normal_serialize_field_level_role():
-#
-#    test_field = field.Nested(
-#        'UserMapper', allow_create=True, role='name', serialize_role='id')
-#
-#    class UserMapper(Mapper):
-#
-#        __type__ = dict
-#
-#        id = field.String(required=True)
-#        name = field.String()
-#
-#        __roles__ = {
-#            'id': whitelist('id'),
-#            'name': whitelist('name')
-#        }
-#
-#    class PostMapper(Mapper):
-#
-#        id = field.String(required=True)
-#        title = field.String()
-#        user = test_field
-#
-#    output = {}
-#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-#
-#    mapper = PostMapper(obj=obj)
-#    mapper_session = mapper.get_mapper_session(obj, output)
-#
-#    result = get_nested_role_for('serialize', mapper_session, test_field)
-#    assert result == 'id'
-#
-#
-#def test_get_role_for_nested_serialize_normal_serialize_nested_role():
-#
-#    test_field = field.Nested(
-#        'UserMapper', allow_create=True, role='id', serialize_role='id')
-#
-#    class UserMapper(Mapper):
-#
-#        __type__ = dict
-#
-#        id = field.String(required=True)
-#        name = field.String()
-#
-#        __roles__ = {
-#            'id': whitelist('id'),
-#            'name': whitelist('name')
-#        }
-#
-#    class PostMapper(Mapper):
-#
-#        id = field.String(required=True)
-#        title = field.String()
-#        user = test_field
-#
-#        __roles__ = {
-#            'full': whitelist('id', 'title', nested_role('user', serialize_role='name')),
-#        }
-#
-#    output = {}
-#    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
-#
-#    mapper = PostMapper(obj=obj)
-#    mapper_session = mapper.get_mapper_session(obj, output, role='full')
-#
-#    result = get_nested_role_for('serialize', mapper_session, test_field)
-#    assert result == 'name'
+def test_get_role_for_nested_marshal_normal_role():
+    """Ensure we get the right role back when using the normal role kwarg passed to nested.
+    """
+
+    test_field = field.Nested('UserMapper', allow_create=True, role='name')
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'name': whitelist('name')
+        }
+
+    class PostMapper(Mapper):
+
+        id = field.String(required=True)
+        title = field.String()
+        user = test_field
+
+    output = {}
+    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+
+    mapper = PostMapper(obj=obj)
+    mapper_session = mapper.get_mapper_session(obj, output)
+
+    result = get_nested_role_for('marshal', mapper_session, test_field)
+    assert result == 'name'
+
+
+def test_get_role_for_nested_marshal_normal_serialize_field_level_role():
+
+    test_field = field.Nested(
+        'UserMapper', allow_create=True, role='name', marshal_role='id')
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'id': whitelist('id'),
+            'name': whitelist('name')
+        }
+
+    class PostMapper(Mapper):
+
+        id = field.String(required=True)
+        title = field.String()
+        user = test_field
+
+    output = {}
+    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+
+    mapper = PostMapper(obj=obj)
+    mapper_session = mapper.get_mapper_session(obj, output)
+
+    result = get_nested_role_for('marshal', mapper_session, test_field)
+    assert result == 'id'
+
+
+def test_get_role_for_nested_marshal_normal_marshal_nested_role():
+
+    test_field = field.Nested(
+        'UserMapper', allow_create=True, role='id', marshal_role='id')
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'id': whitelist('id'),
+            'name': whitelist('name')
+        }
+
+    class PostMapper(Mapper):
+
+        id = field.String(required=True)
+        title = field.String()
+        user = test_field
+
+        __roles__ = {
+            'full': whitelist('id', 'title', nested_role('user', marshal_role='name')),
+        }
+
+    output = {}
+    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+
+    mapper = PostMapper(obj=obj)
+    mapper_session = mapper.get_mapper_session(obj, output, role='full')
+
+    result = get_nested_role_for('marshal', mapper_session, test_field)
+    assert result == 'name'

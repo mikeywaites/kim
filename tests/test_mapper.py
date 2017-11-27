@@ -664,6 +664,114 @@ def test_mapper_marshal_many_with_role():
     assert res2.name == 'bob'
 
 
+def test_mapper_serialize_many_with_nested_role():
+
+    class NestedMapper(Mapper):
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        private = String()
+
+        __roles__ = {
+            'public': whitelist('name'),
+            'full': blacklist('private')
+        }
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        nested = Nested(NestedMapper, getter=lambda x: TestType(**x.data))
+
+        __roles__ = {
+            'private': blacklist('id'),
+            'full': whitelist('id', 'name', nested_role('nested', role='full'))
+        }
+
+    nested_1 = {'id': 1, 'name': 'Nested 1', 'private': 'secret'}
+    nested_2 = {'id': 2, 'name': 'Nested 2', 'private': 'secret'}
+    data = [
+        {'name': 'mike', 'id': 1, 'nested': nested_1},
+        {'name': 'bob', 'id': 2, 'nested': nested_2}
+    ]
+
+    result = MapperBase.many().serialize(data, role='full')
+
+    exp1 = {
+        'name': 'mike',
+        'id': 1,
+        'nested': {
+            'name': 'Nested 1',
+            'id': 1
+        }
+    }
+    exp2 = {
+        'name': 'bob',
+        'id': 2,
+        'nested': {
+            'name': 'Nested 2',
+            'id': 2
+        }
+    }
+
+    assert result == [exp1, exp2]
+
+
+def test_mapper_marshal_many_with_nested_role():
+
+    class NestedMapper(Mapper):
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        private = String()
+
+        __roles__ = {
+            'public': whitelist('name'),
+            'full': blacklist('private')
+        }
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = Integer()
+        name = String()
+        nested = Nested(NestedMapper, allow_create=True)
+
+        __roles__ = {
+            'private': blacklist('id'),
+            'full': whitelist(
+                'id', 'name',
+                nested_role('nested', marshal_role='public', role='full'))
+        }
+
+    nested_1 = {'id': 1, 'name': 'Nested 1', 'private': 'secret'}
+    nested_2 = {'id': 2, 'name': 'Nested 2', 'private': 'secret'}
+    data = [
+        {'name': 'mike', 'id': 1, 'nested': nested_1},
+        {'name': 'bob', 'id': 2, 'nested': nested_2}
+    ]
+
+    result = MapperBase.many().marshal(data, role='full')
+
+    assert len(result) == 2
+    res1, res2 = result
+    assert res1.id == 1
+    assert res2.id == 2
+    assert res1.name == 'mike'
+    assert res2.name == 'bob'
+    assert res1.nested.name == 'Nested 1'
+    assert res2.nested.name == 'Nested 2'
+    assert getattr(res1.nested, 'id', False) is False
+    assert getattr(res2.nested, 'id', False) is False
+    assert getattr(res1.nested, 'private', False) is False
+    assert getattr(res2.nested, 'private', False) is False
+
+
 def test_mapper_serialize_many_with_role():
 
     class MapperBase(Mapper):
