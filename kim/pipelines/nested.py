@@ -33,7 +33,7 @@ def get_nested_role_for(op_name, mapper_session, nested_field):
 
     role_name = '{op_name}_role'.format(op_name=op_name)
 
-    if role_for_nested:
+    if role_for_nested is not None:
         return getattr(role_for_nested, role_name) or role_for_nested.role
     else:
         return getattr(nested_field.opts, role_name) or nested_field.opts.role

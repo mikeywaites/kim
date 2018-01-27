@@ -274,6 +274,19 @@ the default role will be used which now only includes field_a.
     class heirarchy.
 
 
+Nested Roles
+^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.3.0
+
+As of version 1.3.0 Kim now provides ways to specif the role to use when processing nested
+fileds defined on your mappers. Different roles can be specified for serializing and marshaling
+providing a great level of control of how nested fileds are processed
+under certain conditions.
+
+Let's see some examples.
+
+
 .. _fields_advanced:
 
 Fields
