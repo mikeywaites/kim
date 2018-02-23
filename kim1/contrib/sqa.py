@@ -1,4 +1,6 @@
 # encoding: utf-8
+import six
+
 from collections import defaultdict
 
 from sqlalchemy.inspection import inspect
@@ -32,7 +34,7 @@ class NestedForeignKey(Nested):
 
     def parse_id(self, val):
         if isinstance(val, int) or \
-           (isinstance(val, basestring) and val.isdigit()):
+           (isinstance(val, six.string_types) and val.isdigit()):
             return int(val)
 
     def get_object(self, source_value):
@@ -60,7 +62,7 @@ class NestedForeignKey(Nested):
 
 class NestedForeignKeyStr(NestedForeignKey):
     def parse_id(self, val):
-        if isinstance(val, basestring):
+        if isinstance(val, six.string_types):
             return val
 
 
@@ -125,7 +127,7 @@ class SQAMarshalVisitor(MarshalVisitor):
         if not field.read_only:
             if field.source == '__self__':
                 if value is not None:
-                    for k, v in value.items():
+                    for k, v in list(value.items()):
                         setattr(self.output, k, v)
             else:
                 components = field.source.split('.')
@@ -212,7 +214,7 @@ class SQARawSerializeVisitor(SQASerializeVisitor):
     def _remove_none(self, output):
         # If all components of a dictionary are none, remove it and mark the entire thing as none
         all_none = True
-        for k, v in output.iteritems():
+        for k, v in output.items():
             if type(v) == defaultdict:
                 output[k] = self._remove_none(v)
             else:
@@ -244,7 +246,7 @@ class SQARawSerializeVisitor(SQASerializeVisitor):
             }
         """
         output = recursive_defaultdict()
-        for key in data.keys():
+        for key in list(data.keys()):
             path = key.split('__')
             target = output
             # Walk along the path until we find the final dict to insert the

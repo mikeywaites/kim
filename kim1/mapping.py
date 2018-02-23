@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import sys
+import six
 
 from collections import defaultdict
 
@@ -159,7 +160,9 @@ class Visitor(object):
                 msg = 'Caught error whilst processing %s in %s.\n' \
                       'Original exception was "%s: %s"' % (
                           field.field_id, self.mapping, e.__class__.__name__, e)
-                raise KimError(msg), None, sys.exc_info()[2]
+
+                from future.utils import raise_with_traceback
+                raise raise_with_traceback(KimError(msg))
 
        return self.output
 

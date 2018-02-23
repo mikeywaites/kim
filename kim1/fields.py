@@ -1,3 +1,4 @@
+import six
 import inspect
 
 from .exceptions import ValidationError
@@ -86,7 +87,7 @@ class Field(object):
 
         name = kwargs.pop('name', None)
         if args:
-            if isinstance(args[0], basestring):
+            if isinstance(args[0], six.string_types):
                 if name is not None:
                     raise Exception(
                         "May not pass name positionally and as a keyword.")

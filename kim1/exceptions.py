@@ -12,7 +12,10 @@ class ValidationError(KimError):
         :meth:`kim.types.BaseType.validate`
 
     """
-    pass
+    def __init__(self, message=None, *args, **kwargs):
+        super(ValidationError, self).__init__(*args, **kwargs)
+
+        self.message = message
 
 
 class FieldError(ValidationError):
@@ -28,7 +31,11 @@ class FieldError(ValidationError):
 
 
 class MappingErrors(KimError):
-    pass
+
+    def __init__(self, message=None, *args, **kwargs):
+        super(MappingErrors, self).__init__(*args, **kwargs)
+
+        self.message = message
 
 
 class ConfigurationError(KimError):

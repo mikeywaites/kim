@@ -8,6 +8,7 @@ import re
 import decimal
 import inspect
 import importlib
+import six
 
 from .exceptions import ValidationError, ConfigurationError
 from .mapping import get_attribute, serialize, BaseMapping, marshal
@@ -35,7 +36,7 @@ class BaseType(object):
 
         :returns: an error message explaining the error that occured
         """
-        return unicode(self.error_message)
+        return str(self.error_message)
 
     def marshal_value(self, value):
         """called during marshaling of data.
@@ -132,14 +133,14 @@ class String(TypedType):
     """a ``TypedType`` that validate the incoming value is a valid ``str``
     """
 
-    type_ = basestring
+    type_ = six.string_types
 
 
 class Integer(TypedType):
     """a ``TypedType`` that validates the incoming value is a valid ``int``.
     """
 
-    type_ = int
+    type_ = six.integer_types
 
 
 class Boolean(TypedType):
@@ -155,7 +156,7 @@ class NumericType(BaseType):
 
     """
 
-    type_ = int
+    type_ = six.integer_types
 
     def __init__(self, *args, **kwargs):
         self.choices = kwargs.pop('choices', None)
@@ -174,7 +175,7 @@ class NumericType(BaseType):
 
         if value is not None:
 
-            if (isinstance(value, basestring)
+            if (isinstance(value, str)
                     and not value.isdigit()):
                 raise ValidationError(self.get_error_message(value))
 

@@ -1,3 +1,5 @@
+import six
+
 from inspect import isclass
 from collections import OrderedDict
 import json
@@ -8,6 +10,7 @@ from .mapping import Mapping, serialize, marshal
 from .utils import is_role
 from .types import BaseType
 from .fields import Field
+import collections
 
 
 class SerializerMetaclass(type):
@@ -21,7 +24,7 @@ class SerializerMetaclass(type):
                 # Normal Field attributes
                 current_fields.append((key, value))
                 attrs.pop(key)
-            elif callable(value) and key.startswith('validate_'):
+            elif isinstance(value, collections.Callable) and key.startswith('validate_'):
                 # validate_X callables
                 validation_target = key[9:] # stripe 'validate_' from start
                 current_validators.append((validation_target, value))
@@ -92,7 +95,7 @@ class BaseSerializer(object):
         """
 
 
-class Serializer(BaseSerializer):
+class Serializer(six.with_metaclass(SerializerMetaclass, BaseSerializer)):
     """:class:`kim.serializer.Serializer` is a declarative wrapper for
     generating :class:`kim.mapping.Mapping`s. It also provides convinience
     methods for marshalling data against it's mapping.
@@ -117,8 +120,6 @@ class Serializer(BaseSerializer):
 
     """
 
-    __metaclass__ = SerializerMetaclass
-
     def __init__(self, data=None, input=None):
         self.opts = SerializerOpts(self.Meta)
         self.__mapping__, self.fields = self._build_mapping()
@@ -127,7 +128,7 @@ class Serializer(BaseSerializer):
         top_level_validator = getattr(self, 'validate', None)
         mapping = Mapping(validator=top_level_validator)
         fields = {}
-        for name, field in self.declared_fields.items():
+        for name, field in list(self.declared_fields.items()):
             validator = self.declared_validators.get(name)
             if validator:
                 # As the validator will not be called as Serializer.validate_X(),
