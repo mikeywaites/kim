@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+
+  kim_1_py2:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: kim_1_py2
+    volumes:
+      - ./:/opt/code
+    stdin_open: true
+    tty: true
+
+  kim_1_py3:
+    build:
+      context: ./
+      dockerfile: Dockerfile.py3
+    container_name: kim_1_py3
+    volumes:
+      - ./:/opt/code
+    stdin_open: true
+    tty: true
