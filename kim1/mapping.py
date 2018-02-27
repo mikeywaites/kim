@@ -4,6 +4,7 @@ import sys
 import six
 
 from collections import defaultdict
+from future.utils import raise_with_traceback
 
 from .exceptions import ValidationError, MappingErrors, FieldError, KimError
 from .utils import is_valid_field
@@ -161,7 +162,6 @@ class Visitor(object):
                       'Original exception was "%s: %s"' % (
                           field.field_id, self.mapping, e.__class__.__name__, e)
 
-                from future.utils import raise_with_traceback
                 raise raise_with_traceback(KimError(msg))
 
        return self.output
