@@ -6,6 +6,11 @@ v1.3.0
 This release introduces the new nested_role feature.  Nested Roles provide another
 powerful way to allow you to control the shape of data into and out from your mappers.
 
+v1.2.1
+-----------------------
+
+Fix issue where field.opts.attribute_name would always be None
+
 v1.2.0
 -----------------------
 

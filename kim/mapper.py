@@ -249,10 +249,6 @@ class _MapperConfig(object):
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
                 obj.opts.set_name(attribute_name=name)
-                # try:
-                #     obj.name
-                # except FieldError:
-                #     obj.name = name
 
                 _fields.update({name: obj})
 

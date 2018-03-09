@@ -152,6 +152,24 @@ class FieldOpts(object):
     def set_name(self, name=None, attribute_name=None, source=None):
         """Programmatically set the name properties for a field.
 
+        Names cascade from each other unless they are explicitly overridden.
+
+        Example 1:
+        class MyMapper(Mapper):
+            foo = field.String()
+
+        attribute_name = foo
+        name = foo
+        source = foo
+
+        Example 2:
+        class MyMapper(Mapper):
+            foo = field.String(name='bar', source='baz')
+
+        attribute_name = foo
+        name = bar
+        source = baz
+
         :param name: value of name property
         :param attribute_name: value of attribute_name property
         :param source: value of source property
