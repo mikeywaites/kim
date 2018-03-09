@@ -60,15 +60,3 @@ def test_union_of_built_in_types_not_supported():
 
     with pytest.raises(RoleError):
         blacklist('name', 'id') | set('name')
-
-
-def test_nested_role_membership_nested_role_membership():
-
-    role = whitelist('id', 'name', 'user', nested_roles=[nested_role('user')])
-    assert 'user' in role
-
-
-def test_nested_role_membership_nested_in_blacklist():
-
-    role = blacklist('id', 'name', nested_roles=[nested_role('user')])
-    assert 'user' in role

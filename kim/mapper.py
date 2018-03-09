@@ -248,10 +248,11 @@ class _MapperConfig(object):
 
             # Add field to declared fields and remove cls.field
             if isinstance(obj, Field):
-                try:
-                    obj.name
-                except FieldError:
-                    obj.name = name
+                obj.opts.set_name(attribute_name=name)
+                # try:
+                #     obj.name
+                # except FieldError:
+                #     obj.name = name
 
                 _fields.update({name: obj})
 
@@ -295,17 +296,19 @@ class _MapperConfig(object):
                                             type(role))
                 raise MapperError(msg)
 
-            #: Iterate all the items defined within the Role.  Find any instances
-            #: of nested_role and store these on the Mapper in the Mapper.nested_roles
-            #: ..versionadded: 1.3.0
-            for field_or_role in role:
-                if isinstance(field_or_role, nested_role):
-                    _nested_roles.setdefault(role_name, {})
-                    # _nested_roles[role_name][field_or_role.name] = field_or_role
+            # #: Iterate all the items defined within the Role.  Find any instances
+            # #: of nested_role and store these on the Mapper in the Mapper.nested_roles
+            # #: ..versionadded: 1.3.0
+            # for field_or_role in role:
+            #     if isinstance(field_or_role, nested_role):
+            #         _nested_roles.setdefault(role_name, {})
+            #         # _nested_roles[role_name][field_or_role.name] = field_or_role
 
-            for n_role in role.nested_roles:
+            for n_role_name, n_role in six.iteritems(role.nested_roles):
                 _nested_roles.setdefault(role_name, {})
-                _nested_roles[role_name][n_role.name] = n_role
+                if isinstance(n_role, six.string_types):
+                    n_role = nested_role(n_role)
+                _nested_roles[role_name][n_role_name] = n_role
 
         cls.roles = _roles
         cls.nested_roles = _nested_roles

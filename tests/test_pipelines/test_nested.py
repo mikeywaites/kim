@@ -459,7 +459,7 @@ def test_serlialize_with_nested_role_obj_role_param():
 
         __roles__ = {
             'overview': blacklist('user'),
-            'full': whitelist('id', 'name', 'user', nested_roles=[nested_role('user', role='public')]),
+            'full': whitelist('id', 'name', 'user', nested_roles={'user': 'public'}),
         }
 
     obj = {'id': 2, 'name': 'bob', 'user': {'id': 1, 'name': 'a new name'}}
@@ -491,7 +491,7 @@ def test_serlialize_with_nested_role_obj_role_param_blacklist():
 
         __roles__ = {
             'overview': blacklist('user'),
-            'full': blacklist('id', nested_roles=[nested_role('user', role='public')]),
+            'full': blacklist('id', nested_roles={'user': 'public'}),
         }
 
     obj = {'id': 2, 'name': 'bob', 'user': {'id': 1, 'name': 'a new name'}}
@@ -530,7 +530,7 @@ def test_serlialize_with_nested_role_obj_with_serialize_param():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles=[nested_role('user', role='public', serialize_role='email_only')]
+                nested_roles={'user': nested_role(role='public', serialize_role='email_only')}
             ),
         }
 
@@ -574,7 +574,7 @@ def test_serlialize_with_nested_role_obj_with_blacklist_nested_role():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles=[nested_role('user', role='public')]
+                nested_roles={'user': 'public'}
             ),
         }
 
@@ -668,7 +668,7 @@ def test_serlialize_with_nested_role_obj_nested_collection():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'seen_by',
-                'user', nested_roles=[nested_role('seen_by', role='email_only')]
+                'user', nested_roles={'seen_by': 'email_only'}
             ),
         }
 
@@ -787,7 +787,7 @@ def test_get_role_for_nested_serialize_normal_serialize_nested_role():
         user = test_field
 
         __roles__ = {
-            'full': whitelist('id', 'title', 'user', nested_roles=[nested_role('user', serialize_role='name')]),
+            'full': whitelist('id', 'title', 'user', nested_roles={'user': nested_role(serialize_role='name')}),
         }
 
     output = {}
@@ -828,7 +828,7 @@ def test_marshal_with_nested_role_obj_role_param():
 
         __roles__ = {
             'overview': blacklist('user'),
-            'full': whitelist('id', 'name', 'user', nested_roles=[nested_role('user', role='public')]),
+            'full': whitelist('id', 'name', 'user', nested_roles={'user': 'public'}),
         }
 
     obj = {'id': '2', 'name': 'bob', 'user': {'id': '1', 'name': 'a new name'}}
@@ -867,7 +867,7 @@ def test_marshal_with_nested_role_obj_with_marshal_param():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles=[nested_role('user', role='public', marshal_role='email_only')]
+                nested_roles={'user': nested_role(role='public', marshal_role='email_only')}
             ),
         }
 
@@ -911,7 +911,7 @@ def test_marshal_with_nested_role_obj_with_blacklist_nested_role():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles=[nested_role('user', role='public')]
+                nested_roles={'user': 'public'}
             ),
         }
 
@@ -1011,7 +1011,7 @@ def test_marshal_with_nested_role_obj_nested_collection():
                 'id',
                 'name',
                 'user', 'seen_by',
-                nested_roles=[nested_role('seen_by', role='email_only')]
+                nested_roles={'seen_by': 'email_only'}
             ),
         }
 
@@ -1129,7 +1129,7 @@ def test_get_role_for_nested_marshal_normal_marshal_nested_role():
         user = test_field
 
         __roles__ = {
-            'full': whitelist('id', 'title', 'user', nested_roles=[nested_role('user', marshal_role='name')]),
+            'full': whitelist('id', 'title', 'user', nested_roles={'user': nested_role(marshal_role='name')}),
         }
 
     output = {}

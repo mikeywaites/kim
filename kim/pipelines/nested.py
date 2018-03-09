@@ -29,7 +29,7 @@ def get_nested_role_for(op_name, mapper_session, nested_field):
 
     # Do we have any nested roles defined with the parent session's role?
     nested_roles = mapper_session.mapper.nested_roles.get(mapper_session.role, {})
-    role_for_nested = nested_roles.get(nested_field.name, None)
+    role_for_nested = nested_roles.get(nested_field.opts.attribute_name, None)
 
     role_name = '{op_name}_role'.format(op_name=op_name)
 

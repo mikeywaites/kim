@@ -42,7 +42,7 @@ class Role(set):
 
         """
         self.whitelist = kwargs.pop('whitelist', True)
-        self.nested_roles = kwargs.pop('nested_roles', [])
+        self.nested_roles = kwargs.pop('nested_roles', {})
         super(Role, self).__init__(args)
 
     @property
@@ -279,7 +279,7 @@ class nested_role(object):
     """
 
     def __init__(
-            self, name,
+            self,
             role='__default__',
             serialize_role=None,
             marshal_role=None,
@@ -294,7 +294,6 @@ class nested_role(object):
         :param marshal: The name of a role to use when marshaling the nested field
         """
 
-        self.name = name
         self.role = role
         self.serialize_role = serialize_role
         self.marshal_role = marshal_role
@@ -315,8 +314,7 @@ class nested_role(object):
 
         """
 
-        return (self.name == other.name and
-                self.role == other.role and
+        return (self.role == other.role and
                 self.serialize_role == other.serialize_role and
                 self.marshal_role == other.marshal_role)
 
