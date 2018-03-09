@@ -255,7 +255,40 @@ def test_new_mapper_sets_nested_roles():
         user = Nested('UserMapper')
 
         __roles__ = {
-            'public_role': whitelist('email', 'user', nested_roles={'user': 'public'})
+            'public_role': whitelist('email', 'user',
+                                     nested_roles={'user': 'public'})
+        }
+
+    mapper = MyMapper(data={})
+    assert mapper.nested_roles == {
+        'public_role': {'user': nested_role('public')}
+    }
+
+
+def test_new_mapper_sets_nested_roles_from_objects():
+
+    class UserMapper(Mapper):
+
+        __type__ = TestType
+
+        id = String()
+        name = String()
+
+        __roles__ = {
+            'public': whitelist('id', 'name')
+        }
+
+    class MyMapper(Mapper):
+
+        __type__ = TestType
+
+        email = TestField()
+        user = Nested('UserMapper')
+
+        __roles__ = {
+            'public_role': whitelist(
+                'email', 'user',
+                nested_roles={'user': nested_role('public')})
         }
 
     mapper = MyMapper(data={})
@@ -285,7 +318,8 @@ def test_new_mapper_sets_nested_roles_from_parent_mapper():
         id = String()
 
         __roles__ = {
-            'public_role': whitelist('email', 'user', nested_roles={'user': 'public'})
+            'public_role': whitelist('email', 'user',
+                                     nested_roles={'user': 'public'})
         }
 
     class MyMapper(BaseMapper):
@@ -296,7 +330,8 @@ def test_new_mapper_sets_nested_roles_from_parent_mapper():
         user = Nested('UserMapper')
 
         __roles__ = {
-            'private_role': whitelist('email', 'user', nested_roles={'user': 'private'})
+            'private_role': whitelist('email', 'user',
+                                      nested_roles={'user': 'private'})
         }
 
     mapper = MyMapper(data={})
@@ -704,7 +739,8 @@ def test_mapper_serialize_many_with_nested_role():
 
         __roles__ = {
             'private': blacklist('id'),
-            'full': whitelist('id', 'name', 'nested', nested_roles={'nested': 'full'})
+            'full': whitelist('id', 'name', 'nested',
+                              nested_roles={'nested': 'full'})
         }
 
     nested_1 = {'id': 1, 'name': 'Nested 1', 'private': 'secret'}
@@ -762,7 +798,10 @@ def test_mapper_marshal_many_with_nested_role():
             'private': blacklist('id'),
             'full': whitelist(
                 'id', 'name', 'nested',
-                nested_roles={'nested': nested_role(marshal_role='public', role='full')})
+                nested_roles={
+                    'nested': nested_role(marshal_role='public', role='full')
+                }
+            )
         }
 
     nested_1 = {'id': 1, 'name': 'Nested 1', 'private': 'secret'}

@@ -459,7 +459,8 @@ def test_serlialize_with_nested_role_obj_role_param():
 
         __roles__ = {
             'overview': blacklist('user'),
-            'full': whitelist('id', 'name', 'user', nested_roles={'user': 'public'}),
+            'full': whitelist('id', 'name', 'user',
+                              nested_roles={'user': 'public'}),
         }
 
     obj = {'id': 2, 'name': 'bob', 'user': {'id': 1, 'name': 'a new name'}}
@@ -530,7 +531,9 @@ def test_serlialize_with_nested_role_obj_with_serialize_param():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles={'user': nested_role(role='public', serialize_role='email_only')}
+                nested_roles={
+                    'user': nested_role(role='public', serialize_role='email_only')
+                }
             ),
         }
 
@@ -787,7 +790,53 @@ def test_get_role_for_nested_serialize_normal_serialize_nested_role():
         user = test_field
 
         __roles__ = {
-            'full': whitelist('id', 'title', 'user', nested_roles={'user': nested_role(serialize_role='name')}),
+            'full': whitelist(
+                'id', 'title', 'user',
+                nested_roles={'user': nested_role(serialize_role='name')}
+            ),
+        }
+
+    output = {}
+    obj = {'id': 2, 'name': 'bob', 'user': {'id': '1', 'name': 'mike'}}
+
+    mapper = PostMapper(obj=obj)
+    mapper_session = mapper.get_mapper_session(obj, output, role='full')
+
+    result = get_nested_role_for('serialize', mapper_session, test_field)
+    assert result == 'name'
+
+
+def test_get_role_for_nested_serialize_uses_attribute_name():
+    """Ensure we find fields using attribute_name and not name
+    """
+
+    test_field = field.Nested(
+        'UserMapper', allow_create=True, role='id', serialize_role='id',
+        name='different_name')
+
+    class UserMapper(Mapper):
+
+        __type__ = dict
+
+        id = field.String(required=True)
+        name = field.String()
+
+        __roles__ = {
+            'id': whitelist('id'),
+            'name': whitelist('name')
+        }
+
+    class PostMapper(Mapper):
+
+        id = field.String(required=True)
+        title = field.String()
+        user = test_field
+
+        __roles__ = {
+            'full': whitelist(
+                'id', 'title', 'user',
+                nested_roles={'user': nested_role(serialize_role='name')}
+            ),
         }
 
     output = {}
@@ -828,7 +877,10 @@ def test_marshal_with_nested_role_obj_role_param():
 
         __roles__ = {
             'overview': blacklist('user'),
-            'full': whitelist('id', 'name', 'user', nested_roles={'user': 'public'}),
+            'full': whitelist(
+                'id', 'name', 'user',
+                nested_roles={'user': 'public'}
+            ),
         }
 
     obj = {'id': '2', 'name': 'bob', 'user': {'id': '1', 'name': 'a new name'}}
@@ -867,7 +919,9 @@ def test_marshal_with_nested_role_obj_with_marshal_param():
             'overview': blacklist('user'),
             'full': whitelist(
                 'id', 'name', 'user',
-                nested_roles={'user': nested_role(role='public', marshal_role='email_only')}
+                nested_roles={
+                    'user': nested_role(role='public', marshal_role='email_only')
+                }
             ),
         }
 
@@ -1129,7 +1183,10 @@ def test_get_role_for_nested_marshal_normal_marshal_nested_role():
         user = test_field
 
         __roles__ = {
-            'full': whitelist('id', 'title', 'user', nested_roles={'user': nested_role(marshal_role='name')}),
+            'full': whitelist(
+                'id', 'title', 'user',
+                nested_roles={'user': nested_role(marshal_role='name')}
+            ),
         }
 
     output = {}
