@@ -287,7 +287,8 @@ class _MapperConfig(object):
         # objects in this case
         for role_name, role in six.iteritems(_roles):
             if isinstance(role, list):
-                _roles[role_name] = whitelist(*role)
+                role = whitelist(*role)
+                _roles[role_name] = role
             elif not isinstance(role, Role):
                 msg = "role %s on %s must be list or Role " \
                       "instance, got %s" % (role_name, self.__class__.__name__,
@@ -300,7 +301,11 @@ class _MapperConfig(object):
             for field_or_role in role:
                 if isinstance(field_or_role, nested_role):
                     _nested_roles.setdefault(role_name, {})
-                    _nested_roles[role_name][field_or_role.name] = field_or_role
+                    # _nested_roles[role_name][field_or_role.name] = field_or_role
+
+            for n_role in role.nested_roles:
+                _nested_roles.setdefault(role_name, {})
+                _nested_roles[role_name][n_role.name] = n_role
 
         cls.roles = _roles
         cls.nested_roles = _nested_roles

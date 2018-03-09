@@ -42,6 +42,7 @@ class Role(set):
 
         """
         self.whitelist = kwargs.pop('whitelist', True)
+        self.nested_roles = kwargs.pop('nested_roles', [])
         super(Role, self).__init__(args)
 
     @property
@@ -228,7 +229,7 @@ class blacklist(Role):
         super(blacklist, self).__init__(*args, **kwargs)
 
 
-class nested_role(whitelist):
+class nested_role(object):
     """Nested roles allow you to specify the role of a :class:.`kim.field.Nested` field
     on a mapper to be used when serializing or marshaling a Mapper
     conataining a Nested field.
@@ -298,9 +299,9 @@ class nested_role(whitelist):
         self.serialize_role = serialize_role
         self.marshal_role = marshal_role
 
-        super(nested_role, self).__init__(*args, **kwargs)
+    #     super(nested_role, self).__init__(*args, **kwargs)
 
-    def __eq__(self, field_name):
+    def __eq__(self, other):
         """Overload the __eq__ method so that when a Mapper asserts if a field is found
         within a role, nested_role will act as though it's name were added normally using
         the string name of the field.
@@ -314,16 +315,19 @@ class nested_role(whitelist):
 
         """
 
-        return self.name == field_name
+        return (self.name == other.name and
+                self.role == other.role and
+                self.serialize_role == other.serialize_role and
+                self.marshal_role == other.marshal_role)
 
-    def __hash__(self):
-        """Has the nested role using the provided field name.  This means nested roles
-        still pass membership tests on the main role object when only the nested field
-        name is provided.
+    # def __hash__(self):
+    #     """Has the nested role using the provided field name.  This means nested roles
+    #     still pass membership tests on the main role object when only the nested field
+    #     name is provided.
 
-        .. code-block::
+    #     .. code-block::
 
-            role = whitelist('id', 'name', nested('user', role='public'))
-            assert 'user' in role
-        """
-        return hash(self.name)
+    #         role = whitelist('id', 'name', nested('user', role='public'))
+    #         assert 'user' in role
+    #     """
+    #     return hash(self.name)
