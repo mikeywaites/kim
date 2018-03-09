@@ -1,6 +1,11 @@
 Changelog
 ========================
 
+v1.2.1
+-----------------------
+
+Fix issue where field.opts.attribute_name would always be None
+
 v1.2.0
 -----------------------
 

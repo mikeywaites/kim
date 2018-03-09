@@ -289,8 +289,24 @@ def test_mapper_sets_field_names():
 
     mapper = MapperBase(data={})
     assert mapper.fields['id'].opts.name == 'id'
-    assert mapper.fields['name'].opts.name == 'my_name'
     assert mapper.fields['named'].opts.name == 'other_name'
+    assert mapper.fields['name'].opts.name == 'my_name'
+
+
+def test_mapper_sets_field_attribute_names():
+
+    class MapperBase(Mapper):
+
+        __type__ = TestType
+
+        id = TestField()
+        named = TestField(name='other_name')
+        name = TestField(attribute_name='my_name')
+
+    mapper = MapperBase(data={})
+    assert mapper.fields['id'].opts.attribute_name == 'id'
+    assert mapper.fields['named'].opts.attribute_name == 'named'
+    assert mapper.fields['name'].opts.attribute_name == 'my_name'
 
 
 def test_mapper_must_pass_obj_or_data():
