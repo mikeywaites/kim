@@ -1,0 +1,39 @@
+jobs:
+  test:
+    machine: true
+    environment:
+      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "57:f4:7f:50:32:a3:a2:76:20:69:02:06:3f:5a:2a:48"
+      - checkout
+      - run: mkdir -p $CIRCLE_ARTIFACTS
+      - run: docker-compose run py3
+      - run: docker-compose run py2
+      - run: docker-compose run py3 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py3_perf.txt
+      - run: docker-compose run py2 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py2_perf.txt
+      - store_artifacts:
+          path: /tmp/circleci-artifacts
+  deploy:
+    machine: true
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "57:f4:7f:50:32:a3:a2:76:20:69:02:06:3f:5a:2a:48"
+      - checkout
+      - run: sudo chown -R ubuntu:ubuntu py_kim.egg-info
+      - run: docker-compose run -e PYPI_PASSWORD=$PYPI_PASSWORD -e PYPI_USERNAME=$PYPI_USERNAME py2 bash -c 'printf "[distutils]\nindex-servers = pypi \n[pypi]\nusername:$PYPI_USERNAME\npassword:$PYPI_PASSWORD" > ~/.pypirc && python setup.py sdist upload'
+      - run: curl -X POST http://readthedocs.org/build/kim
+
+workflows:
+  version: 2
+  test_and_deploy:
+    jobs:
+      - test
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
