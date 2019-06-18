@@ -1,7 +1,6 @@
 jobs:
   test:
-    docker:
-      - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
+    machine: true
     environment:
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
     steps:
@@ -17,8 +16,7 @@ jobs:
       - store_artifacts:
           path: /tmp/circleci-artifacts
   deploy:
-    docker:
-      - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
+    machine: true
     steps:
       - add_ssh_keys:
           fingerprints:
