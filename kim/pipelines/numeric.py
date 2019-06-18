@@ -104,8 +104,7 @@ class DecimalMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = [is_valid_decimal, bounds_check] + MarshalPipeline.validation_pipes
-    process_pipes = [coerce_to_decimal] + MarshalPipeline.process_pipes
+    validation_pipes = [is_valid_decimal, coerce_to_decimal, bounds_check] + MarshalPipeline.validation_pipes
 
 
 # TODO(mike) This should probably move to base
