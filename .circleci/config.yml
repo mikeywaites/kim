@@ -22,7 +22,6 @@ jobs:
           fingerprints:
             - "57:f4:7f:50:32:a3:a2:76:20:69:02:06:3f:5a:2a:48"
       - checkout
-      - run: sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - run: docker-compose run -e PYPI_PASSWORD=$PYPI_PASSWORD -e PYPI_USERNAME=$PYPI_USERNAME py2 bash -c 'printf "[distutils]\nindex-servers = pypi \n[pypi]\nusername:$PYPI_USERNAME\npassword:$PYPI_PASSWORD" > ~/.pypirc && python setup.py sdist upload'
       - run: curl -X POST http://readthedocs.org/build/kim
 
