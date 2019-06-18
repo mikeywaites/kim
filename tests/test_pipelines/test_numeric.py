@@ -197,6 +197,17 @@ def test_decimal_input():
     assert output == {'name': decimal.Decimal(2)}
 
 
+def test_decimal_input_bounds_when_passed_as_string():
+
+    field = Decimal(name='name', required=True, min=0.1)
+
+    output = {}
+    mapper_session = get_mapper_session(
+        data={'name': "2", 'email': 'mike@mike.com'}, output=output)
+    field.marshal(mapper_session)
+    assert output == {'name': decimal.Decimal(2)}
+
+
 def test_decimal_input_precision():
 
     field = Decimal(name='name', required=True, precision=4)
