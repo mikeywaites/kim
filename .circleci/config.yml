@@ -6,8 +6,8 @@ jobs:
       CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
     steps:
       - add_ssh_keys:
-        fingerprints:
-          - "04:f6:e5:88:0a:4d:cb:83:c3:5a:0d:76:4f:de:e5:57"
+          fingerprints:
+            - "04:f6:e5:88:0a:4d:cb:83:c3:5a:0d:76:4f:de:e5:57"
       - checkout
       - run: mkdir -p $CIRCLE_ARTIFACTS
       - run: docker-compose run py3
@@ -15,14 +15,14 @@ jobs:
       - run: docker-compose run py3 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py3_perf.txt
       - run: docker-compose run py2 python benchmarks/perf.py | tee $CIRCLE_ARTIFACTS/py2_perf.txt
       - store_artifacts:
-        path: /tmp/circleci-artifacts
+          path: /tmp/circleci-artifacts
   deploy:
     docker:
       - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
     steps:
       - add_ssh_keys:
-        fingerprints:
-          - "04:f6:e5:88:0a:4d:cb:83:c3:5a:0d:76:4f:de:e5:57"
+          fingerprints:
+            - "04:f6:e5:88:0a:4d:cb:83:c3:5a:0d:76:4f:de:e5:57"
       - checkout
       - run: sudo chown -R ubuntu:ubuntu py_kim.egg-info
       - run: docker-compose run -e PYPI_PASSWORD=$PYPI_PASSWORD -e PYPI_USERNAME=$PYPI_USERNAME py2 bash -c 'printf "[distutils]\nindex-servers = pypi \n[pypi]\nusername:$PYPI_USERNAME\npassword:$PYPI_PASSWORD" > ~/.pypirc && python setup.py sdist upload'
