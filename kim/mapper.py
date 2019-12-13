@@ -15,7 +15,7 @@ from collections import OrderedDict, defaultdict
 from .exception import MapperError, MappingInvalid
 from .field import Field, FieldError, FieldInvalid
 from .role import whitelist, blacklist, Role
-from .utils import recursive_defaultdict, attr_or_key
+from .utils import recursive_defaultdict, attr_or_key, _remove_escapes
 from .pipelines.base import pipe
 
 
@@ -501,7 +501,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :rtype: boolean
         """
         for key in self.data.keys():
-            if key == field.name:
+            if key == _remove_escapes(field.name):
                 return True
         return False
 
@@ -679,17 +679,17 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             try:
                 field.marshal(self.get_mapper_session(data, output))
             except FieldInvalid as e:
-                self.errors[field.name] = e.message
+                self.errors[_remove_escapes(field.name)] = e.message
             except MappingInvalid as e:
                 # handle errors from nested mappers.
-                self.errors[field.name] = e.errors
+                self.errors[_remove_escapes(field.name)] = e.errors
 
         # Call top level mapper validator for validations involving more
         # than one field
         try:
             self.validate(output)
         except FieldInvalid as e:
-            self.errors[e.field.name] = e.message
+            self.errors[_remove_escapes(e.field.name)] = e.message
         except MappingInvalid as e:
             self.errors = e.errors
 

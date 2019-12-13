@@ -9,7 +9,7 @@ from itertools import chain
 from functools import wraps
 
 from kim.exception import StopPipelineExecution, FieldError
-from kim.utils import attr_or_key, set_attr_or_key, attr_or_key_update
+from kim.utils import attr_or_key, set_attr_or_key, attr_or_key_update, _remove_escapes
 
 
 class Session(object):
@@ -286,7 +286,7 @@ def update_output_to_name(session):
 
     :returns: None
     """
-    session.output[session.field.name] = session.data
+    session.output[_remove_escapes(session.field.name)] = session.data
 
 
 @pipe(run_if_none=True)
@@ -300,7 +300,7 @@ def update_output_to_source(session):
     :returns: None
     """
 
-    source = session.field.opts.source
+    source = _remove_escapes(session.field.opts.source)
     try:
         if source == '__self__':
             attr_or_key_update(session.output, session.data)

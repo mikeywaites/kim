@@ -107,6 +107,21 @@ def test_update_output_to_name_with_dict():
     assert output == {'name': 'mike'}
 
 
+def test_update_output_to_name_with_escape():
+
+    data = {
+        "foo.bar": "mike",
+    }
+
+    output = {}
+
+    field = Field(name="foo\\.bar", required=True)
+    session = Session(field, data, output)
+    session.data = data["foo.bar"]
+    update_output_to_name(session)
+    assert output == {"foo.bar": "mike"}
+
+
 def test_update_output_to_source_with_object():
 
     data = {

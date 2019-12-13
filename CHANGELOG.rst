@@ -1,6 +1,10 @@
 Changelog
 ========================
 
+v1.2.4
+-----------------------
+Fix issue with output of escaped fields
+
 v1.2.3
 -----------------------
 Allow use of escape sequence in dot notation for name/source
