@@ -90,6 +90,11 @@ def _set_attr_or_key(obj, name, value, _isinstance=isinstance, _dict=dict, sette
         setter(obj, name, value)
 
 
+def _remove_escapes(str):
+    """Removes backslash escape sequence from a string"""
+    return str.replace("\\", "")
+
+
 def _split_escape(str):
     """Splits string by dots, unless dot is escaped.
 
@@ -97,7 +102,7 @@ def _split_escape(str):
 
        foo\\.bar results in ["foo.bar"]
    """
-    return [x.replace("\\", "") for x in re.split(r"(?<!\\)\.", str)]
+    return [_remove_escapes(x) for x in re.split(r"(?<!\\)\.", str)]
 
 
 def attr_or_key(obj, name):
