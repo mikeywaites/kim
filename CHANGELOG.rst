@@ -1,6 +1,10 @@
 Changelog
 ========================
 
+v1.2.3
+-----------------------
+Allow use of escape sequence in dot notation for name/source
+
 v1.2.2
 -----------------------
 Fix issue where min/max would not work on Decimal fields when passed as string
