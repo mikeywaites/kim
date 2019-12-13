@@ -4,6 +4,7 @@
 #
 # This module is part of Kim and is released under
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
+import re
 
 from datetime import datetime  # NOQA
 
@@ -89,13 +90,23 @@ def _set_attr_or_key(obj, name, value, _isinstance=isinstance, _dict=dict, sette
         setter(obj, name, value)
 
 
+def _split_escape(str):
+    """Splits string by dots, unless dot is escaped.
+
+       foo.bar results in ["foo", "bar"]
+
+       foo\\.bar results in ["foo.bar"]
+   """
+    return [x.replace("\\", "") for x in re.split(r"(?<!\\)\.", str)]
+
+
 def attr_or_key(obj, name):
     """attempt to use getattr to access an attribute of obj, if that fails
     assume obj support key based look ups like a dict.
 
     Supports dot syntax to span nested objects/dicts eg 'foo.bar.baz'
     """
-    components = name.split('.')
+    components = _split_escape(name)
     for component in components:
         obj = _attr_or_key(obj, component)
     return obj
@@ -107,7 +118,7 @@ def set_attr_or_key(obj, name, value):
 
     Supports dot syntax to span nested objects/dicts eg 'foo.bar.baz'
     """
-    components = name.split('.')
+    components = _split_escape(name)
     for component in components[:-1]:
         obj = _attr_or_key(obj, component)
     _set_attr_or_key(obj, components[-1], value)

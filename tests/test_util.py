@@ -32,3 +32,11 @@ def test_attr_or_key_util_dot_syntax():
     assert attr_or_key(Foo(), 'bar.qux') is None
     assert attr_or_key(foo_dict, 'bar.xyz') == 'abc'
     assert attr_or_key(foo_dict, 'bar.qux') is None
+
+
+def test_attr_or_key_util_dot_syntax_escape():
+
+    foo_dict = {"bar.xyz": "abc"}
+
+    assert attr_or_key(foo_dict, "bar\\.xyz") == "abc"
+
