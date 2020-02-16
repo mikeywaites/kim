@@ -57,7 +57,9 @@ def _attr_or_key(obj, name, _isinstance=isinstance, _dict=dict, getter=getattr):
         return getter(obj, name, None)
 
 
-def _set_attr_or_key(obj, name, value, _isinstance=isinstance, _dict=dict, setter=setattr):
+def _set_attr_or_key(
+    obj, name, value, _isinstance=isinstance, _dict=dict, setter=setattr
+):
     """Attempt to set the attr stored against the specified name on a dict or
     on an attribute on an object.
 

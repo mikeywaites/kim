@@ -1,5 +1,4 @@
-from .base import (
-    Pipeline, get_data_from_source, update_output_to_name, set_default)
+from .base import Pipeline, get_data_from_source, update_output_to_name, set_default
 
 
 class SerializePipeline(Pipeline):

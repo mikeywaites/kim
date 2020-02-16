@@ -25,9 +25,9 @@ def bounds_check(session):
     min_ = session.field.opts.min
 
     if max_ is not None and len(session.data) > max_:
-        raise session.field.invalid(error_type='out_of_bounds')
+        raise session.field.invalid(error_type="out_of_bounds")
     if min_ is not None and len(session.data) < min_:
-        raise session.field.invalid(error_type='out_of_bounds')
+        raise session.field.invalid(error_type="out_of_bounds")
 
     return session.data
 
@@ -43,7 +43,7 @@ def is_valid_string(session):
         session.data = six.text_type(session.data)
         return session.data
     except ValueError:
-        raise session.field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type="type_error")
 
 
 @pipe()
@@ -54,8 +54,8 @@ def blank_check(session):
     :param session: Kim pipeline session instance
     """
 
-    if session.data == '' and session.field.opts.blank is False:
-        raise session.field.invalid(error_type='type_error')
+    if session.data == "" and session.field.opts.blank is False:
+        raise session.field.invalid(error_type="type_error")
 
     return session.data
 
@@ -78,9 +78,12 @@ class StringMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = \
-        [is_valid_string, blank_check, is_valid_choice, bounds_check] \
-        + MarshalPipeline.validation_pipes
+    validation_pipes = [
+        is_valid_string,
+        blank_check,
+        is_valid_choice,
+        bounds_check,
+    ] + MarshalPipeline.validation_pipes
 
     output_pipes = [to_unicode] + MarshalPipeline.output_pipes
 
@@ -91,4 +94,5 @@ class StringSerializePipeline(SerializePipeline):
     .. seealso::
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
+
     pass

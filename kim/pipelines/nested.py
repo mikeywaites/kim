@@ -56,26 +56,31 @@ def marshal_nested(session):
     if resolved is not None:
         if session.field.opts.allow_updates:
             nested_mapper = nested_mapper_class(
-                data=session.data, obj=resolved, partial=partial,
-                parent=parent_mapper)
+                data=session.data, obj=resolved, partial=partial, parent=parent_mapper
+            )
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
             session.data = resolved
     else:
         existing_value = attr_or_key(session.output, session.field.name)
-        if (session.field.opts.allow_updates_in_place or
-                session.field.opts.allow_partial_updates) and \
-                existing_value is not None:
+        if (
+            session.field.opts.allow_updates_in_place
+            or session.field.opts.allow_partial_updates
+        ) and existing_value is not None:
             nested_mapper = nested_mapper_class(
-                data=session.data, obj=existing_value, partial=partial,
-                parent=parent_mapper)
+                data=session.data,
+                obj=existing_value,
+                partial=partial,
+                parent=parent_mapper,
+            )
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         elif session.field.opts.allow_create:
             nested_mapper = nested_mapper_class(
-                data=session.data, partial=partial, parent=parent_mapper)
+                data=session.data, partial=partial, parent=parent_mapper
+            )
             session.data = nested_mapper.marshal(role=session.field.opts.role)
         else:
-            raise session.field.invalid(error_type='not_found')
+            raise session.field.invalid(error_type="not_found")
 
     return session.data
 
@@ -110,7 +115,7 @@ class NestedMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    output_pipes = [marshal_nested, ] + MarshalPipeline.output_pipes
+    output_pipes = [marshal_nested,] + MarshalPipeline.output_pipes
 
 
 class NestedSerializePipeline(SerializePipeline):
@@ -121,4 +126,4 @@ class NestedSerializePipeline(SerializePipeline):
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
 
-    process_pipes = [serialize_nested, ] + SerializePipeline.process_pipes
+    process_pipes = [serialize_nested,] + SerializePipeline.process_pipes

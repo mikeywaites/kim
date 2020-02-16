@@ -15,7 +15,6 @@ DBSession = sessionmaker()
 
 @pytest.fixture
 def mappers(request):
-
     class __Mappers(object):
         pass
 
@@ -31,7 +30,7 @@ def mappers(request):
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True, allow_create=True)
+        user = field.Nested("UserMapper", required=True, allow_create=True)
 
     mappers = __Mappers()
     mappers.UserMapper = UserMapper
@@ -41,7 +40,7 @@ def mappers(request):
 
 class User(Base):
 
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -55,30 +54,27 @@ class User(Base):
 
 class PostReader(Base):
 
-    __tablename__ = 'post_reader'
+    __tablename__ = "post_reader"
 
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
 
 
 class Post(Base):
 
-    __tablename__ = 'posts'
+    __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True)
     title = Column(String)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    user = relationship(User, backref=backref('posts', lazy='dynamic'))
-    readers = relationship(
-        User,
-        secondary=PostReader.__table__,
-        lazy='dynamic')
+    user = relationship(User, backref=backref("posts", lazy="dynamic"))
+    readers = relationship(User, secondary=PostReader.__table__, lazy="dynamic")
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def connection(request):
-    engine = create_engine('sqlite://')
+    engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
     connection = engine.connect()
 
@@ -97,7 +93,6 @@ def db_session(request, connection):
 
 
 def test_partial_updates(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -110,73 +105,51 @@ def test_partial_updates(db_session):
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True, allow_create=True)
-        readers = field.Collection(field.Nested('UserMapper'), required=False)
+        user = field.Nested("UserMapper", required=True, allow_create=True)
+        readers = field.Collection(field.Nested("UserMapper"), required=False)
 
-    data = {'title': 'new'}
-    user = User(id='id', name='mike')
-    post = Post(title='test post', user=user)
+    data = {"title": "new"}
+    user = User(id="id", name="mike")
+    post = Post(title="test post", user=user)
     mapper = PostMapper(data=data, obj=post, partial=True)
     obj = mapper.marshal()
-    assert obj.title == 'new'
+    assert obj.title == "new"
 
 
 def test_marshal_nested_mapper_allow_create(db_session, mappers):
 
-    data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'mike',
-        }
-    }
+    data = {"id": 2, "title": "my post", "user": {"id": 1, "name": "mike",}}
     mapper = mappers.PostMapper(data=data)
     obj = mapper.marshal()
 
     assert isinstance(obj, Post)
-    assert obj.title == 'my post'
+    assert obj.title == "my post"
     assert isinstance(obj.user, User)
 
 
 def test_marshal_nested_mapper(db_session, mappers):
 
-    data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'mike',
-        }
-    }
+    data = {"id": 2, "title": "my post", "user": {"id": 1, "name": "mike",}}
     mapper = mappers.PostMapper(data=data)
     obj = mapper.marshal()
 
     assert isinstance(obj, Post)
-    assert obj.title == 'my post'
+    assert obj.title == "my post"
     assert isinstance(obj.user, User)
 
 
 def test_serializer_nested_mapper(db_session, mappers):
 
-    data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'mike',
-        }
-    }
+    data = {"id": 2, "title": "my post", "user": {"id": 1, "name": "mike",}}
     mapper = mappers.PostMapper(data=data)
     obj = mapper.marshal()
 
     assert isinstance(obj, Post)
-    assert obj.title == 'my post'
+    assert obj.title == "my post"
     assert isinstance(obj.user, User)
 
 
 def test_marshal_nested_mapper_defaults(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -185,25 +158,22 @@ def test_marshal_nested_mapper_defaults(db_session):
         name = field.String()
 
     def getter(session):
-        return db_session.query(User).get(session.data['id'])
+        return db_session.query(User).get(session.data["id"])
 
     class PostMapper(Mapper):
 
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True, getter=getter)
+        user = field.Nested("UserMapper", required=True, getter=getter)
 
     data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'should be ignored',
-        }
+        "id": 2,
+        "title": "my post",
+        "user": {"id": 1, "name": "should be ignored",},
     }
-    user = User(id=1, name='mike')
-    instance = Post(title='my post', user=user)
+    user = User(id=1, name="mike")
+    instance = Post(title="my post", user=user)
 
     db_session.add(instance)
     db_session.flush()
@@ -212,11 +182,10 @@ def test_marshal_nested_mapper_defaults(db_session):
     obj = mapper.marshal()
 
     assert obj.user == user
-    assert obj.user.name == 'mike'
+    assert obj.user.name == "mike"
 
 
 def test_marshal_nested_mapper_defaults_not_found(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -225,22 +194,19 @@ def test_marshal_nested_mapper_defaults_not_found(db_session):
         name = field.String()
 
     def getter(session):
-        return db_session.query(User).get(session.data['id'])
+        return db_session.query(User).get(session.data["id"])
 
     class PostMapper(Mapper):
 
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True, getter=getter)
+        user = field.Nested("UserMapper", required=True, getter=getter)
 
     data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'should be ignored',
-        }
+        "id": 2,
+        "title": "my post",
+        "user": {"id": 1, "name": "should be ignored",},
     }
 
     mapper = PostMapper(data=data)
@@ -248,11 +214,10 @@ def test_marshal_nested_mapper_defaults_not_found(db_session):
     with pytest.raises(MappingInvalid):
         mapper.marshal()
 
-    assert mapper.errors == {'user': 'user not found'}
+    assert mapper.errors == {"user": "user not found"}
 
 
 def test_marshal_nested_mapper_allow_updates(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -261,26 +226,20 @@ def test_marshal_nested_mapper_allow_updates(db_session):
         name = field.String()
 
     def getter(session):
-        return db_session.query(User).get(session.data['id'])
+        return db_session.query(User).get(session.data["id"])
 
     class PostMapper(Mapper):
 
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True, getter=getter,
-                            allow_updates=True)
+        user = field.Nested(
+            "UserMapper", required=True, getter=getter, allow_updates=True
+        )
 
-    data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'id': 1,
-            'name': 'new name',
-        }
-    }
-    user = User(id=1, name='mike')
-    instance = Post(title='my post', user=user)
+    data = {"id": 2, "title": "my post", "user": {"id": 1, "name": "new name",}}
+    user = User(id=1, name="mike")
+    instance = Post(title="my post", user=user)
 
     db_session.add(instance)
     db_session.flush()
@@ -289,11 +248,10 @@ def test_marshal_nested_mapper_allow_updates(db_session):
     obj = mapper.marshal()
 
     assert obj.user == user
-    assert obj.user.name == 'new name'
+    assert obj.user.name == "new name"
 
 
 def test_marshal_nested_mapper_allow_updates_in_place(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -301,25 +259,18 @@ def test_marshal_nested_mapper_allow_updates_in_place(db_session):
         name = field.String()
 
     def getter(session):
-        return db_session.query(User).get(session.data['id'])
+        return db_session.query(User).get(session.data["id"])
 
     class PostMapper(Mapper):
 
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=True,
-                            allow_updates_in_place=True)
+        user = field.Nested("UserMapper", required=True, allow_updates_in_place=True)
 
-    data = {
-        'id': 2,
-        'title': 'my post',
-        'user': {
-            'name': 'new name',
-        }
-    }
-    user = User(id=1, name='mike')
-    instance = Post(title='my post', user=user)
+    data = {"id": 2, "title": "my post", "user": {"name": "new name",}}
+    user = User(id=1, name="mike")
+    instance = Post(title="my post", user=user)
 
     db_session.add(instance)
     db_session.flush()
@@ -328,11 +279,10 @@ def test_marshal_nested_mapper_allow_updates_in_place(db_session):
     obj = mapper.marshal()
 
     assert obj.user == user
-    assert obj.user.name == 'new name'
+    assert obj.user.name == "new name"
 
 
 def test_marshal_collection_appender_query(db_session):
-
     class UserMapper(Mapper):
 
         __type__ = User
@@ -347,23 +297,23 @@ def test_marshal_collection_appender_query(db_session):
         __type__ = Post
 
         title = field.String()
-        user = field.Nested('UserMapper', required=False,
-                            allow_updates_in_place=True)
+        user = field.Nested("UserMapper", required=False, allow_updates_in_place=True)
         readers = field.Collection(
-            field.Nested('PostMapper', getter=foo_getter), required=False)
+            field.Nested("PostMapper", getter=foo_getter), required=False
+        )
 
-    user1 = User(id=1, name='mike')
-    user2 = User(id=2, name='jack')
-    instance = Post(title='my post', user=user1, readers=[user1])
+    user1 = User(id=1, name="mike")
+    user2 = User(id=2, name="jack")
+    instance = Post(title="my post", user=user1, readers=[user1])
 
     db_session.add(user1)
     db_session.add(user2)
     db_session.add(instance)
     db_session.flush()
     data = {
-        'title': 'new title',
+        "title": "new title",
     }
 
     mapper = PostMapper(data=data, obj=instance, partial=True)
     obj = mapper.marshal()
-    assert obj.title == 'new title'
+    assert obj.title == "new title"

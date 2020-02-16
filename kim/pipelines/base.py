@@ -44,10 +44,17 @@ class Session(object):
     serialization pipeline.
     """
 
-    __slots__ = ('field', 'data', 'output', 'parent', 'mapper_session', 'nested_mapper')
+    __slots__ = ("field", "data", "output", "parent", "mapper_session", "nested_mapper")
 
-    def __init__(self, field=None, data=None, output=None,
-                 parent=None, mapper_session=None, nested_mapper=None):
+    def __init__(
+        self,
+        field=None,
+        data=None,
+        output=None,
+        parent=None,
+        mapper_session=None,
+        nested_mapper=None,
+    ):
         """Construct a new session.
 
         :param field: an instance of :class:`kim.field.Field` the scope of this session
@@ -96,13 +103,12 @@ def pipe(**pipe_kwargs):
     """
 
     def pipe_decorator(pipe_func):
-
         @wraps(pipe_func)
         def inner(session, *args, **kwargs):
 
             if session.data is not None:
                 return pipe_func(session)
-            elif session.data is None and pipe_kwargs.get('run_if_none'):
+            elif session.data is None and pipe_kwargs.get("run_if_none"):
                 return pipe_func(session)
             else:
                 return session.data
@@ -151,10 +157,10 @@ class Pipeline(object):
     @classmethod
     def get_pipeline(cls, **extra_pipes):
         chain = []
-        chain.extend(cls.input_pipes + extra_pipes.get('input', []))
-        chain.extend(cls.validation_pipes + extra_pipes.get('validation', []))
-        chain.extend(cls.process_pipes + extra_pipes.get('process', []))
-        chain.extend(cls.output_pipes + extra_pipes.get('output', []))
+        chain.extend(cls.input_pipes + extra_pipes.get("input", []))
+        chain.extend(cls.validation_pipes + extra_pipes.get("validation", []))
+        chain.extend(cls.process_pipes + extra_pipes.get("process", []))
+        chain.extend(cls.output_pipes + extra_pipes.get("output", []))
 
         return chain
 
@@ -202,12 +208,12 @@ def get_data_from_name(session):
 
     if value is None:
         if session.field.opts.required and session.field.opts.default is None:
-            raise session.field.invalid(error_type='required')
+            raise session.field.invalid(error_type="required")
         elif session.field.opts.default is not None:
             session.data = session.field.opts.default
             return session.data
         elif not session.field.opts.allow_none:
-            raise session.field.invalid(error_type='none_not_allowed')
+            raise session.field.invalid(error_type="none_not_allowed")
 
     session.data = value
     return session.data
@@ -229,7 +235,7 @@ def get_data_from_source(session):
 
     # If the field is wrapped by another field then the relevant data
     # will have already been pulled from the source.
-    if session.field.opts._is_wrapped or source == '__self__':
+    if session.field.opts._is_wrapped or source == "__self__":
         return session.data
 
     value = attr_or_key(session.data, source)
@@ -256,7 +262,7 @@ def read_only(session):
     """
 
     if session.field.opts.read_only:
-        raise StopPipelineExecution('read_only field')
+        raise StopPipelineExecution("read_only field")
 
     return session.data
 
@@ -272,7 +278,7 @@ def is_valid_choice(session):
 
     choices = session.field.opts.choices
     if choices is not None and session.data not in choices:
-        raise session.field.invalid('invalid_choice')
+        raise session.field.invalid("invalid_choice")
 
     return session.data
 
@@ -302,13 +308,14 @@ def update_output_to_source(session):
 
     source = _remove_escapes(session.field.opts.source)
     try:
-        if source == '__self__':
+        if source == "__self__":
             attr_or_key_update(session.output, session.data)
         else:
             set_attr_or_key(session.output, session.field.opts.source, session.data)
     except (TypeError, AttributeError):
-        raise FieldError('output does not support attribute or '
-                         'key based set operations')
+        raise FieldError(
+            "output does not support attribute or " "key based set operations"
+        )
 
 
 @pipe(run_if_none=True)

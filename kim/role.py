@@ -41,7 +41,7 @@ class Role(set):
             role is a whitelist
 
         """
-        self.whitelist = kwargs.pop('whitelist', True)
+        self.whitelist = kwargs.pop("whitelist", True)
         super(Role, self).__init__(args)
 
     @property
@@ -103,7 +103,7 @@ class Role(set):
 
         """
         if not isinstance(other, Role):
-            raise RoleError('union of built in types is not supported with roles')
+            raise RoleError("union of built in types is not supported with roles")
 
         whitelist = True
 
@@ -149,8 +149,9 @@ class Role(set):
 
         """
         if not isinstance(other, Role):
-            raise RoleError('intersection of built types is '
-                            'not supported with roles')
+            raise RoleError(
+                "intersection of built types is " "not supported with roles"
+            )
 
         whitelist = True
 
@@ -199,7 +200,7 @@ class whitelist(Role):
 
     def __init__(self, *args, **kwargs):
         self.whitelist = True
-        kwargs['whitelist'] = True
+        kwargs["whitelist"] = True
         super(whitelist, self).__init__(*args, **kwargs)
 
 
@@ -224,5 +225,5 @@ class blacklist(Role):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['whitelist'] = False
+        kwargs["whitelist"] = False
         super(blacklist, self).__init__(*args, **kwargs)

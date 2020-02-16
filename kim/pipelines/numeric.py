@@ -23,9 +23,9 @@ def is_valid_integer(session):
     try:
         session.data = int(session.data)
     except TypeError:
-        raise session.field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type="type_error")
     except ValueError:
-        raise session.field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type="type_error")
     return session.data
 
 
@@ -42,9 +42,9 @@ def bounds_check(session):
     min_ = session.field.opts.min
 
     if max_ is not None and session.data > max_:
-        raise session.field.invalid(error_type='out_of_bounds')
+        raise session.field.invalid(error_type="out_of_bounds")
     if min_ is not None and session.data < min_:
-        raise session.field.invalid(error_type='out_of_bounds')
+        raise session.field.invalid(error_type="out_of_bounds")
 
     return session.data
 
@@ -59,8 +59,11 @@ class IntegerMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = \
-        [is_valid_integer, is_valid_choice, bounds_check] + MarshalPipeline.validation_pipes
+    validation_pipes = [
+        is_valid_integer,
+        is_valid_choice,
+        bounds_check,
+    ] + MarshalPipeline.validation_pipes
 
 
 class IntegerSerializePipeline(SerializePipeline):
@@ -69,6 +72,7 @@ class IntegerSerializePipeline(SerializePipeline):
     .. seealso::
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
+
     pass
 
 
@@ -82,7 +86,7 @@ def is_valid_decimal(session):
     try:
         return Decimal(session.data)
     except InvalidOperation:
-        raise session.field.invalid(error_type='type_error')
+        raise session.field.invalid(error_type="type_error")
 
 
 @pipe()
@@ -90,7 +94,7 @@ def coerce_to_decimal(session):
     """Coerce str representation of a decimal into a valid Decimal object.
     """
     decimals = session.field.opts.precision
-    precision = Decimal('0.' + '0' * (decimals - 1) + '1')
+    precision = Decimal("0." + "0" * (decimals - 1) + "1")
     session.data = Decimal(session.data).quantize(precision)
     return session.data
 
@@ -104,7 +108,11 @@ class DecimalMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = [is_valid_decimal, coerce_to_decimal, bounds_check] + MarshalPipeline.validation_pipes
+    validation_pipes = [
+        is_valid_decimal,
+        coerce_to_decimal,
+        bounds_check,
+    ] + MarshalPipeline.validation_pipes
 
 
 # TODO(mike) This should probably move to base
@@ -139,8 +147,7 @@ def is_valid_float(session):
     try:
         return float(session.data)
     except (InvalidOperation, ValueError):
-        raise session.field.invalid(error_type='type_error')
-
+        raise session.field.invalid(error_type="type_error")
 
 
 @pipe()

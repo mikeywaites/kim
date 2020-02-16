@@ -12,13 +12,13 @@ def test_is_valid_integer_pipe():
     """test piping data through is_valid_integer.
     """
 
-    field = Integer(name='test')
-    session = Session(field, 'test', {})
+    field = Integer(name="test")
+    session = Session(field, "test", {})
 
     with pytest.raises(FieldInvalid):
         is_valid_integer(session)
 
-    session.data = '2'
+    session.data = "2"
     assert is_valid_integer(session) == 2
     session.data = 2
     assert is_valid_integer(session) == 2
@@ -28,60 +28,63 @@ def test_is_valid_integer_pipe():
 
 def test_integer_input():
 
-    field = Integer(name='name', required=True)
+    field = Integer(name="name", required=True)
 
-    mapper_session = get_mapper_session(
-        data={'email': 'mike@mike.com'}, output={})
+    mapper_session = get_mapper_session(data={"email": "mike@mike.com"}, output={})
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     mapper_session = get_mapper_session(
-        data={'name': 'foo', 'email': 'mike@mike.com'}, output={})
+        data={"name": "foo", "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': 2, 'email': 'mike@mike.com'}, output=output)
+        data={"name": 2, "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': 2}
+    assert output == {"name": 2}
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': '2', 'email': 'mike@mike.com'}, output=output)
+        data={"name": "2", "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': 2}
+    assert output == {"name": 2}
 
 
 def test_integer_field_invalid_type():
 
-    field = Integer(name='name')
+    field = Integer(name="name")
     mapper_session = get_mapper_session(
-        data={'name': None, 'email': 'mike@mike.com'}, output={})
+        data={"name": None, "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
 
 def test_integer_output():
-
     class Foo(object):
         name = 2
 
-    field = Integer(name='name', required=True)
+    field = Integer(name="name", required=True)
 
     output = {}
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
-    assert output == {'name': 2}
+    assert output == {"name": 2}
 
 
 def test_marshal_read_only_integer():
 
-    field = Integer(name='name', read_only=True, required=True)
+    field = Integer(name="name", read_only=True, required=True)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'id': 2, 'email': 'mike@mike.com'}, output=output)
+        data={"id": 2, "email": "mike@mike.com"}, output=output
+    )
 
     field.marshal(mapper_session)
     assert output == {}
@@ -89,87 +92,87 @@ def test_marshal_read_only_integer():
 
 def test_marshal_default():
 
-    field = Integer(name='name', default=5)
+    field = Integer(name="name", default=5)
 
     output = {}
     mapper_session = get_mapper_session(data={}, output=output)
 
     field.marshal(mapper_session)
-    assert output == {'name': 5}
+    assert output == {"name": 5}
 
 
 def test_is_valid_choice():
 
-    field = Integer(name='type', choices=[1, 2])
+    field = Integer(name="type", choices=[1, 2])
     output = {}
-    mapper_session = get_mapper_session(data={'type': 3}, output=output)
+    mapper_session = get_mapper_session(data={"type": 3}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'type': 1}, output=output)
+    mapper_session = get_mapper_session(data={"type": 1}, output=output)
     field.marshal(mapper_session)
-    assert output == {'type': 1}
+    assert output == {"type": 1}
 
 
 def test_min_max_integer():
 
-    field = Integer(name='age', min=20, max=35)
+    field = Integer(name="age", min=20, max=35)
     output = {}
 
-    mapper_session = get_mapper_session(data={'age': 15}, output=output)
+    mapper_session = get_mapper_session(data={"age": 15}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 40}, output=output)
+    mapper_session = get_mapper_session(data={"age": 40}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 25}, output=output)
+    mapper_session = get_mapper_session(data={"age": 25}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': 25}
+    assert output == {"age": 25}
 
-    mapper_session = get_mapper_session(data={'age': '25'}, output=output)
+    mapper_session = get_mapper_session(data={"age": "25"}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': 25}
+    assert output == {"age": 25}
 
-    mapper_session = get_mapper_session(data={'age': 35}, output=output)
+    mapper_session = get_mapper_session(data={"age": 35}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': 35}
+    assert output == {"age": 35}
 
 
 def test_min_max_decimal():
-    field = Decimal(name='age', min=0, max=1.5)
+    field = Decimal(name="age", min=0, max=1.5)
     output = {}
 
-    mapper_session = get_mapper_session(data={'age': -1}, output=output)
+    mapper_session = get_mapper_session(data={"age": -1}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 4}, output=output)
+    mapper_session = get_mapper_session(data={"age": 4}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 0.7}, output=output)
+    mapper_session = get_mapper_session(data={"age": 0.7}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': decimal.Decimal('0.7')}
+    assert output == {"age": decimal.Decimal("0.7")}
 
-    mapper_session = get_mapper_session(data={'age': 1.5}, output=output)
+    mapper_session = get_mapper_session(data={"age": 1.5}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': decimal.Decimal('1.5')}
+    assert output == {"age": decimal.Decimal("1.5")}
 
 
 def test_is_valid_decimal_pipe():
     """test piping data through is_valid_decimal.
     """
 
-    field = Decimal(name='test')
-    session = Session(field, 'test', {})
+    field = Decimal(name="test")
+    session = Session(field, "test", {})
 
     with pytest.raises(FieldInvalid):
         is_valid_decimal(session)
 
-    session.data = '2.5'
-    assert is_valid_decimal(session) == decimal.Decimal('2.5')
+    session.data = "2.5"
+    assert is_valid_decimal(session) == decimal.Decimal("2.5")
     session.data = 2
     assert is_valid_decimal(session) == decimal.Decimal(2)
     session.data = 2.3
@@ -178,142 +181,146 @@ def test_is_valid_decimal_pipe():
 
 def test_decimal_input():
 
-    field = Decimal(name='name', required=True)
+    field = Decimal(name="name", required=True)
 
-    mapper_session = get_mapper_session(
-        data={'email': 'mike@mike.com'}, output={})
+    mapper_session = get_mapper_session(data={"email": "mike@mike.com"}, output={})
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     mapper_session = get_mapper_session(
-        data={'name': 'foo', 'email': 'mike@mike.com'}, output={})
+        data={"name": "foo", "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': 2, 'email': 'mike@mike.com'}, output=output)
+        data={"name": 2, "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': decimal.Decimal(2)}
+    assert output == {"name": decimal.Decimal(2)}
 
 
 def test_decimal_input_bounds_when_passed_as_string():
 
-    field = Decimal(name='name', required=True, min=0.1)
+    field = Decimal(name="name", required=True, min=0.1)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': "2", 'email': 'mike@mike.com'}, output=output)
+        data={"name": "2", "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': decimal.Decimal(2)}
+    assert output == {"name": decimal.Decimal(2)}
 
 
 def test_decimal_input_precision():
 
-    field = Decimal(name='name', required=True, precision=4)
+    field = Decimal(name="name", required=True, precision=4)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': '3.147261', 'email': 'mike@mike.com'}, output=output)
+        data={"name": "3.147261", "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': decimal.Decimal('3.1473')}
+    assert output == {"name": decimal.Decimal("3.1473")}
 
 
 def test_decimal_field_invalid_type():
 
-    field = Decimal(name='name')
+    field = Decimal(name="name")
     mapper_session = get_mapper_session(
-        data={'name': None, 'email': 'mike@mike.com'}, output={})
+        data={"name": None, "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
 
 def test_decimal_output():
-
     class Foo(object):
-        name = decimal.Decimal('2.52')
+        name = decimal.Decimal("2.52")
 
-    field = Decimal(name='name', required=True)
+    field = Decimal(name="name", required=True)
 
     output = {}
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
-    assert output == {'name': '2.52000'}
+    assert output == {"name": "2.52000"}
 
 
 def test_float_input():
 
-    field = Float(name='name', required=True)
+    field = Float(name="name", required=True)
 
-    mapper_session = get_mapper_session(
-        data={'email': 'mike@mike.com'}, output={})
+    mapper_session = get_mapper_session(data={"email": "mike@mike.com"}, output={})
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     mapper_session = get_mapper_session(
-        data={'name': 'foo', 'email': 'mike@mike.com'}, output={})
+        data={"name": "foo", "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': 2, 'email': 'mike@mike.com'}, output=output)
+        data={"name": 2, "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': 2.0}
+    assert output == {"name": 2.0}
 
 
 def test_min_max_float():
 
-    field = Float(name='age', min=0, max=1.5)
+    field = Float(name="age", min=0, max=1.5)
     output = {}
 
-    mapper_session = get_mapper_session(data={'age': -1}, output=output)
+    mapper_session = get_mapper_session(data={"age": -1}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 4}, output=output)
+    mapper_session = get_mapper_session(data={"age": 4}, output=output)
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
-    mapper_session = get_mapper_session(data={'age': 0.7}, output=output)
+    mapper_session = get_mapper_session(data={"age": 0.7}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': 0.7}
+    assert output == {"age": 0.7}
 
-    mapper_session = get_mapper_session(data={'age': 1.5}, output=output)
+    mapper_session = get_mapper_session(data={"age": 1.5}, output=output)
     field.marshal(mapper_session)
-    assert output == {'age': 1.5}
+    assert output == {"age": 1.5}
 
 
 def test_float_input_precision():
 
-    field = Float(name='name', required=True, precision=4)
+    field = Float(name="name", required=True, precision=4)
 
     output = {}
     mapper_session = get_mapper_session(
-        data={'name': '3.147261', 'email': 'mike@mike.com'}, output=output)
+        data={"name": "3.147261", "email": "mike@mike.com"}, output=output
+    )
     field.marshal(mapper_session)
-    assert output == {'name': 3.1473}
+    assert output == {"name": 3.1473}
 
 
 def test_float_field_invalid_type():
 
-    field = Decimal(name='name')
+    field = Decimal(name="name")
 
     mapper_session = get_mapper_session(
-        data={'name': None, 'email': 'mike@mike.com'}, output={})
+        data={"name": None, "email": "mike@mike.com"}, output={}
+    )
     with pytest.raises(FieldInvalid):
         field.marshal(mapper_session)
 
 
 def test_float_output():
-
     class Foo(object):
         name = 2.52056
 
-    field = Float(name='name', required=True, precision=2)
+    field = Float(name="name", required=True, precision=2)
 
     output = {}
     mapper_session = get_mapper_session(obj=Foo(), output=output)
     field.serialize(mapper_session)
-    assert output == {'name': '2.52'}
-
+    assert output == {"name": "2.52"}

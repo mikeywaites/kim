@@ -10,28 +10,38 @@ from collections import defaultdict
 from .exception import FieldError, FieldInvalid, FieldOptsError
 from .utils import set_creation_order
 from .pipelines import (
-    StringMarshalPipeline, StringSerializePipeline,
+    StringMarshalPipeline,
+    StringSerializePipeline,
     StaticSerializePipeline,
-    IntegerMarshalPipeline, IntegerSerializePipeline,
-    NestedMarshalPipeline, NestedSerializePipeline,
-    CollectionMarshalPipeline, CollectionSerializePipeline,
-    BooleanMarshalPipeline, BooleanSerializePipeline,
-    DateTimeSerializePipeline, DateTimeMarshalPipeline,
-    DateMarshalPipeline, DateSerializePipeline,
-    DecimalSerializePipeline, DecimalMarshalPipeline,
-    FloatSerializePipeline, FloatMarshalPipeline)
+    IntegerMarshalPipeline,
+    IntegerSerializePipeline,
+    NestedMarshalPipeline,
+    NestedSerializePipeline,
+    CollectionMarshalPipeline,
+    CollectionSerializePipeline,
+    BooleanMarshalPipeline,
+    BooleanSerializePipeline,
+    DateTimeSerializePipeline,
+    DateTimeMarshalPipeline,
+    DateMarshalPipeline,
+    DateSerializePipeline,
+    DecimalSerializePipeline,
+    DecimalMarshalPipeline,
+    FloatSerializePipeline,
+    FloatMarshalPipeline,
+)
 from .pipelines.base import run_pipeline, Session
 from .pipelines.marshaling import MarshalPipeline
 from .pipelines.serialization import SerializePipeline
 
 DEFAULT_ERROR_MSGS = {
-    'required': 'This is a required field',
-    'type_error': 'Invalid type',
-    'not_found': '{name} not found',
-    'none_not_allowed': 'This field cannot be null',
-    'invalid_choice': 'invalid choice',
-    'duplicates': 'duplicates found',
-    'out_of_bounds': 'value out of allowed range',
+    "required": "This is a required field",
+    "type_error": "Invalid type",
+    "not_found": "{name} not found",
+    "none_not_allowed": "This field cannot be null",
+    "invalid_choice": "invalid choice",
+    "duplicates": "duplicates found",
+    "out_of_bounds": "value out of allowed range",
 }
 
 
@@ -95,32 +105,32 @@ class FieldOpts(object):
         self._opts = opts.copy()
 
         # internal attrs
-        self._is_wrapped = opts.pop('_is_wrapped', False)
+        self._is_wrapped = opts.pop("_is_wrapped", False)
 
         # set attribute_name, name and source options.
-        name = opts.pop('name', None)
-        attribute_name = opts.pop('attribute_name', None)
-        source = opts.pop('source', None)
+        name = opts.pop("name", None)
+        attribute_name = opts.pop("attribute_name", None)
+        source = opts.pop("source", None)
 
         self.name, self.attribute_name, self.source = None, None, None
 
         self.set_name(name=name, attribute_name=attribute_name, source=source)
 
         self.error_msgs = DEFAULT_ERROR_MSGS.copy()
-        self.error_msgs.update(opts.pop('error_msgs', self.extra_error_msgs))
+        self.error_msgs.update(opts.pop("error_msgs", self.extra_error_msgs))
 
-        self.required = opts.pop('required', True)
-        self.default = opts.pop('default', None)
-        self.null_default = opts.pop('null_default', None)
+        self.required = opts.pop("required", True)
+        self.default = opts.pop("default", None)
+        self.null_default = opts.pop("null_default", None)
 
-        self.allow_none = opts.pop('allow_none', True)
-        self.read_only = opts.pop('read_only', False)
-        self.choices = opts.pop('choices', None)
+        self.allow_none = opts.pop("allow_none", True)
+        self.read_only = opts.pop("read_only", False)
+        self.choices = opts.pop("choices", None)
 
-        self.extra_marshal_pipes = \
-            opts.pop('extra_marshal_pipes', defaultdict(list))
-        self.extra_serialize_pipes = \
-            opts.pop('extra_serialize_pipes', defaultdict(list))
+        self.extra_marshal_pipes = opts.pop("extra_marshal_pipes", defaultdict(list))
+        self.extra_serialize_pipes = opts.pop(
+            "extra_serialize_pipes", defaultdict(list)
+        )
 
         self.validate()
 
@@ -242,8 +252,9 @@ class Field(object):
         try:
             self.opts = self.opts_class(*args, **field_opts)
         except FieldOptsError as e:
-            msg = '{0} field has invalid options: {1}' \
-                .format(self.__class__.__name__, e.message)
+            msg = "{0} field has invalid options: {1}".format(
+                self.__class__.__name__, e.message
+            )
             raise FieldError(msg)
 
         set_creation_order(self)
@@ -264,9 +275,7 @@ class Field(object):
         :rtype: string
         """
 
-        parse_opts = {
-            'name': self.name
-        }
+        parse_opts = {"name": self.name}
         return self.opts.error_msgs[error_type].format(**parse_opts)
 
     def invalid(self, error_type):
@@ -305,9 +314,11 @@ class Field(object):
         field_name = self.opts.get_name()
         if not field_name:
             cn = self.__class__.__name__
-            raise FieldError('{0} requires {0}.name or '
-                             '{0}.attribute_name.  Please provide a `name` '
-                             'or `attribute_name` param to {0}'.format(cn))
+            raise FieldError(
+                "{0} requires {0}.name or "
+                "{0}.attribute_name.  Please provide a `name` "
+                "or `attribute_name` param to {0}".format(cn)
+            )
 
         return field_name
 
@@ -336,11 +347,14 @@ class Field(object):
             :meth:`kim.mapper.Mapper.marshal`
         """
 
-        parent = opts.get('parent_session', None)
+        parent = opts.get("parent_session", None)
         session = Session(
-            self, mapper_session.data, mapper_session.output,
+            self,
+            mapper_session.data,
+            mapper_session.output,
             mapper_session=mapper_session,
-            parent=parent)
+            parent=parent,
+        )
         run_pipeline(self.marshal_pipes, session, self, **opts)
 
     def serialize(self, mapper_session, **opts):
@@ -355,11 +369,14 @@ class Field(object):
         .. seealso::
             :meth:`kim.mapper.Mapper.serialize`
         """
-        parent = opts.get('parent_session', None)
+        parent = opts.get("parent_session", None)
         session = Session(
-            self, mapper_session.data, mapper_session.output,
+            self,
+            mapper_session.data,
+            mapper_session.output,
             mapper_session=mapper_session,
-            parent=parent)
+            parent=parent,
+        )
 
         run_pipeline(self.serialize_pipes, session, self, **opts)
 
@@ -381,9 +398,9 @@ class StringFieldOpts(FieldOpts):
         :raises: :class:`FieldOptsError`
         :returns: None
         """
-        self.max = kwargs.pop('max', None)
-        self.min = kwargs.pop('min', None)
-        self.blank = kwargs.pop('blank', True)
+        self.max = kwargs.pop("max", None)
+        self.min = kwargs.pop("min", None)
+        self.blank = kwargs.pop("blank", True)
         super(StringFieldOpts, self).__init__(**kwargs)
 
 
@@ -402,6 +419,7 @@ class String(Field):
             name = field.String(required=True)
 
     """
+
     opts_class = StringFieldOpts
     marshal_pipeline = StringMarshalPipeline
     serialize_pipeline = StringSerializePipeline
@@ -423,8 +441,8 @@ class IntegerFieldOpts(FieldOpts):
         :raises: :class:`FieldOptsError`
         :returns: None
         """
-        self.max = kwargs.pop('max', None)
-        self.min = kwargs.pop('min', None)
+        self.max = kwargs.pop("max", None)
+        self.min = kwargs.pop("min", None)
         super(IntegerFieldOpts, self).__init__(**kwargs)
 
 
@@ -467,9 +485,9 @@ class FloatFieldOpts(FieldOpts):
         :raises: :class:`FieldOptsError`
         :returns: None
         """
-        self.precision = kwargs.pop('precision', 5)
-        self.max = kwargs.pop('max', None)
-        self.min = kwargs.pop('min', None)
+        self.precision = kwargs.pop("precision", 5)
+        self.max = kwargs.pop("max", None)
+        self.min = kwargs.pop("min", None)
         super(FloatFieldOpts, self).__init__(**kwargs)
 
 
@@ -533,16 +551,15 @@ class BooleanFieldOpts(FieldOpts):
         :raises: :class:`FieldOptsError`
         :returns: None
         """
-        self.true_boolean_values = \
-            kwargs.pop('true_boolean_values',
-                       [True, 'true', '1', 1, 'True'])
-        self.false_boolean_values = \
-            kwargs.pop('false_boolean_values',
-                       [False, 'false', '0', 0, 'False'])
+        self.true_boolean_values = kwargs.pop(
+            "true_boolean_values", [True, "true", "1", 1, "True"]
+        )
+        self.false_boolean_values = kwargs.pop(
+            "false_boolean_values", [False, "false", "0", 0, "False"]
+        )
 
         super(BooleanFieldOpts, self).__init__(**kwargs)
-        self.choices = set(self.true_boolean_values +
-                           self.false_boolean_values)
+        self.choices = set(self.true_boolean_values + self.false_boolean_values)
 
 
 class Boolean(Field):
@@ -598,15 +615,13 @@ class NestedFieldOpts(FieldOpts):
             of the fields defined on the Nested field.
         """
         self.mapper = mapper_or_mapper_name
-        self.role = kwargs.pop('role', '__default__')
-        self.collection_class = kwargs.pop('collection_class', list)
-        self.getter = kwargs.pop('getter', None)
-        self.allow_updates = kwargs.pop('allow_updates', False)
-        self.allow_updates_in_place = kwargs.pop(
-            'allow_updates_in_place', False)
-        self.allow_partial_updates = kwargs.pop(
-            'allow_partial_updates', False)
-        self.allow_create = kwargs.pop('allow_create', False)
+        self.role = kwargs.pop("role", "__default__")
+        self.collection_class = kwargs.pop("collection_class", list)
+        self.getter = kwargs.pop("getter", None)
+        self.allow_updates = kwargs.pop("allow_updates", False)
+        self.allow_updates_in_place = kwargs.pop("allow_updates_in_place", False)
+        self.allow_partial_updates = kwargs.pop("allow_partial_updates", False)
+        self.allow_create = kwargs.pop("allow_create", False)
         super(NestedFieldOpts, self).__init__(**kwargs)
 
 
@@ -695,11 +710,12 @@ class CollectionFieldOpts(FieldOpts):
         except FieldError:
             pass
         else:
-            raise FieldError('name/attribute_name/source should '
-                             'not be passed to a wrapped field.')
+            raise FieldError(
+                "name/attribute_name/source should " "not be passed to a wrapped field."
+            )
 
         self.field.opts._is_wrapped = True
-        self.unique_on = kwargs.pop('unique_on', None)
+        self.unique_on = kwargs.pop("unique_on", None)
         super(CollectionFieldOpts, self).__init__(**kwargs)
 
     def set_name(self, *args, **kwargs):
@@ -730,8 +746,9 @@ class CollectionFieldOpts(FieldOpts):
         """
 
         if not isinstance(self.field, Field):
-            raise FieldOptsError('Collection requires a valid Field '
-                                 'instance as its first argument')
+            raise FieldOptsError(
+                "Collection requires a valid Field " "instance as its first argument"
+            )
 
 
 class Collection(Field):
@@ -795,6 +812,7 @@ class Static(Field):
             id = field.String()
             object_type = field.Static(value='user')
     """
+
     opts_class = StaticFieldOpts
     serialize_pipeline = StaticSerializePipeline
 
@@ -813,9 +831,9 @@ class DateTimeFieldOpts(FieldOpts):
             iso8601.
 
         """
-        self.date_format = kwargs.pop('format_str', 'iso8601')
+        self.date_format = kwargs.pop("format_str", "iso8601")
         super(DateTimeFieldOpts, self).__init__(**kwargs)
-        self.error_msgs['invalid'] = 'Not a valid datetime.'
+        self.error_msgs["invalid"] = "Not a valid datetime."
 
 
 class DateFieldOpts(FieldOpts):
@@ -832,9 +850,9 @@ class DateFieldOpts(FieldOpts):
             iso8601.
 
         """
-        self.date_format = kwargs.pop('format_str', '%Y-%m-%d')
+        self.date_format = kwargs.pop("format_str", "%Y-%m-%d")
         super(DateFieldOpts, self).__init__(**kwargs)
-        self.error_msgs['invalid'] = 'Not a valid date.'
+        self.error_msgs["invalid"] = "Not a valid date."
 
 
 class DateTime(Field):

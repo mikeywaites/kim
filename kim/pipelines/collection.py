@@ -28,8 +28,8 @@ def marshall_collection(session):
     output = []
 
     if session.data is not None:
-        if not hasattr(session.data, '__iter__'):
-            raise session.field.invalid('type_error')
+        if not hasattr(session.data, "__iter__"):
+            raise session.field.invalid("type_error")
 
         for i, datum in enumerate(session.data):
             _output = {}
@@ -67,10 +67,9 @@ def serialize_collection(session):
 
     # If the wrapped field uses a mapper, fetch it once to avoid looking up the mapper
     # from the registry for each item in the collection.
-    session.nested_mapper = getattr(
-        wrapped_field,
-        'get_mapper',
-        lambda **kwargs: None)(as_class=True)
+    session.nested_mapper = getattr(wrapped_field, "get_mapper", lambda **kwargs: None)(
+        as_class=True
+    )
 
     for datum in session.data:
         mapper_session.data = datum
@@ -95,7 +94,7 @@ def check_duplicates(session):
     if key:
         keys = [attr_or_key(a, key) for a in data]
         if len(keys) != len(set(keys)):
-            raise session.field.invalid(error_type='duplicates')
+            raise session.field.invalid(error_type="duplicates")
     return data
 
 
@@ -119,4 +118,4 @@ class CollectionSerializePipeline(SerializePipeline):
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
 
-    process_pipes = [serialize_collection, ] + SerializePipeline.process_pipes
+    process_pipes = [serialize_collection,] + SerializePipeline.process_pipes

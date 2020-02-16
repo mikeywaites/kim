@@ -12,7 +12,8 @@ def do_cprofile(func):
             profile.disable()
             return result
         finally:
-            profile.print_stats('cumulative')
+            profile.print_stats("cumulative")
+
     return profiled_func
 
 
@@ -34,6 +35,6 @@ def run():
     test_one()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     run()

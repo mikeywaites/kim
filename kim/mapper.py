@@ -53,9 +53,9 @@ def get_mapper_from_registry(mapper_or_name):
         name = mapper_or_name
 
     if not mapper_is_defined(name):
-        raise MapperError('%s is not a valid Mapper. '
-                          'Is this Mapper defined?'
-                          % mapper_or_name)
+        raise MapperError(
+            "%s is not a valid Mapper. " "Is this Mapper defined?" % mapper_or_name
+        )
 
     reg = _MapperConfig.MAPPER_REGISTRY
     return reg[name]
@@ -73,7 +73,7 @@ def add_class_to_registry(classname, cls):
     """
 
     if classname in _MapperConfig.MAPPER_REGISTRY:
-        msg = '%s is already a registered Mapper' % classname
+        msg = "%s is already a registered Mapper" % classname
         raise MapperError(msg)
     else:
         _MapperConfig.MAPPER_REGISTRY[classname] = cls
@@ -102,9 +102,8 @@ class _MapperConfig(object):
         # If a __default__ role is found in the cls.__roles__ property, assume
         # the user is looking to override the default role and dont create one
         # here.
-        if '__default__' not in self.cls.__roles__:
-            self.cls.roles['__default__'] = \
-                whitelist(*self.cls.fields.keys())
+        if "__default__" not in self.cls.__roles__:
+            self.cls.roles["__default__"] = whitelist(*self.cls.fields.keys())
 
         self._remove_fields()
 
@@ -118,8 +117,8 @@ class _MapperConfig(object):
 
     def _set_polymorphic_base(self, base):
 
-        mapper_args = getattr(base, '__mapper_args__', {})
-        is_polymorphic_base = 'polymorphic_on' in mapper_args
+        mapper_args = getattr(base, "__mapper_args__", {})
+        is_polymorphic_base = "polymorphic_on" in mapper_args
 
         if is_polymorphic_base:
 
@@ -128,7 +127,7 @@ class _MapperConfig(object):
             # All the field attrs, we need to use the newly created cls.fields
             # dict otherwise _polymorphic_on will be unset when the fields
             # are removed due to garbage collection.
-            field_or_field_name = mapper_args['polymorphic_on']
+            field_or_field_name = mapper_args["polymorphic_on"]
             if isinstance(field_or_field_name, Field):
                 field_name = field_or_field_name.name
             else:
@@ -136,9 +135,10 @@ class _MapperConfig(object):
 
             self.cls._polymorphic_base = True
             self.cls._polymorphic_opts = {
-                'polymorphic_on': self.cls.fields.get(field_name),
-                'allow_polymorphic_marshal':
-                mapper_args.get('allow_polymorphic_marshal', False)
+                "polymorphic_on": self.cls.fields.get(field_name),
+                "allow_polymorphic_marshal": mapper_args.get(
+                    "allow_polymorphic_marshal", False
+                ),
             }
             self.cls._polymorphic_identities = {}
         else:
@@ -146,19 +146,18 @@ class _MapperConfig(object):
 
     def _configure_polymorphism(self, base):
 
-        mapper_args = getattr(base, '__mapper_args__', {})
-        if 'polymorphic_name' in mapper_args:
+        mapper_args = getattr(base, "__mapper_args__", {})
+        if "polymorphic_name" in mapper_args:
 
             def _set_polymorphic_identity(parent, mapper):
 
-                parent._polymorphic_identities.update({
-                    mapper.__mapper_args__['polymorphic_name']:
-                    mapper
-                })
+                parent._polymorphic_identities.update(
+                    {mapper.__mapper_args__["polymorphic_name"]: mapper}
+                )
 
             # find the base polymorphic mapper
             for mapper in reversed(base.__mro__):
-                if getattr(mapper, '_polymorphic_base', False):
+                if getattr(mapper, "_polymorphic_base", False):
                     _set_polymorphic_identity(mapper, base)
                     break
 
@@ -186,24 +185,24 @@ class _MapperConfig(object):
 
         for name, obj in vars(base).items():
 
-            types = ['validation', 'process', 'output', 'input']
-            hook_type = getattr(obj, '__mapper_field_hook', None)
+            types = ["validation", "process", "output", "input"]
+            hook_type = getattr(obj, "__mapper_field_hook", None)
 
             if not callable(obj) or hook_type not in types:
                 continue
-            elif hook_type == 'validation':
+            elif hook_type == "validation":
                 for name in obj._field_names:
                     _validators.setdefault(name, [])
                     _validators[name].append(obj)
-            elif hook_type == 'input':
+            elif hook_type == "input":
                 for name in obj._field_names:
                     _inputs.setdefault(name, [])
                     _inputs[name].append(obj)
-            elif hook_type == 'process':
+            elif hook_type == "process":
                 for name in obj._field_names:
                     _processors.setdefault(name, [])
                     _processors[name].append(obj)
-            elif hook_type == 'output':
+            elif hook_type == "output":
                 for name in obj._field_names:
                     _outputs.setdefault(name, [])
                     _outputs[name].append(obj)
@@ -222,13 +221,15 @@ class _MapperConfig(object):
         if field.name in pipes:
 
             for p in pipes[field.name]:
-                opts = getattr(p, '__mapper_field_hook_opts', {})
-                if opts['marshal']:
-                    field.opts.extra_marshal_pipes[pipe_type] \
-                        .append(pipe(p, **opts['pipe_opts']))
-                if opts['serialize']:
-                    field.opts.extra_serialize_pipes[pipe_type] \
-                        .append(pipe(p, **opts['pipe_opts']))
+                opts = getattr(p, "__mapper_field_hook_opts", {})
+                if opts["marshal"]:
+                    field.opts.extra_marshal_pipes[pipe_type].append(
+                        pipe(p, **opts["pipe_opts"])
+                    )
+                if opts["serialize"]:
+                    field.opts.extra_serialize_pipes[pipe_type].append(
+                        pipe(p, **opts["pipe_opts"])
+                    )
 
             return field
 
@@ -244,7 +245,7 @@ class _MapperConfig(object):
         cls = self.cls
         _fields = {}
 
-        _fields.update(getattr(base, 'fields', {}))
+        _fields.update(getattr(base, "fields", {}))
         for name, obj in vars(base).items():
 
             # Add field to declared fields and remove cls.field
@@ -253,13 +254,14 @@ class _MapperConfig(object):
 
                 _fields.update({name: obj})
 
-                self._set_field_pipes(obj, cls.defined_inputs, 'input')
-                self._set_field_pipes(obj, cls.defined_validators, 'validation')
-                self._set_field_pipes(obj, cls.defined_processors, 'process')
-                self._set_field_pipes(obj, cls.defined_outputs, 'output')
+                self._set_field_pipes(obj, cls.defined_inputs, "input")
+                self._set_field_pipes(obj, cls.defined_validators, "validation")
+                self._set_field_pipes(obj, cls.defined_processors, "process")
+                self._set_field_pipes(obj, cls.defined_outputs, "output")
 
         cls.fields = OrderedDict(
-            sorted(_fields.items(), key=lambda o: o[1]._creation_order))
+            sorted(_fields.items(), key=lambda o: o[1]._creation_order)
+        )
 
     def _extract_roles(self, base):
         """update ``roles`` with any roles defined previously in
@@ -277,8 +279,8 @@ class _MapperConfig(object):
         cls = self.cls
 
         _roles = {}
-        _roles.update(getattr(cls, 'roles', None) or {})
-        _roles.update(getattr(base, '__roles__', None) or {})
+        _roles.update(getattr(cls, "roles", None) or {})
+        _roles.update(getattr(base, "__roles__", None) or {})
 
         # Roles may be passed as list, convert to whitelist
         # objects in this case
@@ -286,9 +288,11 @@ class _MapperConfig(object):
             if isinstance(role, list):
                 _roles[name] = whitelist(*role)
             elif not isinstance(role, Role):
-                msg = "role %s on %s must be list or Role " \
-                      "instance, got %s" % (name, self.__class__.__name__,
-                                            type(role))
+                msg = "role %s on %s must be list or Role " "instance, got %s" % (
+                    name,
+                    self.__class__.__name__,
+                    type(role),
+                )
                 raise MapperError(msg)
 
         cls.roles = _roles
@@ -296,7 +300,6 @@ class _MapperConfig(object):
 
 # TODO(mike) __docs__
 class MapperMeta(type):
-
     def __init__(cls, classname, bases, dict_):
         _MapperConfig.setup_mapping(cls, classname, dict_)
         type.__init__(cls, classname, bases, dict_)
@@ -307,7 +310,7 @@ class MapperSession(object):
     marshaling and serialization :class:`Pipeline`.
     """
 
-    __slots__ = ('mapper', 'data', 'output', 'partial')
+    __slots__ = ("mapper", "data", "output", "partial")
 
     def __init__(self, mapper, data, output, partial=None):
         """Instantiate a new instance of :class:`MapperSession`
@@ -377,8 +380,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperIterator(cls, **mapper_params)
 
-    def __init__(self, obj=None, data=None, partial=False, raw=False,
-                 parent=None):
+    def __init__(self, obj=None, data=None, partial=False, raw=False, parent=None):
         """Initialise a Mapper with the object and/or the data to be
         serialzed/marshaled. Mappers must be instantiated once per object/data.
         At least one of obj or data must be passed.
@@ -399,8 +401,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         if obj is None and data is None:
             raise MapperError(
-                'At least one of obj or data must be passed to %s()'
-                % self.__class__.__name__)
+                "At least one of obj or data must be passed to %s()"
+                % self.__class__.__name__
+            )
 
         self.obj = obj
         self.data = data
@@ -412,7 +415,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
     @property
     def initial_errors(self):
 
-        return getattr(self, '_initial_errors', None)
+        return getattr(self, "_initial_errors", None)
 
     def _get_mapper_type(self):
         """Return the specified type for this Mapper.  If no ``__type__`` is
@@ -423,8 +426,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         """
 
         if self.__type__ is None:
-            raise MapperError(
-                '%s must define a __type__' % self.__class__.__name__)
+            raise MapperError("%s must define a __type__" % self.__class__.__name__)
 
         return self.__type__
 
@@ -475,19 +477,22 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
             try:
                 role = self.roles[name_or_role]
             except KeyError:
-                raise MapperError("Role '%s' not found on %s" % (
-                                  name_or_role, self.__class__.__name__))
+                raise MapperError(
+                    "Role '%s' not found on %s"
+                    % (name_or_role, self.__class__.__name__)
+                )
         elif isinstance(name_or_role, Role):
             role = name_or_role
         else:
-            raise MapperError('role must be string or Role instance, got %s'
-                              % type(name_or_role))
+            raise MapperError(
+                "role must be string or Role instance, got %s" % type(name_or_role)
+            )
 
         # If deferred_role is not None, return the intersection of the
         # role and the deffered_role
         if deferred_role is not None:
             if not isinstance(deferred_role, Role):
-                raise MapperError('deferred_role must be instance of Role')
+                raise MapperError("deferred_role must be instance of Role")
 
             return role & deferred_role
         else:
@@ -541,7 +546,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
         :rtype: boolean
         """
 
-        return getattr(data, 'keys', False) is not False
+        return getattr(data, "keys", False) is not False
 
     def _remove_none(self, output):
         """If all components of a dictionary are none, remove it and mark
@@ -593,13 +598,15 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         """
         if not self._data_supports_transform(data):
-            raise MapperError('%s object does not appear to '
-                              'support key based iteration '
-                              'required when raw=True' % type(data))
+            raise MapperError(
+                "%s object does not appear to "
+                "support key based iteration "
+                "required when raw=True" % type(data)
+            )
 
         output = recursive_defaultdict()
         for key in data.keys():
-            path = key.split('__')
+            path = key.split("__")
             target = output
             # Walk along the path until we find the final dict to insert the
             # data into
@@ -621,7 +628,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return MapperSession(self, data, output, partial=self.partial)
 
-    def serialize(self, role='__default__', raw=False, deferred_role=None):
+    def serialize(self, role="__default__", raw=False, deferred_role=None):
         """Serialize ``self.obj`` into a dict according to the fields
         defined on this Mapper.
 
@@ -644,8 +651,9 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         if self.obj is None:
             raise MapperError(
-                'Attmpted to serialize None, have you passed a valid obj param to %s()?'
-                % self.__class__.__name__)
+                "Attmpted to serialize None, have you passed a valid obj param to %s()?"
+                % self.__class__.__name__
+            )
 
         data = self.obj
         transform_data = raw or self.raw
@@ -658,7 +666,7 @@ class Mapper(six.with_metaclass(MapperMeta, object)):
 
         return output
 
-    def marshal(self, role='__default__'):
+    def marshal(self, role="__default__"):
         """Marshal ``self.data`` into ``self.obj`` according to the fields
         defined on this Mapper.
 
@@ -763,7 +771,7 @@ class PolymorphicMapper(Mapper):
         :rtype: boolean
         """
 
-        return getattr(cls, '_polymorphic_base', False)
+        return getattr(cls, "_polymorphic_base", False)
 
     @classmethod
     def _get_polymorphic_on(cls):
@@ -774,7 +782,7 @@ class PolymorphicMapper(Mapper):
         :rtype: :class:`kim.field.Field``
         """
 
-        return cls._polymorphic_opts['polymorphic_on']
+        return cls._polymorphic_opts["polymorphic_on"]
 
     def __new__(cls, data=None, obj=None, *args, **kwargs):
         """Create an new instance of a Mapper using the polymorphic_on key defined in
@@ -789,20 +797,17 @@ class PolymorphicMapper(Mapper):
         :rtype: :class:`kim.mapper.Mapper`
         """
 
-        if (cls.is_polymorphic_base()
-                and not kwargs.get('initial_errors', None)):
+        if cls.is_polymorphic_base() and not kwargs.get("initial_errors", None):
 
             try:
                 key = cls.get_polymorphic_key(obj=obj, data=data)
                 return cls.get_polymorphic_identity(key)(
-                    data=data, obj=obj, *args, **kwargs)
+                    data=data, obj=obj, *args, **kwargs
+                )
             except FieldInvalid as e:
-                initial_errors = {
-                    cls._get_polymorphic_on().opts.source:
-                    e.message
-                }
+                initial_errors = {cls._get_polymorphic_on().opts.source: e.message}
                 _obj = super(PolymorphicMapper, cls).__new__(cls)
-                setattr(_obj, '_initial_errors', initial_errors)
+                setattr(_obj, "_initial_errors", initial_errors)
                 return _obj
 
         return super(PolymorphicMapper, cls).__new__(cls)
@@ -821,8 +826,7 @@ class PolymorphicMapper(Mapper):
 
         field = cls._get_polymorphic_on()
         key_name = field.opts.source
-        allow_create = cls._polymorphic_opts.get(
-            'allow_polymorphic_marshal', False)
+        allow_create = cls._polymorphic_opts.get("allow_polymorphic_marshal", False)
 
         key = attr_or_key(obj, key_name)
         if key is not None:
@@ -832,9 +836,9 @@ class PolymorphicMapper(Mapper):
         if key is not None and allow_create:
             return key
         elif key and not allow_create:
-            raise MappingInvalid('PolymorphicMapper does not allow marshaling')
+            raise MappingInvalid("PolymorphicMapper does not allow marshaling")
         else:
-            raise field.invalid('required')
+            raise field.invalid("required")
 
     @classmethod
     def get_polymorphic_identity(cls, key):
@@ -849,8 +853,9 @@ class PolymorphicMapper(Mapper):
         try:
             return cls._polymorphic_identities[key]
         except KeyError:
-            raise MapperError('invalid polymorphic_identity %s'
-                              ' is not a valid identity' % key)
+            raise MapperError(
+                "invalid polymorphic_identity %s" " is not a valid identity" % key
+            )
 
 
 class MapperIterator(object):
@@ -894,13 +899,10 @@ class MapperIterator(object):
         :returns: a new :class:`.Mapper`
         """
 
-        self.mapper_params.update({
-            'data': data,
-            'obj': obj
-        })
+        self.mapper_params.update({"data": data, "obj": obj})
         return self.mapper(**self.mapper_params)
 
-    def serialize(self, objs, role='__default__', deferred_role=None):
+    def serialize(self, objs, role="__default__", deferred_role=None):
         """Serializes each item in ``objs`` creating a new mapper each time.
 
         :param objs: iterable of objects to serialize
@@ -911,13 +913,15 @@ class MapperIterator(object):
 
         output = []  # TODO should this be user defined?
         for obj in objs:
-            output.append(self.get_mapper(obj=obj).serialize(
-                role=role,
-                deferred_role=deferred_role))
+            output.append(
+                self.get_mapper(obj=obj).serialize(
+                    role=role, deferred_role=deferred_role
+                )
+            )
 
         return output
 
-    def marshal(self, data, role='__default__'):
+    def marshal(self, data, role="__default__"):
         """Marshals each item in ``data`` creating a new mapper each time.
 
         :param objs: iterable of objects to marshal

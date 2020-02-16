@@ -19,7 +19,7 @@ def parse_iso8601(session):
     try:
         session.data = iso8601.parse_date(session.data)
     except iso8601.ParseError:
-        raise session.field.invalid(error_type='invalid')
+        raise session.field.invalid(error_type="invalid")
 
     return session.data
 
@@ -30,7 +30,7 @@ def parse_date_str(session):
     try:
         session.data = dt.strptime(session.data, date_format)
     except ValueError:
-        raise session.field.invalid(error_type='invalid')
+        raise session.field.invalid(error_type="invalid")
 
     return session.data
 
@@ -45,7 +45,7 @@ def is_valid_datetime(session):
 
     if session.data is not None:
         date_format = session.field.opts.date_format
-        if date_format == 'iso8601':
+        if date_format == "iso8601":
             return parse_iso8601(session)
         else:
             return parse_date_str(session)
@@ -57,7 +57,7 @@ def format_datetime(session):
     """
     if session.data is not None:
         date_format = session.field.opts.date_format
-        if date_format == 'iso8601':
+        if date_format == "iso8601":
             session.data = session.data.isoformat()
         else:
             session.data = session.data.strftime(date_format)
@@ -73,8 +73,10 @@ class DateTimeMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = \
-        [is_valid_datetime, is_valid_choice] + MarshalPipeline.validation_pipes
+    validation_pipes = [
+        is_valid_datetime,
+        is_valid_choice,
+    ] + MarshalPipeline.validation_pipes
 
 
 class DateTimeSerializePipeline(SerializePipeline):
@@ -84,7 +86,8 @@ class DateTimeSerializePipeline(SerializePipeline):
         :func:`kim.pipelines.datetime.format_datetime`
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
-    process_pipes = [format_datetime, ] + SerializePipeline.process_pipes
+
+    process_pipes = [format_datetime,] + SerializePipeline.process_pipes
 
 
 @pipe()
@@ -113,4 +116,5 @@ class DateSerializePipeline(DateTimeSerializePipeline):
     .. seealso::
         :func:`kim.pipelines.serialization.SerializePipeline`
     """
+
     pass

@@ -17,14 +17,14 @@ class KimException(Exception):
 
 class MapperError(KimException):
     """MapperError is raised from a mapper that was unable to instantiate correctly."""
+
     pass
 
 
 class MappingInvalid(KimException):
-
     def __init__(self, errors, *args, **kwargs):
         self.errors = errors
-        super(MappingInvalid, self).__init__('Mapping invalid', *args, **kwargs)
+        super(MappingInvalid, self).__init__("Mapping invalid", *args, **kwargs)
 
 
 class RoleError(KimException):
@@ -41,7 +41,7 @@ class FieldError(KimException):
 
 class FieldInvalid(KimException):
     def __init__(self, *args, **kwargs):
-        self.field = kwargs.pop('field')
+        self.field = kwargs.pop("field")
         super(FieldInvalid, self).__init__(*args, **kwargs)
 
 

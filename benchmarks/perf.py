@@ -4,8 +4,8 @@ from data import serialize, test_object
 from tabulate import tabulate
 
 
-class timer():
-    def __init__(self, name=''):
+class timer:
+    def __init__(self, name=""):
         self.name = name
 
     def __enter__(self):
@@ -29,11 +29,11 @@ def test_one(limit=1000):
 def run():
 
     results = []
-    with timer('many') as result:
+    with timer("many") as result:
         test_many()
         results.append(result)
 
-    with timer('one') as result:
+    with timer("one") as result:
         test_one()
         results.append(result)
 
@@ -102,10 +102,10 @@ def report():
     one_max = find_max(one_results)
 
     table = []
-    table.append(['Serialize Many', many_avg, many_min, many_max])
-    table.append(['Serialize One', one_avg, one_min, one_max])
+    table.append(["Serialize Many", many_avg, many_min, many_max])
+    table.append(["Serialize One", one_avg, one_min, one_max])
 
-    print(tabulate(table, headers=['Test', 'Avg', 'Min', 'Max']))
+    print(tabulate(table, headers=["Test", "Avg", "Min", "Max"]))
 
 
 if __name__ == "__main__":

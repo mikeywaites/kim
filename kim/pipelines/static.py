@@ -27,4 +27,4 @@ class StaticSerializePipeline(SerializePipeline):
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
 
-    process_pipes = [get_static_value, ] + SerializePipeline.process_pipes
+    process_pipes = [get_static_value,] + SerializePipeline.process_pipes

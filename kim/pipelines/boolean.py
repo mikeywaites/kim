@@ -34,8 +34,8 @@ class BooleanMarshalPipeline(MarshalPipeline):
         :class:`kim.pipelines.marshaling.MarshalPipeline`
     """
 
-    validation_pipes = [is_valid_choice, ] + MarshalPipeline.validation_pipes
-    process_pipes = [coerce_to_boolean, ] + MarshalPipeline.process_pipes
+    validation_pipes = [is_valid_choice,] + MarshalPipeline.validation_pipes
+    process_pipes = [coerce_to_boolean,] + MarshalPipeline.process_pipes
 
 
 class BooleanSerializePipeline(SerializePipeline):
@@ -44,4 +44,5 @@ class BooleanSerializePipeline(SerializePipeline):
     .. seealso::
         :class:`kim.pipelines.serialization.SerializePipeline`
     """
+
     pass
